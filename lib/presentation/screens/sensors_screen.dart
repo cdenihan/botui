@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:stpvelox/presentation/blocs/sensor_bloc.dart';
+import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 class SensorsScreen extends StatefulWidget {
@@ -22,10 +22,10 @@ class _SensorsScreenState extends State<SensorsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
+      appBar: createTopBar("Sensors"),
       body: SafeArea(
         child: Column(
           children: [
-            TopBar(title: "Sensors"),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),

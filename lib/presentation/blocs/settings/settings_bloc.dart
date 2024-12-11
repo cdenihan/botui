@@ -13,7 +13,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<LoadSettingsEvent>((event, emit) async {
       emit(SettingsLoading());
       try {
-                final settings = await updateSetting.repository.getSettings();
+        final settings = await updateSetting.repository.getSettings();
         emit(SettingsLoaded(settings: settings));
       } catch (e) {
         emit(SettingsError(message: e.toString()));
@@ -24,7 +24,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
       emit(SettingsLoading());
       try {
         await updateSetting.execute(event.label);
-                        add(LoadSettingsEvent());
+        add(LoadSettingsEvent());
       } catch (e) {
         emit(SettingsError(message: e.toString()));
       }

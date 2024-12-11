@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/presentation/screens/program_screen.dart';
+import 'package:stpvelox/presentation/screens/program_selection_screen.dart';
 import 'package:stpvelox/presentation/screens/sensors_screen.dart';
 import 'package:stpvelox/presentation/screens/settings_screen.dart';
 import 'package:stpvelox/presentation/widgets/dashboard_tile.dart';
@@ -27,18 +28,18 @@ class DashboardScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
-              const Expanded(
+              Expanded(
                 flex: 2,
                 child: DashboardTile(
                   label: "Programs",
                   icon: Icons.code,
-                  destination: ProgramScreen(),
+                  destination: ProgramSelectionScreen(),
                   color: AppColors.programs,
                   isMain: true,
                 ),
               ),
               const SizedBox(height: 16),
-              Expanded(
+              const Expanded(
                 flex: 1,
                 child: DashboardTile(
                   label: "Settings",

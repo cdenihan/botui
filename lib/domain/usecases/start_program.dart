@@ -1,11 +1,12 @@
-import 'package:stpvelox/domain/repositories/program_repository.dart';
+import 'package:stpvelox/domain/entities/program.dart';
+import 'package:stpvelox/domain/service/program_lifecycle_manager.dart';
 
 class StartProgram {
-  final ProgramRepository repository;
+  final ProgramLifecycleManager programLifecycleManager;
 
-  StartProgram({required this.repository});
+  StartProgram({required this.programLifecycleManager});
 
-  Future<List<String>> execute(String arg) async {
-    return await repository.startProgram(arg);
+  void call(Program program) {
+    programLifecycleManager.startProgram(program);
   }
 }

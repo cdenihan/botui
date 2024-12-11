@@ -8,12 +8,14 @@ import 'package:stpvelox/data/repositories/settings_repository_impl.dart';
 import 'package:stpvelox/domain/repositories/program_repository.dart';
 import 'package:stpvelox/domain/repositories/sensor_repository.dart';
 import 'package:stpvelox/domain/repositories/settings_repository.dart';
+import 'package:stpvelox/domain/usecases/get_programs.dart';
 import 'package:stpvelox/domain/usecases/get_sensors.dart';
 import 'package:stpvelox/domain/usecases/start_program.dart';
 import 'package:stpvelox/domain/usecases/update_setting.dart';
-import 'package:stpvelox/presentation/blocs/program_bloc.dart';
-import 'package:stpvelox/presentation/blocs/sensor_bloc.dart';
-import 'package:stpvelox/presentation/blocs/settings_bloc.dart';
+import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
+import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
+import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
 
 final sl = GetIt.instance;
 
@@ -21,10 +23,12 @@ Future<void> init() async {
   sl.registerFactory(() => SensorBloc(getSensors: sl()));
   sl.registerFactory(() => ProgramBloc(startProgram: sl()));
   sl.registerFactory(() => SettingsBloc(updateSetting: sl()));
+  sl.registerFactory(() => ProgramSelectionBloc(getPrograms: sl()));
 
   sl.registerLazySingleton(() => GetSensors(repository: sl()));
   sl.registerLazySingleton(() => StartProgram(repository: sl()));
   sl.registerLazySingleton(() => UpdateSetting(repository: sl()));
+  sl.registerLazySingleton(() => GetPrograms(repository: sl()));
 
   sl.registerLazySingleton<SensorRepository>(
           () => SensorRepositoryImpl(remoteDataSource: sl()));
@@ -36,7 +40,7 @@ Future<void> init() async {
   sl.registerLazySingleton<SensorsRemoteDataSource>(
           () => SensorsRemoteDataSourceImpl());
   sl.registerLazySingleton<ProgramRemoteDataSource>(
-          () => ProgramRemoteDataSourceImpl());
+          () => ProgramRemoteDataSourceImpl(programsDirectoryPath: 'programs'));
   sl.registerLazySingleton<SettingsRemoteDataSource>(
           () => SettingsRemoteDataSourceImpl());
 

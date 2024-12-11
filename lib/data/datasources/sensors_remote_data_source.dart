@@ -7,7 +7,6 @@ abstract class SensorsRemoteDataSource {
 class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
   @override
   Future<List<Sensor>> fetchSensors() async {
-    await Future.delayed(Duration(seconds: 2));
     return [
       Sensor(name: "Temperature", value: "25°C"),
       Sensor(name: "Humidity", value: "60%"),

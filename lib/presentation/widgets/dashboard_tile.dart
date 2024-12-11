@@ -8,12 +8,13 @@ class DashboardTile extends StatelessWidget {
   final bool isMain;
 
   const DashboardTile({
-    Key? key,
+    super.key,
     required this.label,
     required this.icon,
     required this.destination,
     required this.color,
-    this.isMain = false,   }) : super(key: key);
+    this.isMain = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +32,7 @@ class DashboardTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
                 color: Colors.black45,
                 offset: Offset(0, 4),
@@ -45,14 +46,16 @@ class DashboardTile extends StatelessWidget {
               children: [
                 Icon(
                   icon,
-                  size: isMain ? 60 : 50,                   color: Colors.white,
+                  size: isMain ? 60 : 50,
+                  color: Colors.white,
                 ),
                 SizedBox(height: isMain ? 12 : 8),
                 Text(
                   label,
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: isMain ? 26 : 22,                     fontWeight: isMain ? FontWeight.bold : FontWeight.normal,
+                    fontSize: isMain ? 26 : 22,
+                    fontWeight: isMain ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ],

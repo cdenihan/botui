@@ -12,7 +12,7 @@ class ProgramBloc extends Bloc<ProgramEvent, ProgramState> {
     on<StartProgramEvent>((event, emit) async {
       emit(ProgramLoading());
       try {
-        final output = await startProgram.execute(event.arg);
+        final output = await startProgram.call(event.arg);
         emit(ProgramLoaded(output: output));
       } catch (e) {
         emit(ProgramError(message: e.toString()));

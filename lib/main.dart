@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stpvelox/core/di/injection.dart' as di;
 import 'package:stpvelox/core/utils/colors.dart';
-import 'package:stpvelox/presentation/blocs/program_bloc.dart';
-import 'package:stpvelox/presentation/blocs/sensor_bloc.dart';
-import 'package:stpvelox/presentation/blocs/settings_bloc.dart';
+import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
+import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
+import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
 import 'package:stpvelox/presentation/screens/dashboard_screen.dart';
 
 void main() async {
@@ -20,15 +21,10 @@ class StpVeloxApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider<SensorBloc>(
-          create: (_) => di.sl<SensorBloc>(),
-        ),
-        BlocProvider<ProgramBloc>(
-          create: (_) => di.sl<ProgramBloc>(),
-        ),
-        BlocProvider<SettingsBloc>(
-          create: (_) => di.sl<SettingsBloc>(),
-        ),
+        BlocProvider(create: (_) => di.sl<SensorBloc>()),
+        BlocProvider(create: (_) => di.sl<ProgramBloc>()),
+        BlocProvider(create: (_) => di.sl<SettingsBloc>()),
+        BlocProvider(create: (_) => di.sl<ProgramSelectionBloc>()),
       ],
       child: MaterialApp(
         title: 'stpvelox',

@@ -23,7 +23,7 @@ class ResponsiveGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount =
-        (constraints.maxWidth / (maxTileWidth + crossAxisSpacing)).floor();
+            (constraints.maxWidth / (maxTileWidth + crossAxisSpacing)).floor();
 
         crossAxisCount = crossAxisCount > 0 ? crossAxisCount : 1;
 
@@ -41,4 +41,37 @@ class ResponsiveGrid extends StatelessWidget {
       },
     );
   }
+}
+
+Widget buildGridTile(
+    {required BuildContext context,
+    required String label,
+    required IconData icon,
+    required void Function() onPressed,
+    Color color = Colors.black12}) {
+  return Container(
+    decoration: BoxDecoration(
+      color: color,
+      borderRadius: BorderRadius.circular(8.0),
+    ),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(8.0),
+      onTap: onPressed,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            icon,
+            color: Colors.white,
+            size: 100,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(color: Colors.white, fontSize: 18),
+          )
+        ],
+      ),
+    ),
+  );
 }

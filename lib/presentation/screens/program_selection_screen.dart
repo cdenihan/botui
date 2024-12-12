@@ -84,35 +84,15 @@ class ProgramSelectionScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildProgramTile(BuildContext context, int idx, Program program) {
-    return Container(
-      decoration: BoxDecoration(
-        color: programTileColors[idx % programTileColors.length],
-        borderRadius: BorderRadius.circular(8.0),
-      ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8.0),
-        onTap: () {
-          context
-              .read<ProgramSelectionBloc>()
-              .add(ProgramTappedEvent(program: program));
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.code,
-              color: Colors.white,
-              size: 100,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              program.name,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
-            )
-          ],
-        ),
-      ),
+  Widget _buildProgramTile(BuildContext context, int index, Program program) {
+    return buildGridTile(
+      context: context,
+      label: program.name,
+      icon: Icons.code,
+      onPressed: () {
+        context.read<ProgramSelectionBloc>().add(ProgramTappedEvent(program: program));
+      },
+      color: programTileColors[index % programTileColors.length],
     );
   }
 }

@@ -8,6 +8,7 @@ import 'package:stpvelox/data/repositories/settings_repository_impl.dart';
 import 'package:stpvelox/domain/repositories/program_repository.dart';
 import 'package:stpvelox/domain/repositories/sensor_repository.dart';
 import 'package:stpvelox/domain/repositories/settings_repository.dart';
+import 'package:stpvelox/domain/service/program_lifecycle_manager.dart';
 import 'package:stpvelox/domain/usecases/get_programs.dart';
 import 'package:stpvelox/domain/usecases/get_sensors.dart';
 import 'package:stpvelox/domain/usecases/start_program.dart';
@@ -26,16 +27,16 @@ Future<void> init() async {
   sl.registerFactory(() => ProgramSelectionBloc(getPrograms: sl()));
 
   sl.registerLazySingleton(() => GetSensors(repository: sl()));
-  sl.registerLazySingleton(() => StartProgram(repository: sl()));
   sl.registerLazySingleton(() => UpdateSetting(repository: sl()));
   sl.registerLazySingleton(() => GetPrograms(repository: sl()));
+  sl.registerLazySingleton(() => StartProgram(programLifecycleManager: sl()));
 
   sl.registerLazySingleton<SensorRepository>(
-          () => SensorRepositoryImpl(remoteDataSource: sl()));
+      () => SensorRepositoryImpl(remoteDataSource: sl()));
   sl.registerLazySingleton<ProgramRepository>(
-          () => ProgramRepositoryImpl(remoteDataSource: sl()));
+      () => ProgramRepositoryImpl(remoteDataSource: sl()));
   sl.registerLazySingleton<SettingsRepository>(
-          () => SettingsRepositoryImpl(remoteDataSource: sl()));
+      () => SettingsRepositoryImpl(remoteDataSource: sl()));
 
   sl.registerLazySingleton<SensorsRemoteDataSource>(
           () => SensorsRemoteDataSourceImpl());
@@ -44,4 +45,6 @@ Future<void> init() async {
   sl.registerLazySingleton<SettingsRemoteDataSource>(
           () => SettingsRemoteDataSourceImpl());
 
+
+  sl.registerLazySingleton(() => ProgramLifecycleManager());
 }

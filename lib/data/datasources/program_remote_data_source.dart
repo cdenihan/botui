@@ -93,6 +93,7 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
 
       final program = Program(
         name: name,
+        parentDir: dir.path,
         runScript: runScript,
         args: args,
       );

@@ -8,10 +8,12 @@ abstract class ProgramEvent extends Equatable {
 }
 
 class StartProgramEvent extends ProgramEvent {
-  final String arg;
+  final Program program;
 
-  const StartProgramEvent({required this.arg});
+  const StartProgramEvent({required this.program});
 
   @override
-  List<Object> get props => [arg];
+  List<Object> get props => [program];
 }
+
+class ToggleOverlayEvent extends ProgramEvent {}

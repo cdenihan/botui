@@ -6,7 +6,7 @@ class StartProgram {
 
   StartProgram({required this.programLifecycleManager});
 
-  void call(Program program) {
-    programLifecycleManager.startProgram(program);
+  ProgramSession call(Program program) {
+    return programLifecycleManager.startProgram(program);
   }
 }

@@ -7,15 +7,17 @@ class ResponsiveGrid extends StatelessWidget {
   final double mainAxisSpacing;
   final EdgeInsetsGeometry padding;
   final double? childAspectRatio;
+  final bool isScrollable; // New parameter
 
   const ResponsiveGrid({
     super.key,
     required this.children,
-    this.maxTileWidth = 250,
+    this.maxTileWidth = 150,
     this.crossAxisSpacing = 16,
     this.mainAxisSpacing = 16,
     this.padding = const EdgeInsets.all(8.0),
     this.childAspectRatio,
+    this.isScrollable = true, // Default to true
   });
 
   @override
@@ -23,7 +25,7 @@ class ResponsiveGrid extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         int crossAxisCount =
-            (constraints.maxWidth / (maxTileWidth + crossAxisSpacing)).floor();
+        (constraints.maxWidth / (maxTileWidth + crossAxisSpacing)).floor();
 
         crossAxisCount = crossAxisCount > 0 ? crossAxisCount : 1;
 
@@ -37,41 +39,12 @@ class ResponsiveGrid extends StatelessWidget {
           ),
           itemCount: children.length,
           itemBuilder: (context, index) => children[index],
+          physics: isScrollable
+              ? const AlwaysScrollableScrollPhysics()
+              : const NeverScrollableScrollPhysics(),
+          shrinkWrap: !isScrollable,
         );
       },
     );
   }
-}
-
-Widget buildGridTile(
-    {required BuildContext context,
-    required String label,
-    required IconData icon,
-    required void Function() onPressed,
-    Color color = Colors.black12}) {
-  return Container(
-    decoration: BoxDecoration(
-      color: color,
-      borderRadius: BorderRadius.circular(8.0),
-    ),
-    child: InkWell(
-      borderRadius: BorderRadius.circular(8.0),
-      onTap: onPressed,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            icon,
-            color: Colors.white,
-            size: 100,
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(color: Colors.white, fontSize: 18),
-          )
-        ],
-      ),
-    ),
-  );
 }

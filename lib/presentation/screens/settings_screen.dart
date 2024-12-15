@@ -11,7 +11,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      appBar: createTopBar("Settings"),
+      appBar: createTopBar(context, "Settings"),
       body: SafeArea(
         child: Column(
           children: [

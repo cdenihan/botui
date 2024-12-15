@@ -1,27 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/domain/entities/program.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_event.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_state.dart';
 import 'package:stpvelox/presentation/screens/program_screen.dart';
+import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 class ProgramSelectionScreen extends StatelessWidget {
-  final List<Color> programTileColors = [
-    Colors.blue,
-    Colors.green,
-    Colors.orange,
-    Colors.purple,
-    Colors.red,
-    Colors.teal,
-    Colors.pink,
-    Colors.indigo,
-    Colors.amber,
-    Colors.cyan,
-  ];
-
   ProgramSelectionScreen({super.key});
 
   @override
@@ -37,7 +26,7 @@ class ProgramSelectionScreen extends StatelessWidget {
         }
       },
       child: Scaffold(
-        appBar: createTopBar("Programs"),
+        appBar: createTopBar(context, "Programs"),
         body: SafeArea(
           child: Column(
             children: [
@@ -85,14 +74,13 @@ class ProgramSelectionScreen extends StatelessWidget {
   }
 
   Widget _buildProgramTile(BuildContext context, int index, Program program) {
-    return buildGridTile(
-      context: context,
+    return ResponsiveGridTile(
       label: program.name,
       icon: Icons.code,
       onPressed: () {
         context.read<ProgramSelectionBloc>().add(ProgramTappedEvent(program: program));
       },
-      color: programTileColors[index % programTileColors.length],
+      color: AppColors.getTileColor(index),
     );
   }
 }

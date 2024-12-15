@@ -14,10 +14,21 @@ class SensorBloc extends Bloc<SensorEvent, SensorState> {
       emit(SensorLoading());
       try {
         final sensors = await getSensors.execute();
-        emit(SensorLoaded(sensors: sensors));
+        final categories = sensors.map((sensor) => sensor.category).toSet().toList();
+        final expanded = List<bool>.filled(categories.length, false);
+        expanded[0] = true;
+        emit(SensorLoaded(sensors: sensors, expandedSensors: expanded));
       } catch (e) {
         emit(SensorError(message: e.toString()));
       }
+    });
+
+    on<ExpandSensorEvent>((event, emit) {
+      final state = this.state as SensorLoaded;
+      final categories = state.sensors.map((sensor) => sensor.category).toSet().toList();
+      final expanded = List<bool>.filled(categories.length, false);
+      expanded[event.index] = true;
+      emit(SensorLoaded(sensors: state.sensors, expandedSensors: expanded));
     });
   }
 }

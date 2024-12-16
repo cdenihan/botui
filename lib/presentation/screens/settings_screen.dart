@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stpvelox/domain/entities/setting.dart';
 import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
@@ -28,9 +29,7 @@ class SettingsScreen extends StatelessWidget {
                         children: settings.map((setting) {
                           return _buildSettingItem(
                             context,
-                            setting.icon,
-                            setting.label,
-                            setting.color,
+                            setting,
                           );
                         }).toList(),
                       );
@@ -38,7 +37,8 @@ class SettingsScreen extends StatelessWidget {
                       return Center(
                         child: Text(
                           state.message,
-                          style: const TextStyle(color: Colors.red, fontSize: 18),
+                          style:
+                              const TextStyle(color: Colors.red, fontSize: 18),
                         ),
                       );
                     } else {
@@ -55,8 +55,7 @@ class SettingsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSettingItem(
-      BuildContext context, IconData icon, String label, Color color) {
+  Widget _buildSettingItem(BuildContext context, Setting setting) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[800],
@@ -67,15 +66,15 @@ class SettingsScreen extends StatelessWidget {
         onTap: () {
           context
               .read<SettingsBloc>()
-              .add(SettingTappedEvent(label: label));
+              .add(SettingTappedEvent(setting: setting));
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: color),
+            Icon(setting.icon, size: 48, color: setting.color),
             const SizedBox(height: 8),
             Text(
-              label,
+              setting.label,
               style: const TextStyle(color: Colors.white, fontSize: 18),
             )
           ],

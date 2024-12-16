@@ -10,10 +10,10 @@ abstract class SettingsEvent extends Equatable {
 class LoadSettingsEvent extends SettingsEvent {}
 
 class SettingTappedEvent extends SettingsEvent {
-  final String label;
+  final Setting setting;
 
-  const SettingTappedEvent({required this.label});
+  const SettingTappedEvent({required this.setting});
 
   @override
-  List<Object> get props => [label];
+  List<Object> get props => [setting];
 }

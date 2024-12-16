@@ -18,6 +18,7 @@ dependencies:
   pty: ^0.1.1
   collection: ^1.17.0
   fl_chart: ^0.69.2
+  sleek_circular_slider: ^2.0.1
 
 dev_dependencies:
   flutter_test:

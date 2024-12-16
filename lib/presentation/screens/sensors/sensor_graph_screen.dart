@@ -168,8 +168,9 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
               color: Colors.blueAccent,
               barWidth: 3,
               isStrokeCapRound: true,
+              preventCurveOverShooting: true,
               dotData: const FlDotData(
-                show: false, // Hide the dots on the line
+                show: false,
               ),
               belowBarData: BarAreaData(
                 show: true,

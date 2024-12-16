@@ -1,8 +1,9 @@
 import 'package:stpvelox/data/native/kipr_plugin.dart';
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
-import 'package:stpvelox/presentation/screens/sensor_graph_screen.dart';
-import 'package:stpvelox/presentation/screens/sensor_motor_screen.dart';
+import 'package:stpvelox/presentation/screens/sensors/sensor_graph_screen.dart';
+import 'package:stpvelox/presentation/screens/sensors/sensor_motor_screen.dart';
+import 'package:stpvelox/presentation/screens/sensors/sensor_servo_screen.dart';
 
 abstract class SensorsRemoteDataSource {
   Future<List<Sensor>> fetchSensors();
@@ -37,7 +38,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
     return Sensor(
       category: SensorCategory.servo,
       name: 'Servo $port',
-      getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getAnalog(port))
+      getSensorScreen: (sensor) => SensorServoScreen(sensor: sensor, port: port)
     );
   }
 

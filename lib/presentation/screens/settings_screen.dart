@@ -66,7 +66,7 @@ class SettingsScreen extends StatelessWidget {
         onTap: () {
           context
               .read<SettingsBloc>()
-              .add(SettingTappedEvent(setting: setting));
+              .add(SettingTappedEvent(setting: setting, context: context));
         },
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

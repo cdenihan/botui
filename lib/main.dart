@@ -6,6 +6,7 @@ import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
 import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
 import 'package:stpvelox/presentation/screens/dashboard_screen.dart';
 
 void main() async {
@@ -25,6 +26,7 @@ class StpVeloxApp extends StatelessWidget {
         BlocProvider(create: (_) => di.sl<ProgramBloc>()),
         BlocProvider(create: (_) => di.sl<SettingsBloc>()),
         BlocProvider(create: (_) => di.sl<ProgramSelectionBloc>()),
+        BlocProvider(create: (_) => di.sl<WifiBloc>())
       ],
       child: MaterialApp(
         title: 'stpvelox',

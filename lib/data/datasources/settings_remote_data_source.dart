@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:stpvelox/domain/entities/setting.dart';
+import 'package:stpvelox/presentation/screens/wifi/wifi_home_screen.dart';
 
 abstract class SettingsRemoteDataSource {
   Future<List<Setting>> fetchSettings();
@@ -15,16 +16,19 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         icon: Icons.wifi,
         label: "Wi-Fi",
         color: Colors.green,
-        onTap: () {
-          print("Wi-Fi");
-          // Implement Wi-Fi related functionality here
+        onTap: (context) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const WifiHomeScreen(),
+            ),
+          );
         },
       ),
       Setting(
         icon: Icons.power_settings_new,
         label: "Shutdown",
         color: Colors.red,
-        onTap: () async {
+        onTap: (_) async {
           await _shutdownDevice();
         },
       ),
@@ -32,7 +36,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         icon: Icons.refresh,
         label: "Reboot",
         color: Colors.orange,
-        onTap: () async {
+        onTap: (_) async {
           await _rebootDevice();
         },
       ),

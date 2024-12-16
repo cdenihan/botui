@@ -1,5 +1,6 @@
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:stpvelox/domain/entities/setting.dart';
 import 'package:stpvelox/domain/repositories/settings_repository.dart';
 
@@ -24,7 +25,7 @@ class SettingsBloc extends Bloc<SettingsEvent, SettingsState> {
     on<SettingTappedEvent>((event, emit) async {
       emit(SettingsLoading());
       try {
-        event.setting.onTap();
+        event.setting.onTap(event.context);
         add(LoadSettingsEvent());
       } catch (e) {
         emit(SettingsError(message: e.toString()));

@@ -4,7 +4,7 @@ class Setting {
   final IconData icon;
   final String label;
   final Color color;
-  final Function() onTap;
+  final Function(BuildContext) onTap;
 
   Setting({
     required this.icon,

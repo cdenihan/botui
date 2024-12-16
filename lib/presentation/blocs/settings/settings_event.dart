@@ -11,9 +11,10 @@ class LoadSettingsEvent extends SettingsEvent {}
 
 class SettingTappedEvent extends SettingsEvent {
   final Setting setting;
+  final BuildContext context;
 
-  const SettingTappedEvent({required this.setting});
+  const SettingTappedEvent({required this.setting, required this.context});
 
   @override
-  List<Object> get props => [setting];
+  List<Object> get props => [setting, context];
 }

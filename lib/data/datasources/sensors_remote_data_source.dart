@@ -2,6 +2,7 @@ import 'package:stpvelox/data/native/kipr_plugin.dart';
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
 import 'package:stpvelox/presentation/screens/sensor_graph_screen.dart';
+import 'package:stpvelox/presentation/screens/sensor_motor_screen.dart';
 
 abstract class SensorsRemoteDataSource {
   Future<List<Sensor>> fetchSensors();
@@ -16,6 +17,30 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
     );
   }
 
+  Sensor getDigitalSensor(int port) {
+    return Sensor(
+      category: SensorCategory.digital,
+      name: 'Digital $port',
+      getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getDigital(port))
+    );
+  }
+
+  Sensor getMotorSensor(int port) {
+    return Sensor(
+      category: SensorCategory.motor,
+      name: 'Motor $port',
+      getSensorScreen: (sensor) => SensorMotorScreen(sensor: sensor, port: port)
+    );
+  }
+
+  Sensor getServoSensor(int port) {
+    return Sensor(
+      category: SensorCategory.servo,
+      name: 'Servo $port',
+      getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getAnalog(port))
+    );
+  }
+
   @override
   Future<List<Sensor>> fetchSensors() async {
     return [
@@ -25,6 +50,24 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
       getAnalogSensor(3),
       getAnalogSensor(4),
       getAnalogSensor(5),
+      getDigitalSensor(0),
+      getDigitalSensor(1),
+      getDigitalSensor(2),
+      getDigitalSensor(3),
+      getDigitalSensor(4),
+      getDigitalSensor(5),
+      getDigitalSensor(6),
+      getDigitalSensor(7),
+      getDigitalSensor(8),
+      getDigitalSensor(9),
+      getMotorSensor(0),
+      getMotorSensor(1),
+      getMotorSensor(2),
+      getMotorSensor(3),
+      getServoSensor(0),
+      getServoSensor(1),
+      getServoSensor(2),
+      getServoSensor(3),
       Sensor(
         category: SensorCategory.gyro,
         name: 'Gyro X',

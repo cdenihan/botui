@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stpvelox/domain/entities/args/arg.dart';
 import 'package:stpvelox/domain/entities/program.dart';
 import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
 import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 import 'package:xterm/xterm.dart';
 
+// TODO: This si a very ugly and hacky way to get the terminal to work with arguments, overlay, etc.
+// TODO: This should be refactored to be more clean and maintainable
 class ProgramScreen extends StatefulWidget {
   final Program program;
 
@@ -28,7 +31,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
 
   @override
   void dispose() {
-    removeControlOverlay();
+    removeOverlay();
     context.read<ProgramBloc>().close();
     super.dispose();
   }
@@ -46,11 +49,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
         icon: Icons.play_arrow,
         color: Colors.green,
         onPressed: () {
-          removeControlOverlay();
-
-          context
-              .read<ProgramBloc>()
-              .add(StartProgramEvent(program: widget.program));
+          createArgOverlay({}, widget.program, 0, widget.program.args[0]);
         },
       ),
     );
@@ -65,7 +64,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
         icon: Icons.stop,
         color: Colors.red,
         onPressed: () {
-          removeControlOverlay();
+          removeOverlay();
 
           context.read<ProgramBloc>().add(StopProgramEvent());
         },
@@ -73,8 +72,76 @@ class _ProgramScreenState extends State<ProgramScreen> {
     );
   }
 
+  void createArgOverlay(
+      Map<String, String> args, Program program, int idx, Arg? arg) {
+    removeOverlay();
+    assert(overlayEntry == null);
+
+    if (arg == null) {
+      context
+          .read<ProgramBloc>()
+          .add(StartProgramEvent(program: program, args: args));
+      return;
+    }
+
+    overlayEntry = OverlayEntry(
+      builder: (BuildContext context) {
+        return GestureDetector(
+          child: Material(
+            color: Colors.black54,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          arg.name,
+                          style: const TextStyle(
+                            fontSize: 30,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        arg.build(context, (value) {
+                          args[arg.name] = value;
+                        }),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 200,
+                    height: 200,
+                    child: ResponsiveGridTile(
+                      label: 'Submit',
+                      icon: Icons.hide_image_rounded,
+                      color: Colors.blue,
+                      onPressed: () {
+                        if (idx + 1 >= program.args.length) {
+                          createArgOverlay(args, program, idx + 1, null);
+                          return;
+                        }
+
+                        createArgOverlay(
+                            args, program, idx + 1, program.args[idx + 1]);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+
+    Overlay.of(context).insert(overlayEntry!);
+  }
+
   void createControlOverlay(ProgramState state) {
-    removeControlOverlay();
+    removeOverlay();
     assert(overlayEntry == null);
 
     var running = state is ProgramStarted && state.session.isRunning;
@@ -96,7 +163,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                       label: 'Hide',
                       icon: Icons.hide_image_rounded,
                       color: Colors.blue,
-                      onPressed: () => removeControlOverlay(),
+                      onPressed: () => removeOverlay(),
                     ),
                   ),
                   SizedBox(
@@ -121,7 +188,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
     Overlay.of(context).insert(overlayEntry!);
   }
 
-  void removeControlOverlay() {
+  void removeOverlay() {
     overlayEntry?.remove();
     overlayEntry?.dispose();
     overlayEntry = null;
@@ -155,8 +222,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                   Container(
                     color: Colors.black,
                     child: const Center(
-                      child:
-                          Text('Press the play button to start the program'),
+                      child: Text('Press the play button to start the program'),
                     ),
                   ),
               ],

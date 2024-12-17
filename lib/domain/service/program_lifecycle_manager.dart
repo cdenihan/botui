@@ -5,8 +5,8 @@ import 'package:xterm/xterm.dart';
 class ProgramLifecycleManager {
   ProgramSession? session;
 
-  ProgramSession startProgram(Program program) {
-    session = ProgramSession(program);
+  ProgramSession startProgram(Program program, Map<String, String> args) {
+    session = ProgramSession(program, args);
     return session!;
   }
 
@@ -19,7 +19,7 @@ class ProgramSession {
   late PseudoTerminal pty;
   bool _isRunning = false;
 
-  ProgramSession(Program program) {
+  ProgramSession(Program program, Map<String, String> args) {
     terminal = Terminal(
       onOutput: (data) {
         pty.write(data);
@@ -44,7 +44,7 @@ class ProgramSession {
     });
 
     pty.out.listen((event) => terminal.write(event));
-    pty.write("cd ${program.parentDir} && bash ${program.runScript}\n");
+    pty.write("cd ${program.parentDir} && bash ${program.runScript} ${args.entries.map((e) => pairToString(e.key, e.value)).join(' ')}\n");
     _isRunning = true;
   }
 
@@ -56,6 +56,10 @@ class ProgramSession {
     pty.kill();
     _isRunning = false;
     return pty.exitCode;
+  }
+
+  String pairToString(String key, String value) {
+    return "--$key=$value";
   }
 
   get isRunning => _isRunning;

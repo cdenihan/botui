@@ -6,7 +6,7 @@ class StartProgram {
 
   StartProgram({required this.programLifecycleManager});
 
-  ProgramSession call(Program program) {
-    return programLifecycleManager.startProgram(program);
+  ProgramSession call(Program program, Map<String, String> args) {
+    return programLifecycleManager.startProgram(program, args);
   }
 }

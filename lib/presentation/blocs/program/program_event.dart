@@ -9,11 +9,12 @@ abstract class ProgramEvent extends Equatable {
 
 class StartProgramEvent extends ProgramEvent {
   final Program program;
+  final Map<String, String> args;
 
-  const StartProgramEvent({required this.program});
+  const StartProgramEvent({required this.program, required this.args});
 
   @override
-  List<Object> get props => [program];
+  List<Object> get props => [program, args];
 }
 
 class StopProgramEvent extends ProgramEvent {}

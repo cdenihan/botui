@@ -1,11 +1,14 @@
+import 'package:flutter/material.dart';
 import 'package:stpvelox/domain/entities/args/bool_arg.dart';
-import 'package:stpvelox/domain/entities/args/enum_arg.dart';
 import 'package:stpvelox/domain/entities/args/number_arg.dart';
 
 abstract class Arg {
   final String type;
+  final String name;
 
-  Arg({required this.type});
+  Arg({required this.type, required this.name});
+
+  Widget build(BuildContext context, Function(String) setValue);
 
   factory Arg.fromJson(Map<String, dynamic> json) {
     switch (json['type']) {
@@ -13,8 +16,6 @@ abstract class Arg {
         return NumberArg.fromJson(json);
       case 'bool':
         return BoolArg.fromJson(json);
-      case 'enum':
-        return EnumArg.fromJson(json);
       default:
         throw UnsupportedError('Unsupported argument type: ${json['type']}');
     }

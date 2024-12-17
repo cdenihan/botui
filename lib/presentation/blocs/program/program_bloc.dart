@@ -16,7 +16,7 @@ class ProgramBloc extends Bloc<ProgramEvent, ProgramState> {
   ProgramBloc({required this.startProgram, required this.rebootDevice})
       : super(ProgramStopped()) {
     on<StartProgramEvent>((event, emit) async {
-      var session = startProgram.call(event.program);
+      var session = startProgram.call(event.program, event.args);
 
       emit(ProgramStarted(session: session));
     });

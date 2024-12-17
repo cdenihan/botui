@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:math';
 
-import 'package:fl_chart/fl_chart.dart'; // Import fl_chart
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'dart:developer' as developer;
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
@@ -43,7 +44,7 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
 
         setState(() {});
       } catch (e) {
-        debugPrint('Error fetching sensor value: $e');
+        developer.log('Error fetching sensor value: $e');
       }
     });
   }

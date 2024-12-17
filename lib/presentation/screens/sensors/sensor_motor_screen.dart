@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer' as developer;
 
 import 'package:flutter/material.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
@@ -40,7 +41,7 @@ class _SensorMotorScreenState extends State<SensorMotorScreen> {
           _motorTicks = position;
         });
       } catch (e) {
-        print('Error fetching motor position: $e');
+        developer.log('Error fetching motor position: $e');
       }
     });
   }

@@ -18,6 +18,7 @@ import 'package:stpvelox/domain/usecases/get_available_networks.dart';
 import 'package:stpvelox/domain/usecases/get_device_info.dart';
 import 'package:stpvelox/domain/usecases/get_programs.dart';
 import 'package:stpvelox/domain/usecases/get_sensors.dart';
+import 'package:stpvelox/domain/usecases/reboot.dart';
 import 'package:stpvelox/domain/usecases/start_program.dart';
 import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
@@ -29,7 +30,7 @@ final sl = GetIt.instance;
 
 Future<void> init() async {
   sl.registerFactory(() => SensorBloc(getSensors: sl()));
-  sl.registerFactory(() => ProgramBloc(startProgram: sl()));
+  sl.registerFactory(() => ProgramBloc(startProgram: sl(), rebootDevice: sl()));
   sl.registerFactory(() => SettingsBloc(repository: sl()));
   sl.registerFactory(() => ProgramSelectionBloc(getPrograms: sl()));
   sl.registerFactory(() => WifiBloc(
@@ -46,6 +47,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ForgetWifi(repository: sl()));
   sl.registerLazySingleton(() => GetAvailableNetworks(repository: sl()));
   sl.registerLazySingleton(() => GetDeviceInfo(repository: sl()));
+  sl.registerLazySingleton(() => RebootDevice());
   sl.registerLazySingleton(() => ProgramLifecycleManager());
   sl.registerLazySingleton(() => LinuxNetworkManager());
 
@@ -63,5 +65,5 @@ Future<void> init() async {
   sl.registerLazySingleton<ProgramRemoteDataSource>(
       () => ProgramRemoteDataSourceImpl(programsDirectoryPath: 'programs'));
   sl.registerLazySingleton<SettingsRemoteDataSource>(
-      () => SettingsRemoteDataSourceImpl());
+      () => SettingsRemoteDataSourceImpl(reboot: sl()));
 }

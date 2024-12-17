@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/domain/entities/device_info.dart';
 import 'package:stpvelox/domain/entities/wifi_credentials.dart';
 import 'package:stpvelox/domain/entities/wifi_network.dart';
@@ -9,8 +10,7 @@ import '../../domain/entities/wifi_encryption_type.dart';
 class LinuxNetworkManager {
   Future<List<WifiNetwork>> scanNetworks() async {
     // Example: nmcli -f SSID,SECURITY,IN-USE dev wifi
-    final result = await Process.run(
-        'nmcli', ['-f', 'SSID,SECURITY,IN-USE', 'dev', 'wifi']);
+    final result = await SudoProcess.run('nmcli', ['-f', 'SSID,SECURITY,IN-USE', 'dev', 'wifi']);
     if (result.exitCode != 0) {
       throw Exception('Failed to scan WiFi networks: ${result.stderr}');
     }
@@ -70,7 +70,7 @@ class LinuxNetworkManager {
         // For simplicity:
         // nmcli connection add type wifi con-name "$SSID" ifname wlan0 ssid "$SSID" -- wifi-sec.key-mgmt wpa-eap 802-1x.eap peap 802-1x.identity user 802-1x.password pass
         // This is a one-liner example. Adjust as needed. In reality, you'd create a connection profile.
-        await Process.run('nmcli', [
+        await SudoProcess.run('nmcli', [
           'connection',
           'add',
           'type',
@@ -93,18 +93,18 @@ class LinuxNetworkManager {
           if (entCred.caCertificatePath != null) entCred.caCertificatePath!,
         ]);
         // After adding, try to bring it up
-        await Process.run('nmcli', ['connection', 'up', ssid]);
+        await SudoProcess.run('nmcli', ['connection', 'up', ssid]);
         return;
     }
 
-    final result = await Process.run('nmcli', cmd);
+    final result = await SudoProcess.run('nmcli', cmd);
     if (result.exitCode != 0) {
       throw Exception('Failed to connect: ${result.stderr}');
     }
   }
 
   Future<void> forget(String ssid) async {
-    final result = await Process.run('nmcli', ['connection', 'delete', ssid]);
+    final result = await SudoProcess.run('nmcli', ['connection', 'delete', ssid]);
     if (result.exitCode != 0) {
       throw Exception('Failed to forget network: ${result.stderr}');
     }
@@ -113,14 +113,14 @@ class LinuxNetworkManager {
   Future<DeviceInfo> getDeviceInfo() async {
     try {
       // Get IP Address
-      final ipResult = await Process.run('hostname', ['-I']);
+      final ipResult = await SudoProcess.run('hostname', ['-I']);
       if (ipResult.exitCode != 0) {
         throw Exception('Failed to retrieve IP address: ${ipResult.stderr}');
       }
       final ipAddress = (ipResult.stdout as String).trim().split(' ').first;
 
       // Get Currently Connected Network
-      final connResult = await Process.run(
+      final connResult = await SudoProcess.run(
           'nmcli', ['-t', '-f', 'SSID,SECURITY,IN-USE', 'dev', 'wifi']);
       if (connResult.exitCode != 0) {
         throw Exception(
@@ -151,7 +151,7 @@ class LinuxNetworkManager {
               ssid: ssid,
               encryptionType: encType,
               isConnected: true,
-              isKnown: true, // Assuming connected network is known
+              isKnown: true,
             );
             break;
           }

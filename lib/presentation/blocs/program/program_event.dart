@@ -16,4 +16,6 @@ class StartProgramEvent extends ProgramEvent {
   List<Object> get props => [program];
 }
 
-class ToggleOverlayEvent extends ProgramEvent {}
+class StopProgramEvent extends ProgramEvent {}
+
+class RebootEvent extends ProgramEvent {}

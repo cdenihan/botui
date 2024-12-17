@@ -15,14 +15,14 @@ class ResponsiveGridTile extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => Container(
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8.0),
-        ),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8.0),
-          onTap: onPressed,
+  Widget build(BuildContext context) {
+    return GestureDetector(
+        onTap: onPressed,
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(8.0),
+          ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -40,4 +40,5 @@ class ResponsiveGridTile extends StatelessWidget {
           ),
         ),
       );
+  }
 }

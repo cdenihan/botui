@@ -21,21 +21,10 @@ class WifiHomeScreen extends StatelessWidget {
               Expanded(
                 flex: 1,
                 child: DashboardTile(
-                  label: "Scan & Select WiFi",
+                  label: "Connect to Wifi",
                   icon: Icons.wifi,
                   destination: WifiScanListScreen(),
                   color: Colors.blue,
-                ),
-              ),
-              SizedBox(height: 16),
-              Expanded(
-                flex: 2,
-                child: DashboardTile(
-                  label: "Connect by SSID",
-                  icon: Icons.connect_without_contact,
-                  destination: WifiManualConnectScreen(),
-                  color: Colors.green,
-                  isMain: true,
                 ),
               ),
               SizedBox(height: 16),

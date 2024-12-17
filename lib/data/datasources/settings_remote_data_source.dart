@@ -1,7 +1,7 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/domain/entities/setting.dart';
+import 'package:stpvelox/domain/usecases/reboot.dart';
 import 'package:stpvelox/presentation/screens/wifi/wifi_home_screen.dart';
 
 abstract class SettingsRemoteDataSource {
@@ -9,6 +9,10 @@ abstract class SettingsRemoteDataSource {
 }
 
 class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
+  final RebootDevice reboot;
+
+  SettingsRemoteDataSourceImpl({required this.reboot});
+
   @override
   Future<List<Setting>> fetchSettings() async {
     return [
@@ -37,17 +41,13 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         label: "Reboot",
         color: Colors.orange,
         onTap: (_) async {
-          await _rebootDevice();
+          await reboot.call();
         },
       ),
     ];
   }
 
   Future<void> _shutdownDevice() async {
-    await Process.run('shutdown', ['-h', 'now']);
-  }
-
-  Future<void> _rebootDevice() async {
-    await Process.run('shutdown', ['-r', 'now']);
+    await SudoProcess.run('shutdown', ['-h', 'now']);
   }
 }

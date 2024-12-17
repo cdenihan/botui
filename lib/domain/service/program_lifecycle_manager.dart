@@ -36,6 +36,7 @@ class ProgramSession {
         "TERM": "xterm-256color",
       },
     );
+    pty.resize(800, 480);
 
     pty.exitCode.then((exitCode) {
       terminal.write("\r\nProcess finished with exit code $exitCode\r\n");
@@ -44,6 +45,7 @@ class ProgramSession {
 
     pty.out.listen((event) => terminal.write(event));
     pty.write("cd ${program.parentDir} && bash ${program.runScript}\n");
+    _isRunning = true;
   }
 
   Future<int> kill() async {
@@ -51,6 +53,7 @@ class ProgramSession {
 
     terminal.write("\r\n^C\r\n");
     pty.write("\x03");
+    pty.kill();
     _isRunning = false;
     return pty.exitCode;
   }

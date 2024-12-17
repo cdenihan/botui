@@ -44,6 +44,14 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
           await reboot.call();
         },
       ),
+      Setting(
+        icon: Icons.remove_red_eye,
+        label: "Hide UI",
+        color: Colors.blue,
+        onTap: (_) async {
+          await SudoProcess.run('systemctl', ['stop', 'flutter-ui.service']);
+        },
+      )
     ];
   }
 

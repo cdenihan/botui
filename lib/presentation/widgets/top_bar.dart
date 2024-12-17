@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
-AppBar createTopBar(BuildContext context, String title) {
+AppBar createTopBar(BuildContext context, String title,
+    {List<Widget>? actions}) {
   return AppBar(
     backgroundColor: Colors.grey[900],
     automaticallyImplyLeading: false,
+    actions: actions,
     title: GestureDetector(
       onTap: () => Navigator.of(context).pop(),
       child: Row(

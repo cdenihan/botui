@@ -37,10 +37,47 @@ class _ProgramScreenState extends State<ProgramScreen> {
     createControlOverlay(state);
   }
 
+  Widget startButton() {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: ResponsiveGridTile(
+        label: 'Start',
+        icon: Icons.play_arrow,
+        color: Colors.green,
+        onPressed: () {
+          removeControlOverlay();
+
+          context
+              .read<ProgramBloc>()
+              .add(StartProgramEvent(program: widget.program));
+        },
+      ),
+    );
+  }
+
+  Widget stopButton() {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: ResponsiveGridTile(
+        label: 'Stop',
+        icon: Icons.stop,
+        color: Colors.red,
+        onPressed: () {
+          removeControlOverlay();
+
+          context.read<ProgramBloc>().add(StopProgramEvent());
+        },
+      ),
+    );
+  }
+
   void createControlOverlay(ProgramState state) {
     removeControlOverlay();
     assert(overlayEntry == null);
 
+    var running = state is ProgramStarted && state.session.isRunning;
     overlayEntry = OverlayEntry(
       builder: (BuildContext context) {
         return GestureDetector(
@@ -51,30 +88,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    width: 200,
-                    height: 200,
-                    child: ResponsiveGridTile(
-                      label: state is ProgramStarted ? 'Stop' : 'Start',
-                      icon: state is ProgramStarted
-                          ? Icons.stop
-                          : Icons.play_arrow,
-                      color: state is ProgramStarted
-                          ? Colors.red
-                          : Colors.green,
-                      onPressed: () {
-                        removeControlOverlay();
-
-                        if (state is ProgramStarted) {
-                          context.read<ProgramBloc>().add(StopProgramEvent());
-                          return;
-                        }
-                        context
-                            .read<ProgramBloc>()
-                            .add(StartProgramEvent(program: widget.program));
-                      },
-                    ),
-                  ),
+                  if (!running) startButton() else stopButton(),
                   SizedBox(
                     width: 200,
                     height: 200,
@@ -116,31 +130,38 @@ class _ProgramScreenState extends State<ProgramScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: createTopBar(context, widget.program.name),
-      body: SafeArea(
-        child: GestureDetector(
-          onLongPress: () => _onLongPress(context.read<ProgramBloc>().state),
-          child: BlocBuilder<ProgramBloc, ProgramState>(
-            builder: (context, state) {
-              return Stack(
-                children: [
-                  if (state is ProgramStarted)
-                    TerminalView(
-                      state.session.terminal,
-                      controller: state.session.terminalController,
+      appBar: createTopBar(context, widget.program.name, actions: [
+        IconButton(
+          onPressed: () => _onLongPress(context.read<ProgramBloc>().state),
+          icon: const Icon(Icons.layers),
+        )
+      ]),
+      body: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: () => _onLongPress(context.read<ProgramBloc>().state),
+        onTapCancel: () => _onLongPress(context.read<ProgramBloc>().state),
+        child: BlocBuilder<ProgramBloc, ProgramState>(
+          builder: (context, state) {
+            return Stack(
+              children: [
+                if (state is ProgramStarted)
+                  TerminalView(
+                    state.session.terminal,
+                    controller: state.session.terminalController,
+                    onTapUp: (_, a) => _onLongPress(state),
+                    onSecondaryTapDown: (_, a) => _onLongPress(state),
+                  ),
+                if (state is ProgramStopped)
+                  Container(
+                    color: Colors.black,
+                    child: const Center(
+                      child:
+                          Text('Press the play button to start the program'),
                     ),
-                  if (state is ProgramStopped)
-                    Container(
-                      color: Colors.black,
-                      child: const Center(
-                        child:
-                            Text('Press the play button to start the program'),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
+                  ),
+              ],
+            );
+          },
         ),
       ),
     );

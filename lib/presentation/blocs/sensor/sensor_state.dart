@@ -13,12 +13,11 @@ class SensorLoading extends SensorState {}
 
 class SensorLoaded extends SensorState {
   final List<Sensor> sensors;
-  final List<bool> expandedSensors;
 
-  const SensorLoaded({required this.sensors, required this.expandedSensors});
+  const SensorLoaded({required this.sensors});
 
   @override
-  List<Object> get props => [sensors, expandedSensors];
+  List<Object> get props => [sensors];
 }
 
 class SensorError extends SensorState {

@@ -5,6 +5,7 @@ import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
 import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
+import 'package:stpvelox/presentation/screens/sensors/sensor_category_screen.dart';
 import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
@@ -35,23 +36,14 @@ class _SensorSelectionScreenState extends State<SensorSelectionScreen> {
               return const Center(child: CircularProgressIndicator());
             } else if (state is SensorLoaded) {
               final sensors = state.sensors;
-              final expandedSensors = state.expandedSensors;
               final sensoryByCategory =
               sensors.groupListsBy((sensor) => sensor.category);
 
-              return SingleChildScrollView(
-                child: Column(
-                  children: [
-                    ...sensoryByCategory.entries.mapIndexed((idx, entry) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
-                        child: _buildExpansionPanel(
-                            entry.key, idx, entry.value, expandedSensors[idx]),
-                      );
-                    }),
-                    const SizedBox(height: 16),
-                  ],
-                ),
+              return ResponsiveGrid(
+                isScrollable: false,
+                children: sensoryByCategory.entries
+                    .map((entry) => _buildSensorTile(entry.key, entry.value))
+                    .toList(),
               );
             } else if (state is SensorError) {
               return Center(
@@ -69,48 +61,13 @@ class _SensorSelectionScreenState extends State<SensorSelectionScreen> {
     );
   }
 
-  Widget _buildExpansionPanel(
-      SensorCategory category,
-      int index,
-      List<Sensor> sensor,
-      bool isExpanded,
-      ) {
-    return Theme(
-      data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-      child: ExpansionTile(
-        tilePadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-        title: Text(
-          category.name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20, // Increased font size
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: Colors.grey[850],
-        initiallyExpanded: isExpanded,
-        onExpansionChanged: (bool expanding) => context.read<SensorBloc>().add(ExpandSensorEvent(index: index)),
-        childrenPadding: EdgeInsets.zero,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: ResponsiveGrid(
-              isScrollable: false,
-              children: sensor.map((Sensor sensor) => _buildSensorTile(category, sensor)).toList(),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSensorTile(SensorCategory category, Sensor sensor) {
+  Widget _buildSensorTile(SensorCategory category, List<Sensor> sensor) {
     return ResponsiveGridTile(
-      label: sensor.name,
+      label: category.name,
       icon: Icons.auto_graph,
       onPressed: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => sensor.screen,
+          builder: (_) => SensorCategoryScreen(category: category, sensor: sensor),
         ),
       ),
       color: AppColors.getTileColor(category.index),

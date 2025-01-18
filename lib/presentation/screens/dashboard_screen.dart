@@ -20,7 +20,7 @@ class DashboardScreen extends StatelessWidget {
               const Expanded(
                 flex: 1,
                 child: DashboardTile(
-                  label: "Sensors",
+                  label: "Sensors & Actors",
                   icon: Icons.sensors,
                   destination: SensorSelectionScreen(),
                   color: AppColors.sensors,

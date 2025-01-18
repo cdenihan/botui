@@ -84,6 +84,36 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
         name: 'Gyro Z',
         getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getGyroZ())
       ),
+      Sensor(
+        category: SensorCategory.accel,
+        name: 'Accel X',
+        getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getAccelX())
+      ),
+      Sensor(
+        category: SensorCategory.accel,
+        name: 'Accel Y',
+        getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getAccelY())
+      ),
+      Sensor(
+        category: SensorCategory.accel,
+        name: 'Accel Z',
+        getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getAccelZ())
+      ),
+      Sensor(
+        category: SensorCategory.mag,
+        name: 'Mag X',
+        getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getMagX())
+      ),
+      Sensor(
+        category: SensorCategory.mag,
+        name: 'Mag Y',
+        getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getMagY())
+      ),
+      Sensor(
+        category: SensorCategory.mag,
+        name: 'Mag Z',
+        getSensorScreen: (sensor) => SensorGraphScreen(sensor: sensor, getSensorValue: () => KiprPlugin.getMagZ())
+      ),
     ];
   }
 }

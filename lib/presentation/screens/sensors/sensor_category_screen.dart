@@ -4,6 +4,7 @@ import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
 import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
+import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 class SensorCategoryScreen extends StatelessWidget {
   final SensorCategory category;
@@ -14,9 +15,7 @@ class SensorCategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(category.name),
-      ),
+      appBar: createTopBar(context, category.name),
       body: ResponsiveGrid(
         isScrollable: false,
         children: sensor

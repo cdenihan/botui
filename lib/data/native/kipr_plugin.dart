@@ -35,6 +35,66 @@ class KiprPlugin {
     }
   }
 
+  static Future<int> getAccelX() async {
+    try {
+      final int accelXValue = await _channel.invokeMethod<int>('accelX') ?? 0;
+      return accelXValue;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get accelX: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<int> getAccelY() async {
+    try {
+      final int accelYValue = await _channel.invokeMethod<int>('accelY') ?? 0;
+      return accelYValue;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get accelY: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<int> getAccelZ() async {
+    try {
+      final int accelZValue = await _channel.invokeMethod<int>('accelZ') ?? 0;
+      return accelZValue;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get accelZ: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<int> getMagX() async {
+    try {
+      final int magXValue = await _channel.invokeMethod<int>('magX') ?? 0;
+      return magXValue;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get magX: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<int> getMagY() async {
+    try {
+      final int magYValue = await _channel.invokeMethod<int>('magY') ?? 0;
+      return magYValue;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get magY: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<int> getMagZ() async {
+    try {
+      final int magZValue = await _channel.invokeMethod<int>('magZ') ?? 0;
+      return magZValue;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get magZ: '${e.message}'.");
+      return 0;
+    }
+  }
+
   // Existing Analog Method
   static Future<int> getAnalog(int port) async {
     try {

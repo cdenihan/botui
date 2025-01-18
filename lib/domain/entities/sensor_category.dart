@@ -3,7 +3,10 @@ enum SensorCategory {
   digital('Digital'),
   motor('Motor'),
   servo('Servo'),
-  gyro('Gyro');
+  gyro('Gyro'),
+  accel('Accelerometer'),
+  mag('Magnetometer'),
+  ;
 
   final String name;
 

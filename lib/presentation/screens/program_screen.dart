@@ -49,7 +49,7 @@ class _ProgramScreenState extends State<ProgramScreen> {
         icon: Icons.play_arrow,
         color: Colors.green,
         onPressed: () {
-          createArgOverlay({}, widget.program, 0, widget.program.args[0]);
+          createArgOverlay({}, widget.program, 0, widget.program.args.firstOrNull);
         },
       ),
     );

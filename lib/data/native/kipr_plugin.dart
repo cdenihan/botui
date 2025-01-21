@@ -5,9 +5,9 @@ class KiprPlugin {
   static const MethodChannel _channel = MethodChannel('stpvelox.kipr');
 
   // Existing Gyro Methods
-  static Future<int> getGyroX() async {
+  static Future<double> getGyroX() async {
     try {
-      final int gyroXValue = await _channel.invokeMethod<int>('gyroX') ?? 0;
+      final double gyroXValue = await _channel.invokeMethod<double>('gyroX') ?? 0;
       return gyroXValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get gyroX: '${e.message}'.");
@@ -15,9 +15,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getGyroY() async {
+  static Future<double> getGyroY() async {
     try {
-      final int gyroYValue = await _channel.invokeMethod<int>('gyroY') ?? 0;
+      final double gyroYValue = await _channel.invokeMethod<double>('gyroY') ?? 0;
       return gyroYValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get gyroY: '${e.message}'.");
@@ -25,9 +25,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getGyroZ() async {
+  static Future<double> getGyroZ() async {
     try {
-      final int gyroZValue = await _channel.invokeMethod<int>('gyroZ') ?? 0;
+      final double gyroZValue = await _channel.invokeMethod<double>('gyroZ') ?? 0;
       return gyroZValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get gyroZ: '${e.message}'.");
@@ -35,9 +35,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getAccelX() async {
+  static Future<double> getAccelX() async {
     try {
-      final int accelXValue = await _channel.invokeMethod<int>('accelX') ?? 0;
+      final double accelXValue = await _channel.invokeMethod<double>('accelX') ?? 0;
       return accelXValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get accelX: '${e.message}'.");
@@ -45,9 +45,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getAccelY() async {
+  static Future<double> getAccelY() async {
     try {
-      final int accelYValue = await _channel.invokeMethod<int>('accelY') ?? 0;
+      final double accelYValue = await _channel.invokeMethod<double>('accelY') ?? 0;
       return accelYValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get accelY: '${e.message}'.");
@@ -55,9 +55,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getAccelZ() async {
+  static Future<double> getAccelZ() async {
     try {
-      final int accelZValue = await _channel.invokeMethod<int>('accelZ') ?? 0;
+      final double accelZValue = await _channel.invokeMethod<double>('accelZ') ?? 0;
       return accelZValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get accelZ: '${e.message}'.");
@@ -67,7 +67,7 @@ class KiprPlugin {
 
   static Future<int> getMagX() async {
     try {
-      final int magXValue = await _channel.invokeMethod<int>('magX') ?? 0;
+      final int magXValue = await _channel.invokeMethod<int>('magnetoX') ?? 0;
       return magXValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get magX: '${e.message}'.");
@@ -77,7 +77,7 @@ class KiprPlugin {
 
   static Future<int> getMagY() async {
     try {
-      final int magYValue = await _channel.invokeMethod<int>('magY') ?? 0;
+      final int magYValue = await _channel.invokeMethod<int>('magnetoY') ?? 0;
       return magYValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get magY: '${e.message}'.");
@@ -87,7 +87,7 @@ class KiprPlugin {
 
   static Future<int> getMagZ() async {
     try {
-      final int magZValue = await _channel.invokeMethod<int>('magZ') ?? 0;
+      final int magZValue = await _channel.invokeMethod<int>('magnetoZ') ?? 0;
       return magZValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get magZ: '${e.message}'.");

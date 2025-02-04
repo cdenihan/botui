@@ -65,9 +65,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getMagX() async {
+  static Future<double> getMagX() async {
     try {
-      final int magXValue = await _channel.invokeMethod<int>('magnetoX') ?? 0;
+      final double magXValue = await _channel.invokeMethod<double>('magnetoX') ?? 0;
       return magXValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get magX: '${e.message}'.");
@@ -75,9 +75,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getMagY() async {
+  static Future<double> getMagY() async {
     try {
-      final int magYValue = await _channel.invokeMethod<int>('magnetoY') ?? 0;
+      final double magYValue = await _channel.invokeMethod<double>('magnetoY') ?? 0;
       return magYValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get magY: '${e.message}'.");
@@ -85,9 +85,9 @@ class KiprPlugin {
     }
   }
 
-  static Future<int> getMagZ() async {
+  static Future<double> getMagZ() async {
     try {
-      final int magZValue = await _channel.invokeMethod<int>('magnetoZ') ?? 0;
+      final double magZValue = await _channel.invokeMethod<double>('magnetoZ') ?? 0;
       return magZValue;
     } on PlatformException catch (e) {
       developer.log("Failed to get magZ: '${e.message}'.");

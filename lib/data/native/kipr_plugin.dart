@@ -4,6 +4,36 @@ import 'dart:developer' as developer;
 class KiprPlugin {
   static const MethodChannel _channel = MethodChannel('stpvelox.kipr');
 
+  static Future<double> getOrientationRoll() async {
+    try {
+      final double roll = await _channel.invokeMethod<double>('orientationRoll') ?? 0;
+      return roll;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get orientation roll: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<double> getOrientationPitch() async {
+    try {
+      final double pitch = await _channel.invokeMethod<double>('orientationPitch') ?? 0;
+      return pitch;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get orientation pitch: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<double> getOrientationYaw() async {
+    try {
+      final double yaw = await _channel.invokeMethod<double>('orientationYaw') ?? 0;
+      return yaw;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get orientation yaw: '${e.message}'.");
+      return 0;
+    }
+  }
+
   // Existing Gyro Methods
   static Future<double> getGyroX() async {
     try {

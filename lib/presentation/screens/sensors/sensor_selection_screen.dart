@@ -65,11 +65,22 @@ class _SensorSelectionScreenState extends State<SensorSelectionScreen> {
     return ResponsiveGridTile(
       label: category.name,
       icon: Icons.auto_graph,
-      onPressed: () => Navigator.of(context).push(
+      onPressed: () {
+        if (sensor.length == 1) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => sensor.first.screen,
+            ),
+          );
+          return;
+        }
+
+        Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => SensorCategoryScreen(category: category, sensor: sensor),
         ),
-      ),
+      );
+      },
       color: AppColors.getTileColor(category.index),
     );
   }

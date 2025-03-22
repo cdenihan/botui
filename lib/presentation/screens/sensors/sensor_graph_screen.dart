@@ -10,11 +10,15 @@ import 'package:stpvelox/presentation/widgets/top_bar.dart';
 class SensorGraphScreen extends StatefulWidget {
   final Sensor sensor;
   final Future<double> Function() getSensorValue;
+  final double graphMin;
+  final double graphMax;
 
   const SensorGraphScreen({
     super.key,
     required this.sensor,
     required this.getSensorValue,
+    required this.graphMin,
+    required this.graphMax,
   });
 
   @override
@@ -50,9 +54,7 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
           if (_dataPoints.length > _maxPoints) {
             _dataPoints.removeAt(0);
           }
-
           _calculateMetrics();
-
           _calculateMovingAverage();
         });
       } catch (e) {
@@ -65,7 +67,6 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
     if (_dataPoints.isEmpty) return;
 
     _average = _dataPoints.reduce((a, b) => a + b) / _dataPoints.length;
-
     _min = _dataPoints.reduce(min);
     _max = _dataPoints.reduce(max);
 
@@ -124,7 +125,7 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
 
     List<FlSpot> rawSpots = _dataPoints.asMap().entries.map((entry) {
       int index = entry.key;
-      double y = entry.value.toDouble();
+      double y = entry.value;
       return FlSpot(index.toDouble(), y);
     }).toList();
 
@@ -134,8 +135,9 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
       return FlSpot(index.toDouble(), y);
     }).toList();
 
-    double minY = (_min - (_min.abs() * 0.1)).toDouble();
-    double maxY = (_max + (_max.abs() * 0.1)).toDouble();
+    // Use the provided graphMin and graphMax for the Y-axis instead of auto-scaling.
+    double minY = widget.graphMin;
+    double maxY = widget.graphMax;
 
     return Column(
       children: [
@@ -144,6 +146,7 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
             child: LineChart(
               duration: Duration.zero,
               LineChartData(
+                clipData: const FlClipData.all(),
                 minX: 0,
                 maxX: (_maxPoints - 1).toDouble(),
                 minY: minY,
@@ -253,10 +256,9 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
                   touchTooltipData: LineTouchTooltipData(
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
-                        String label =
-                            spot.bar.color == Colors.blueAccent
-                                ? 'Value: ${spot.y.toInt()}'
-                                : 'Moving Avg: ${spot.y.toStringAsFixed(2)}';
+                        String label = spot.bar.color == Colors.blueAccent
+                            ? 'Value: ${spot.y.toInt()}'
+                            : 'Moving Avg: ${spot.y.toStringAsFixed(2)}';
                         return LineTooltipItem(
                           label,
                           const TextStyle(color: Colors.white),

@@ -6,6 +6,7 @@ enum SensorCategory {
   gyro('Gyro'),
   accel('Accelerometer'),
   mag('Magnetometer'),
+  orientation('Orientation'),
   ;
 
   final String name;

@@ -74,7 +74,7 @@ class _WifiDetailScreenState extends State<WifiDetailScreen> {
                   const SizedBox(height: 16),
                   if (!network.isConnected && !network.isKnown)
                     _buildConnectionUI(context, network, isLoading),
-                  if (network.isKnown)
+                  if (network.isKnown || network.isConnected)
                     ElevatedButton(
                       onPressed: isLoading
                           ? null

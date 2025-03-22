@@ -1,6 +1,7 @@
 import 'package:stpvelox/data/native/kipr_plugin.dart';
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
+import 'package:stpvelox/presentation/screens/sensors/orientation_screen.dart';
 import 'package:stpvelox/presentation/screens/sensors/sensor_graph_screen.dart';
 import 'package:stpvelox/presentation/screens/sensors/sensor_motor_screen.dart';
 import 'package:stpvelox/presentation/screens/sensors/sensor_servo_screen.dart';
@@ -15,7 +16,11 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
         category: SensorCategory.analog,
         name: 'Analog $port',
         getSensorScreen: (sensor) => SensorGraphScreen(
-            sensor: sensor, getSensorValue: () => KiprPlugin.getAnalog(port).then((value) => value.toDouble())));
+            sensor: sensor,
+            graphMin: 0,
+            graphMax: 4095,
+            getSensorValue: () =>
+                KiprPlugin.getAnalog(port).then((value) => value.toDouble())));
   }
 
   Sensor getDigitalSensor(int port) {
@@ -23,7 +28,11 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
         category: SensorCategory.digital,
         name: 'Digital $port',
         getSensorScreen: (sensor) => SensorGraphScreen(
-            sensor: sensor, getSensorValue: () => KiprPlugin.getDigital(port).then((value) => value.toDouble())));
+            sensor: sensor,
+            graphMin: 0,
+            graphMax: 1,
+            getSensorValue: () =>
+                KiprPlugin.getDigital(port).then((value) => value.toDouble())));
   }
 
   Sensor getMotorSensor(int port) {
@@ -70,52 +79,99 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
       getServoSensor(2),
       getServoSensor(3),
       Sensor(
-          category: SensorCategory.gyro,
-          name: 'Gyro X',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getGyroX())),
+        category: SensorCategory.gyro,
+        name: 'Gyro X',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -180,
+          graphMax: 180,
+          getSensorValue: () => KiprPlugin.getGyroX(),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.gyro,
-          name: 'Gyro Y',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getGyroY())),
+        category: SensorCategory.gyro,
+        name: 'Gyro Y',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -180,
+          graphMax: 180,
+          getSensorValue: () => KiprPlugin.getGyroY(),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.gyro,
-          name: 'Gyro Z',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getGyroZ())),
+        category: SensorCategory.gyro,
+        name: 'Gyro Z',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -180,
+          graphMax: 180,
+          getSensorValue: () => KiprPlugin.getGyroZ(),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.accel,
-          name: 'Accel X',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getAccelX())),
+        category: SensorCategory.accel,
+        name: 'Accel X',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -10,
+          graphMax: 10,
+          getSensorValue: () => KiprPlugin.getAccelX(),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.accel,
-          name: 'Accel Y',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getAccelY())),
+        category: SensorCategory.accel,
+        name: 'Accel Y',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -10,
+          graphMax: 10,
+          getSensorValue: () => KiprPlugin.getAccelY(),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.accel,
-          name: 'Accel Z',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getAccelZ())),
+        category: SensorCategory.accel,
+        name: 'Accel Z',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -10,
+          graphMax: 10,
+          getSensorValue: () => KiprPlugin.getAccelZ(),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.mag,
-          name: 'Mag X',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor,
-              getSensorValue: () =>
-                  KiprPlugin.getMagX().then((value) => value.toDouble()))),
+        category: SensorCategory.mag,
+        name: 'Mag X',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -256,
+          graphMax: 256,
+          getSensorValue: () =>
+              KiprPlugin.getMagX().then((value) => value.toDouble()),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.mag,
-          name: 'Mag Y',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getMagY().then((value) => value.toDouble()))),
+        category: SensorCategory.mag,
+        name: 'Mag Y',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -256,
+          graphMax: 256,
+          getSensorValue: () =>
+              KiprPlugin.getMagY().then((value) => value.toDouble()),
+        ),
+      ),
       Sensor(
-          category: SensorCategory.mag,
-          name: 'Mag Z',
-          getSensorScreen: (sensor) => SensorGraphScreen(
-              sensor: sensor, getSensorValue: () => KiprPlugin.getMagZ().then((value) => value.toDouble()))),
+        category: SensorCategory.mag,
+        name: 'Mag Z',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -256,
+          graphMax: 256,
+          getSensorValue: () => KiprPlugin.getMagZ().then(
+            (value) => value.toDouble(),
+          ),
+        ),
+      ),
     ];
   }
 }

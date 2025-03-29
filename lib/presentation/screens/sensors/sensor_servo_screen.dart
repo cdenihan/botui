@@ -20,11 +20,9 @@ class SensorServoScreen extends StatefulWidget {
 class _SensorServoScreenState extends State<SensorServoScreen> {
   double _currentPosition = 0.0;
 
-  Future<void> _setServoPosition(int position) async =>
-      await KiprPlugin.setServoPosition(widget.port, position);
-
-  Future<void> _enableServo() async {
+  Future<void> _setServoPosition(int position) async {
     await KiprPlugin.enableServo(widget.port);
+    await KiprPlugin.setServoPosition(widget.port, position);
   }
 
   Future<void> _disableServo() async {
@@ -140,28 +138,6 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
                       ),
                       child: const Text(
                         'Disable',
-                        style: TextStyle(
-                          fontSize: 30,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  // Enable button
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: _enableServo,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.greenAccent,
-                        shape: const RoundedRectangleBorder(
-                          borderRadius: BorderRadius.only(
-                            topRight: Radius.circular(12),
-                            bottomRight: Radius.circular(12),
-                          ),
-                        ),
-                      ),
-                      child: const Text(
-                        'Enable',
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,

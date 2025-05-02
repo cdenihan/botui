@@ -166,17 +166,17 @@ class _ProgramScreenState extends State<ProgramScreen> {
                       onPressed: () => removeOverlay(),
                     ),
                   ),
-                  SizedBox(
-                    width: 200,
-                    height: 200,
-                    child: ResponsiveGridTile(
-                      label: 'Reboot',
-                      icon: Icons.restart_alt,
-                      color: Colors.orange,
-                      onPressed: () =>
-                          context.read<ProgramBloc>().add(RebootEvent()),
-                    ),
-                  ),
+                  // SizedBox(
+                  //   width: 200,
+                  //   height: 200,
+                  //   child: ResponsiveGridTile(
+                  //     label: 'Reboot',
+                  //     icon: Icons.restart_alt,
+                  //     color: Colors.orange,
+                  //     onPressed: () =>
+                  //         context.read<ProgramBloc>().add(RebootEvent()),
+                  //   ),
+                  // ),
                 ],
               ),
             ),

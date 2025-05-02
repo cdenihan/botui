@@ -9,7 +9,7 @@ import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 class SensorGraphScreen extends StatefulWidget {
   final Sensor sensor;
-  final Future<double> Function() getSensorValue;
+  final Future<num> Function() getSensorValue; // Changed to num to support both int and double
   final double graphMin;
   final double graphMax;
 
@@ -48,9 +48,9 @@ class _SensorGraphScreenState extends State<SensorGraphScreen> {
   void _startDataFetching() {
     _timer = Timer.periodic(_updateInterval, (timer) async {
       try {
-        double value = await widget.getSensorValue();
+        num value = await widget.getSensorValue(); // Changed to num
         setState(() {
-          _dataPoints.add(value);
+          _dataPoints.add(value.toDouble()); // Convert to double
           if (_dataPoints.length > _maxPoints) {
             _dataPoints.removeAt(0);
           }

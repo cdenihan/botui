@@ -29,9 +29,9 @@ class _OrientationScreenState extends State<OrientationScreen> {
       var pitch = await KiprPlugin.getOrientationPitch();
       var yaw = await KiprPlugin.getOrientationYaw();
       setState(() {
-        _roll = roll;
-        _pitch = pitch;
-        _yaw = yaw;
+        _roll = roll as double;
+        _pitch = pitch as double;
+        _yaw = yaw as double;
       });
     });
   }

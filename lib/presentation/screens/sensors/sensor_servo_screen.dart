@@ -43,7 +43,7 @@ class SensorServoScreen extends StatefulWidget {
 
 class _SensorServoScreenState extends State<SensorServoScreen> {
   double _currentPosition = 0.0;
-  bool _angleMode = true; // Default to position mode
+  bool _angleMode = true; // Default to angle mode
 
   // Computed properties
   double get currentAngle => ServoUtils.positionToAngle(_currentPosition.toInt());
@@ -66,6 +66,13 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
         _currentPosition = value;
       }
     });
+
+    // Update servo position continuously during slider movement
+    if (_angleMode) {
+      _setServoPosition(ServoUtils.angleToPosition(value));
+    } else {
+      _setServoPosition(value.toInt());
+    }
   }
 
   void _onSliderChangeEnd(double value) {
@@ -94,48 +101,46 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
         ? ServoUtils.positionToAngle(_currentPosition.toInt())
         : _currentPosition;
 
+    // Create mode toggle for top bar
+    final modeToggle = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: ElevatedButton(
+        onPressed: _toggleMode,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        ),
+        child: Text(
+          _angleMode ? 'Angle Mode' : 'Position Mode',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+
     return Scaffold(
-      appBar: createTopBar(context, widget.sensor.name),
+      appBar: createTopBar(
+        context,
+        widget.sensor.name,
+        trailing: modeToggle,
+      ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            // Mode toggle
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Position Mode',
-                  style: TextStyle(
-                    fontWeight: _angleMode ? FontWeight.normal : FontWeight.bold,
-                    color: _angleMode ? Colors.grey : Colors.black,
-                    fontSize: 16,
-                  ),
-                ),
-                Switch(
-                  value: _angleMode,
-                  onChanged: (value) => _toggleMode(),
-                  activeColor: Colors.blue,
-                ),
-                Text(
-                  'Angle Mode',
-                  style: TextStyle(
-                    fontWeight: _angleMode ? FontWeight.bold : FontWeight.normal,
-                    color: _angleMode ? Colors.black : Colors.grey,
-                    fontSize: 16,
-                  ),
-                ),
-              ],
-            ),
-
             Expanded(
               child: Center(
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
                     Positioned(
-                      bottom: -210,
+                      bottom: -180,
                       child: SleekCircularSlider(
                         min: minValue,
                         max: maxValue,
@@ -157,7 +162,7 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
                             shadowColor: Colors.grey,
                             shadowMaxOpacity: 0.0,
                           ),
-                          size: 500,
+                          size: 480,
                           infoProperties: InfoProperties(
                             modifier: (double value) {
                               return '${value.toInt()}${_angleMode ? '°' : ''}';
@@ -243,3 +248,4 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
     );
   }
 }
+

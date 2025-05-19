@@ -7,6 +7,30 @@ import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 import '../../../data/native/kipr_plugin.dart';
 
+// Servo utility class for angle conversions
+class ServoUtils {
+  static const double minAngle = 0.0;
+  static const double maxAngle = 170.0;
+  static const double servoSpeedDps = 60 / 0.3;
+  static const int minPosition = 0;
+  static const int maxPosition = 2047;
+
+  static int angleToPosition(double angle) {
+    final clampedAngle = angle.clamp(minAngle, maxAngle);
+    return ((clampedAngle / maxAngle) * maxPosition).round();
+  }
+
+  static double positionToAngle(int position) {
+    final clampedPosition = position.clamp(minPosition, maxPosition);
+    return (clampedPosition / maxPosition) * maxAngle;
+  }
+
+  static double estimateServoMoveTime(double startAngle, double endAngle) {
+    final delta = (endAngle - startAngle).abs();
+    return delta / servoSpeedDps;
+  }
+}
+
 class SensorServoScreen extends StatefulWidget {
   final int port;
   final Sensor sensor;
@@ -19,6 +43,10 @@ class SensorServoScreen extends StatefulWidget {
 
 class _SensorServoScreenState extends State<SensorServoScreen> {
   double _currentPosition = 0.0;
+  bool _angleMode = true; // Default to position mode
+
+  // Computed properties
+  double get currentAngle => ServoUtils.positionToAngle(_currentPosition.toInt());
 
   Future<void> _setServoPosition(int position) async {
     await KiprPlugin.enableServo(widget.port);
@@ -31,18 +59,40 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
 
   void _onSliderChange(double value) {
     setState(() {
-      _currentPosition = value;
+      if (_angleMode) {
+        // In angle mode, convert to position before storing
+        _currentPosition = ServoUtils.angleToPosition(value).toDouble();
+      } else {
+        _currentPosition = value;
+      }
     });
   }
 
   void _onSliderChangeEnd(double value) {
-    _setServoPosition(value.toInt());
+    if (_angleMode) {
+      // In angle mode, convert to position before sending to servo
+      _setServoPosition(ServoUtils.angleToPosition(value));
+    } else {
+      _setServoPosition(value.toInt());
+    }
+  }
+
+  void _toggleMode() {
+    setState(() {
+      _angleMode = !_angleMode;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    const double minValue = 0;
-    const double maxValue = 2047;
+    // Set the range based on the current mode
+    final double minValue = _angleMode ? ServoUtils.minAngle : ServoUtils.minPosition.toDouble();
+    final double maxValue = _angleMode ? ServoUtils.maxAngle : ServoUtils.maxPosition.toDouble();
+
+    // Calculate the current value based on mode for the slider
+    final double sliderValue = _angleMode
+        ? ServoUtils.positionToAngle(_currentPosition.toInt())
+        : _currentPosition;
 
     return Scaffold(
       appBar: createTopBar(context, widget.sensor.name),
@@ -51,6 +101,34 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            // Mode toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Position Mode',
+                  style: TextStyle(
+                    fontWeight: _angleMode ? FontWeight.normal : FontWeight.bold,
+                    color: _angleMode ? Colors.grey : Colors.black,
+                    fontSize: 16,
+                  ),
+                ),
+                Switch(
+                  value: _angleMode,
+                  onChanged: (value) => _toggleMode(),
+                  activeColor: Colors.blue,
+                ),
+                Text(
+                  'Angle Mode',
+                  style: TextStyle(
+                    fontWeight: _angleMode ? FontWeight.bold : FontWeight.normal,
+                    color: _angleMode ? Colors.black : Colors.grey,
+                    fontSize: 16,
+                  ),
+                ),
+              ],
+            ),
+
             Expanded(
               child: Center(
                 child: Stack(
@@ -61,7 +139,7 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
                       child: SleekCircularSlider(
                         min: minValue,
                         max: maxValue,
-                        initialValue: _currentPosition,
+                        initialValue: sliderValue,
                         onChange: _onSliderChange,
                         onChangeEnd: _onSliderChangeEnd,
                         appearance: CircularSliderAppearance(
@@ -82,7 +160,7 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
                           size: 500,
                           infoProperties: InfoProperties(
                             modifier: (double value) {
-                              return '${value.toInt()}';
+                              return '${value.toInt()}${_angleMode ? '°' : ''}';
                             },
                             mainLabelStyle: const TextStyle(
                               fontSize: 32,
@@ -91,22 +169,33 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
                             ),
                           ),
                         ),
-                        innerWidget: (velocity) {
+                        innerWidget: (value) {
                           return Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                velocity.toStringAsFixed(0),
+                                _angleMode
+                                    ? '${value.toStringAsFixed(1)}°'
+                                    : value.toStringAsFixed(0),
                                 style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              const Text(
-                                'Position',
-                                style: TextStyle(
+                              Text(
+                                _angleMode ? 'Angle' : 'Position',
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                _angleMode
+                                    ? 'Position: ${_currentPosition.toInt()}'
+                                    : 'Angle: ${currentAngle.toStringAsFixed(1)}°',
+                                style: const TextStyle(
+                                  fontSize: 16,
                                 ),
                               ),
                             ],

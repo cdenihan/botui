@@ -7,7 +7,8 @@ class ResponsiveGrid extends StatelessWidget {
   final double mainAxisSpacing;
   final EdgeInsetsGeometry padding;
   final double? childAspectRatio;
-  final bool isScrollable; // New parameter
+  final bool isScrollable;
+  final int? crossAxisCount;
 
   const ResponsiveGrid({
     super.key,
@@ -17,22 +18,24 @@ class ResponsiveGrid extends StatelessWidget {
     this.mainAxisSpacing = 16,
     this.padding = const EdgeInsets.all(8.0),
     this.childAspectRatio,
-    this.isScrollable = true, // Default to true
+    this.isScrollable = true,
+    this.crossAxisCount,
   });
 
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        int crossAxisCount =
-        (constraints.maxWidth / (maxTileWidth + crossAxisSpacing)).floor();
+        int calculatedCrossAxisCount =
+            (constraints.maxWidth / (maxTileWidth + crossAxisSpacing)).floor();
 
-        crossAxisCount = crossAxisCount > 0 ? crossAxisCount : 1;
+        calculatedCrossAxisCount =
+            calculatedCrossAxisCount > 0 ? calculatedCrossAxisCount : 1;
 
         return GridView.builder(
           padding: padding,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: crossAxisCount ?? calculatedCrossAxisCount,
             crossAxisSpacing: crossAxisSpacing,
             mainAxisSpacing: mainAxisSpacing,
             childAspectRatio: childAspectRatio ?? 1,

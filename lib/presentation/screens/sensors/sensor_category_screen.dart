@@ -1,18 +1,31 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/data/native/kipr_plugin.dart';
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
 import 'package:stpvelox/presentation/widgets/grid_tile.dart';
+import 'package:stpvelox/presentation/widgets/imu_temperature_display.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
-class SensorCategoryScreen extends StatelessWidget {
+class SensorCategoryScreen extends StatefulWidget {
   final SensorCategory category;
   final List<Sensor> sensor;
 
   const SensorCategoryScreen(
       {super.key, required this.category, required this.sensor});
+
+  @override
+  State<SensorCategoryScreen> createState() => _SensorCategoryScreenState();
+}
+
+class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
+  @override
+  void initState() {
+    super.initState();
+  }
 
   Future<void> _stopAllMotors() async {
     for (int i = 0; i < 4; i++) {
@@ -21,25 +34,53 @@ class SensorCategoryScreen extends StatelessWidget {
   }
 
   Future<void> _disableAllServos() async {
-      await KiprPlugin.fullyDisableServos();
+    await KiprPlugin.fullyDisableServos();
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool isMotorCategory = category.name == 'Motor';
-    final bool isServoCategory = category.name == 'Servo';
+    final bool isMotorCategory = widget.category.name == 'Motor';
+    final bool isServoCategory = widget.category.name == 'Servo';
+    final bool isDigitalCategory = widget.category.name == 'Digital';
+    final bool isIMUCategory = widget.category.name == 'Gyro' ||
+        widget.category.name == 'Accel' ||
+        widget.category.name == 'Magneto';
+
+    final actions = <Widget>[];
+    if (isIMUCategory) {
+      actions.add(
+        ImuTemperatureDisplay(),
+      );
+    }
 
     return Scaffold(
-      appBar: createTopBar(context, category.name),
+      appBar: createTopBar(context, widget.category.name, actions: actions),
       body: Column(
         children: [
           Expanded(
             child: ResponsiveGrid(
+              crossAxisCount: isDigitalCategory ? 5 : null,
               isScrollable: true,
-              children: sensor
-                  .map((Sensor sensor) =>
-                      _buildSensorTile(context, category, sensor))
-                  .toList(),
+              children: widget.sensor.asMap().entries.map((entry) {
+                if (isDigitalCategory) {
+                  return _DigitalSensorTile(
+                    sensor: entry.value,
+                    index: entry.key,
+                  );
+                }
+                return ResponsiveGridTile(
+                  label: entry.value.name,
+                  icon: Icons.auto_graph,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => entry.value.screen,
+                      ),
+                    );
+                  },
+                  color: AppColors.getTileColor(widget.category.index),
+                );
+              }).toList(),
             ),
           ),
           if (isMotorCategory)
@@ -94,18 +135,60 @@ class SensorCategoryScreen extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildSensorTile(
-      BuildContext context, SensorCategory category, Sensor sensor) {
-    return ResponsiveGridTile(
-      label: sensor.name,
-      icon: Icons.auto_graph,
-      onPressed: () => Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => sensor.screen,
-        ),
-      ),
-      color: AppColors.getTileColor(category.index),
+class _DigitalSensorTile extends StatefulWidget {
+  final Sensor sensor;
+  final int index;
+
+  const _DigitalSensorTile({required this.sensor, required this.index});
+
+  @override
+  State<_DigitalSensorTile> createState() => _DigitalSensorTileState();
+}
+
+class _DigitalSensorTileState extends State<_DigitalSensorTile> {
+  late Future<int> _future;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = KiprPlugin.getDigital(widget.index);
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+      if (mounted) {
+        setState(() {
+          _future = KiprPlugin.getDigital(widget.index);
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<int>(
+      future: _future,
+      builder: (context, snapshot) {
+        final isClicked = snapshot.data ?? 0;
+        return ResponsiveGridTile(
+          label: widget.sensor.name,
+          icon: Icons.auto_graph,
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => widget.sensor.screen,
+              ),
+            );
+          },
+          color: isClicked == 1 ? Colors.red : Colors.green,
+        );
+      },
     );
   }
 }

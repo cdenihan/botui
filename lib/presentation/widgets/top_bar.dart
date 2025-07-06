@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:stpvelox/presentation/widgets/battery_status.dart';
 
 AppBar createTopBar(BuildContext context, String title,
     {List<Widget>? actions, Widget? trailing}) {
+  actions ??= [];
+  actions.add(const BatteryStatus());
   return AppBar(
     backgroundColor: Colors.grey[900],
     automaticallyImplyLeading: false,

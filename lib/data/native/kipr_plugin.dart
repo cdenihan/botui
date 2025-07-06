@@ -232,6 +232,25 @@ class KiprPlugin {
     } on PlatformException catch (e) {
       developer.log("Failed to fully disable servos: '${e.message}'.");
     }
+  }
 
+  static Future<double> getImuTemperature() async {
+    try {
+      final double temperature = await _channel.invokeMethod<double>('imuTemp') ?? 0;
+      return temperature;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get IMU temperature: '${e.message}'.");
+      return 0;
+    }
+  }
+
+  static Future<double> getBatteryVoltage() async {
+    try {
+      final double voltage = await _channel.invokeMethod<double>('battery') ?? 0;
+      return voltage;
+    } on PlatformException catch (e) {
+      developer.log("Failed to get battery voltage: '${e.message}'.");
+      return 0;
+    }
   }
 }

@@ -4,8 +4,8 @@ enum SensorCategory {
   motor('Motor'),
   servo('Servo'),
   gyro('Gyro'),
-  accel('Accelerometer'),
-  mag('Magnetometer'),
+  accel('Accel'),
+  mag('Magneto'),
   orientation('Orientation'),
   ;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/domain/entities/setting.dart';
 import 'package:stpvelox/domain/usecases/reboot.dart';
+import 'package:stpvelox/presentation/screens/touch_calibration_screen.dart';
 import 'package:stpvelox/presentation/screens/wifi/wifi_home_screen.dart';
 
 abstract class SettingsRemoteDataSource {
@@ -42,6 +43,22 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         color: Colors.orange,
         onTap: (_) async {
           await reboot.call();
+        },
+      ),
+      Setting(
+        icon: Icons.display_settings,
+        label: "Calibrate",
+        color: Colors.purple,
+        onTap: (context) async {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => TouchCalibrationScreen(
+                  onFinished: () {
+                    Navigator.of(context).pop();
+                  },
+              ),
+            ),
+          );
         },
       ),
       Setting(

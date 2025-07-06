@@ -5,6 +5,7 @@ import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/data/native/kipr_plugin.dart';
 import 'package:stpvelox/domain/entities/sensor.dart';
 import 'package:stpvelox/domain/entities/sensor_category.dart';
+import 'package:stpvelox/presentation/screens/flappy_bird_game.dart';
 import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/imu_temperature_display.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
@@ -14,19 +15,18 @@ class SensorCategoryScreen extends StatefulWidget {
   final SensorCategory category;
   final List<Sensor> sensor;
 
-  const SensorCategoryScreen(
-      {super.key, required this.category, required this.sensor});
+  const SensorCategoryScreen({
+    super.key,
+    required this.category,
+    required this.sensor,
+  });
 
   @override
   State<SensorCategoryScreen> createState() => _SensorCategoryScreenState();
 }
 
 class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
-  @override
-  void initState() {
-    super.initState();
-  }
-
+  /// === MOTOR & SERVO HELPERS ===
   Future<void> _stopAllMotors() async {
     for (int i = 0; i < 4; i++) {
       await KiprPlugin.stopMotor(i);
@@ -35,6 +35,52 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
 
   Future<void> _disableAllServos() async {
     await KiprPlugin.fullyDisableServos();
+  }
+
+  /// === DIGITAL‑10 "HOLD TO UNLOCK" EASTER EGG ===
+  static const _holdDuration = Duration(seconds: 5);
+  DateTime? _heldStart;
+  Timer? _digital10Timer;
+  int _prevDigital10 = 0;
+
+  void _startListeningForDigital10Hold() {
+    _digital10Timer =
+        Timer.periodic(const Duration(milliseconds: 100), (_) async {
+      final current = await KiprPlugin.getDigital(10);
+
+      if (current == 1) {
+        _heldStart ??= DateTime.now(); // start hold timer
+        final heldTime = DateTime.now().difference(_heldStart!);
+        if (heldTime >= _holdDuration) {
+          _heldStart = null; // reset to avoid repeated triggering
+          if (mounted) _openFlappyBirdGame();
+        }
+      } else {
+        _heldStart = null; // reset if released
+      }
+
+      _prevDigital10 = current;
+    });
+  }
+
+  void _openFlappyBirdGame() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const FlappyBirdGame()),
+    );
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.category.name == 'Digital') {
+      _startListeningForDigital10Hold();
+    }
+  }
+
+  @override
+  void dispose() {
+    _digital10Timer?.cancel();
+    super.dispose();
   }
 
   @override
@@ -48,9 +94,7 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
 
     final actions = <Widget>[];
     if (isIMUCategory) {
-      actions.add(
-        ImuTemperatureDisplay(),
-      );
+      actions.add(ImuTemperatureDisplay());
     }
 
     return Scaffold(
@@ -73,9 +117,7 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
                   icon: Icons.auto_graph,
                   onPressed: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => entry.value.screen,
-                      ),
+                      MaterialPageRoute(builder: (_) => entry.value.screen),
                     );
                   },
                   color: AppColors.getTileColor(widget.category.index),
@@ -84,52 +126,14 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
             ),
           ),
           if (isMotorCategory)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 70,
-                child: ElevatedButton(
-                  onPressed: _stopAllMotors,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Stop All Motors',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+            _CategoryActionButton(
+              label: 'Stop All Motors',
+              onPressed: _stopAllMotors,
             ),
           if (isServoCategory)
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                height: 70,
-                child: ElevatedButton(
-                  onPressed: _disableAllServos,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Disable All Servos',
-                    style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ),
+            _CategoryActionButton(
+              label: 'Disable All Servos',
+              onPressed: _disableAllServos,
             ),
         ],
       ),
@@ -155,11 +159,9 @@ class _DigitalSensorTileState extends State<_DigitalSensorTile> {
   void initState() {
     super.initState();
     _future = KiprPlugin.getDigital(widget.index);
-    _timer = Timer.periodic(const Duration(milliseconds: 200), (timer) {
+    _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       if (mounted) {
-        setState(() {
-          _future = KiprPlugin.getDigital(widget.index);
-        });
+        setState(() => _future = KiprPlugin.getDigital(widget.index));
       }
     });
   }
@@ -181,14 +183,42 @@ class _DigitalSensorTileState extends State<_DigitalSensorTile> {
           icon: Icons.auto_graph,
           onPressed: () {
             Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => widget.sensor.screen,
-              ),
+              MaterialPageRoute(builder: (_) => widget.sensor.screen),
             );
           },
           color: isClicked == 1 ? Colors.red : Colors.green,
         );
       },
+    );
+  }
+}
+
+class _CategoryActionButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onPressed;
+
+  const _CategoryActionButton({required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 70,
+        child: ElevatedButton(
+          onPressed: onPressed,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.redAccent,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ),
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
     );
   }
 }

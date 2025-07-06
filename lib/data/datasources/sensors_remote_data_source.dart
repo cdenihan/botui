@@ -70,6 +70,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
       getDigitalSensor(7),
       getDigitalSensor(8),
       getDigitalSensor(9),
+      getDigitalSensor(10),
       getMotorSensor(0),
       getMotorSensor(1),
       getMotorSensor(2),

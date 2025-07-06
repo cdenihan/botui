@@ -225,4 +225,13 @@ class KiprPlugin {
       return 0;
     }
   }
+
+  static Future<void> fullyDisableServos() async {
+    try {
+      await _channel.invokeMethod('fullyDisableServos');
+    } on PlatformException catch (e) {
+      developer.log("Failed to fully disable servos: '${e.message}'.");
+    }
+
+  }
 }

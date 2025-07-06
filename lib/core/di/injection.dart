@@ -25,10 +25,12 @@ import 'package:stpvelox/presentation/blocs/program_selection/program_selection_
 import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
+import 'package:stpvelox/core/utils/touch_calibrator.dart';
 
 final sl = GetIt.instance;
 
 Future<void> init() async {
+  sl.registerLazySingleton(() => TouchCalibrator());
   sl.registerFactory(() => SensorBloc(getSensors: sl()));
   sl.registerFactory(() => ProgramBloc(startProgram: sl(), rebootDevice: sl()));
   sl.registerFactory(() => SettingsBloc(repository: sl()));

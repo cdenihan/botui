@@ -2,7 +2,14 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/data/native/kipr_plugin.dart';
+
+/// Simple Flappy‑Bird‑style game controlled by a digital input on port 10.
+/// Touch input is completely disabled – every flap is triggered by a rising
+/// edge on KiprPlugin.digital(10).
+
+enum GameState { ready, running, gameOver }
 
 class FlappyBirdGame extends StatefulWidget {
   const FlappyBirdGame({super.key});
@@ -11,227 +18,362 @@ class FlappyBirdGame extends StatefulWidget {
   State<FlappyBirdGame> createState() => _FlappyBirdGameState();
 }
 
-class _FlappyBirdGameState extends State<FlappyBirdGame> {
-  // === Bird ===
-  double birdY = 0.0;
-  double birdVelocity = 0.0;
-  static const double gravity = 0.5; // downward acceleration
-  static const double jumpStrength = -0.3;
-  static const double birdWidth = 0.1;
+class _FlappyBirdGameState extends State<FlappyBirdGame>
+    with SingleTickerProviderStateMixin {
+  /*──────────────────────────────
+  │  Gameplay state & scores
+  └─────────────────────────────*/
+  GameState _gameState = GameState.ready;
+  int _score = 0;
+  int _highScore = 0;
 
-  // === Pipes ===
-  List<List<double>> pipes = []; // [x, topY, bottomY, scored]
-  double pipeWidth = 0.2;
-  double pipeGap = 0.4;
-  double pipeSpeed = 0.02;
+  /*──────────────────────────────
+  │  Bird physics
+  └─────────────────────────────*/
+  double _birdY = 0;
+  double _birdVelocity = 0;
+  final double _gravity = 0.5;
+  final double _jumpStrength = -10.0;
+  final double _birdSize = 50.0;
 
-  // === Game State ===
-  bool gameStarted = false;
-  bool gameOver = false;
-  int score = 0;
+  /*──────────────────────────────
+  │  Pipes
+  └─────────────────────────────*/
+  final double _pipeWidth = 80.0;
+  final double _pipeGap = 200.0;
+  final double _pipeSpeed = 4.0;
+  final List<Offset> _pipeOffsets = [];
 
-  Timer? gameLoopTimer;
-  Timer? pipeGenerationTimer;
-  Timer? digital10PollTimer;
-  bool _isDigital10Pressed = false;
+  /*──────────────────────────────
+  │  Game loop
+  └─────────────────────────────*/
+  late final AnimationController _controller;
+
+  /*──────────────────────────────
+  │  Hardware input (KIPR)
+  └─────────────────────────────*/
+  Timer? _sensorTimer;
+  bool _lastSensorState = false;
+  final Duration _pollInterval = const Duration(milliseconds: 50);
+  final int _sensorPort = 10; // Digital port to read
 
   @override
   void initState() {
     super.initState();
-    _startGame();
-    digital10PollTimer =
-        Timer.periodic(const Duration(milliseconds: 100), (timer) async {
-      final digital10Value = await KiprPlugin.getDigital(10);
-      if (digital10Value == 1 && !_isDigital10Pressed) {
-        _birdJump();
-        _isDigital10Pressed = true;
-      } else if (digital10Value == 0) {
-        _isDigital10Pressed = false;
-      }
-    });
-  }
+    _loadHighScore();
 
-  void _startGame() {
-    gameLoopTimer?.cancel();
-    pipeGenerationTimer?.cancel();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 16),
+    )..addListener(_gameLoop);
 
-    setState(() {
-      gameStarted = true;
-      gameOver = false;
-      birdY = 0.0;
-      birdVelocity = 0.0;
-      pipes.clear();
-      score = 0;
-    });
-
-    gameLoopTimer =
-        Timer.periodic(const Duration(milliseconds: 30), (_) => _updateGame());
-    pipeGenerationTimer =
-        Timer.periodic(const Duration(seconds: 2), (_) => _generatePipe());
-  }
-
-  void _updateGame() {
-    if (!gameStarted || gameOver) return;
-
-    setState(() {
-      // Bird physics
-      birdVelocity += gravity;
-      birdY = (birdY + birdVelocity).clamp(-1.0, 1.0);
-
-      // Move pipes
-      for (var pipe in pipes) {
-        pipe[0] -= pipeSpeed;
-      }
-
-      // Remove off-screen pipes
-      pipes.removeWhere((pipe) => pipe[0] < -pipeWidth);
-
-      // Collision detection
-      if (birdY <= -1.0 || birdY >= 1.0) {
-        _endGame();
-      }
-
-      for (var pipe in pipes) {
-        bool birdInPipeXRange =
-            pipe[0] < birdWidth && pipe[0] + pipeWidth > -birdWidth;
-        if (birdInPipeXRange) {
-          if (birdY < pipe[1] || birdY > pipe[2]) {
-            _endGame();
-          }
-        }
-
-        // Score
-        if (pipe[0] + pipeWidth < -birdWidth && pipe[3] == 0.0) {
-          score++;
-          pipe[3] = 1.0;
-        }
-      }
-    });
-  }
-
-  void _generatePipe() {
-    if (!gameStarted || gameOver) return;
-
-    double topPipeHeight = Random().nextDouble() * 0.6 + 0.2;
-    double bottomPipeHeight = topPipeHeight - pipeGap;
-    pipes.add([1.0, topPipeHeight, bottomPipeHeight, 0.0]);
-  }
-
-  void _birdJump() {
-    if (!gameOver) {
-      setState(() {
-        birdVelocity = jumpStrength;
-      });
-    }
-  }
-
-  void _endGame() {
-    gameLoopTimer?.cancel();
-    pipeGenerationTimer?.cancel();
-    setState(() {
-      gameOver = true;
-    });
+    // Start polling the hardware button
+    _sensorTimer = Timer.periodic(_pollInterval, (_) => _pollSensor());
   }
 
   @override
   void dispose() {
-    gameLoopTimer?.cancel();
-    pipeGenerationTimer?.cancel();
-    digital10PollTimer?.cancel();
+    _sensorTimer?.cancel();
+    _controller.dispose();
     super.dispose();
   }
 
+  /*──────────────────────────────
+  │  Persistent high‑score helpers
+  └─────────────────────────────*/
+  Future<void> _loadHighScore() async {
+    final prefs = await SharedPreferences.getInstance();
+    _highScore = prefs.getInt('highScore') ?? 0;
+    setState(() {});
+  }
+
+  Future<void> _saveHighScore() async {
+    if (_score <= _highScore) return;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('highScore', _score);
+    _highScore = _score;
+  }
+
+  /*──────────────────────────────
+  │  Hardware polling & tap simulation
+  └─────────────────────────────*/
+  Future<void> _pollSensor() async {
+    bool current;
+    try {
+      current = await KiprPlugin.getDigital(_sensorPort) == 1;
+    } catch (e) {
+      // If the read fails, treat as "not pressed" to keep game alive
+      current = false;
+    }
+
+    // Rising‑edge detection → flap
+    if (current && !_lastSensorState) _onTap();
+    _lastSensorState = current;
+  }
+
+  /*──────────────────────────────
+  │  Game control routines
+  └─────────────────────────────*/
+  void _resetGame() {
+    setState(() {
+      _gameState = GameState.ready;
+      _birdY = 0;
+      _birdVelocity = 0;
+      _pipeOffsets.clear();
+      _score = 0;
+    });
+  }
+
+  void _startGame() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    setState(() {
+      _gameState = GameState.running;
+      _pipeOffsets
+        ..clear()
+        ..addAll([
+          _generatePipeOffset(screenWidth + 100),
+          _generatePipeOffset(screenWidth + 100 + screenWidth / 2),
+        ]);
+    });
+    _controller.repeat();
+  }
+
+  void _gameOver() {
+    _controller.stop();
+    _saveHighScore();
+    setState(() => _gameState = GameState.gameOver);
+  }
+
+  void _jump() => _birdVelocity = _jumpStrength;
+
+  void _onTap() {
+    switch (_gameState) {
+      case GameState.ready:
+        _startGame();
+        break;
+      case GameState.running:
+        _jump();
+        break;
+      case GameState.gameOver:
+        _resetGame();
+        break;
+    }
+  }
+
+  /*──────────────────────────────
+  │  Game loop & collisions
+  └─────────────────────────────*/
+  void _gameLoop() {
+    if (_gameState != GameState.running) return;
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    setState(() {
+      // Bird physics
+      _birdVelocity += _gravity;
+      _birdY += _birdVelocity;
+
+      // Move pipes
+      for (var i = 0; i < _pipeOffsets.length; i++) {
+        _pipeOffsets[i] = _pipeOffsets[i].translate(-_pipeSpeed, 0);
+      }
+
+      // Scoring
+      for (var offset in _pipeOffsets) {
+        final pipeCenterX = offset.dx + _pipeWidth / 2;
+        final birdCenterX = screenWidth / 2;
+        if (pipeCenterX < birdCenterX &&
+            pipeCenterX > birdCenterX - _pipeSpeed) {
+          _score++;
+        }
+      }
+
+      // Recycle pipes
+      if (_pipeOffsets.isNotEmpty && _pipeOffsets.first.dx < -_pipeWidth) {
+        _pipeOffsets.removeAt(0);
+        _pipeOffsets.add(_generatePipeOffset(screenWidth));
+      }
+
+      _checkCollisions();
+    });
+  }
+
+  void _checkCollisions() {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    // Bird bounding box
+    final birdRect = Rect.fromLTWH(
+      screenWidth / 2 - _birdSize / 2,
+      _birdY,
+      _birdSize,
+      _birdSize,
+    );
+
+    // Ground collision
+    if (_birdY > screenHeight - _birdSize) {
+      _gameOver();
+      return;
+    }
+
+    // Pipe collision
+    for (var offset in _pipeOffsets) {
+      final topPipeHeight = offset.dy;
+      final bottomPipeY = offset.dy + _pipeGap;
+
+      final topPipe = Rect.fromLTWH(offset.dx, 0, _pipeWidth, topPipeHeight);
+      final bottomPipe = Rect.fromLTWH(
+          offset.dx, bottomPipeY, _pipeWidth, screenHeight - bottomPipeY);
+
+      if (birdRect.overlaps(topPipe) || birdRect.overlaps(bottomPipe)) {
+        _gameOver();
+        return;
+      }
+    }
+  }
+
+  /*──────────────────────────────
+  │  Utility
+  └─────────────────────────────*/
+  Offset _generatePipeOffset(double x) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    const minTop = 100.0;
+    final maxTop = screenHeight - _pipeGap - 100;
+    final topHeight = minTop + Random().nextDouble() * (maxTop - minTop);
+    return Offset(x, topHeight);
+  }
+
+  /*──────────────────────────────
+  │  UI
+  └─────────────────────────────*/
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
     return Scaffold(
-      body: GestureDetector(
-        onTap: _birdJump,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.blue, Colors.lightBlueAccent],
+          ),
+        ),
         child: Stack(
           children: [
-            // Background
-            Container(color: Colors.lightBlueAccent),
+            // Pipes
+            for (final offset in _pipeOffsets) ...[
+              // Top
+              Positioned(
+                left: offset.dx,
+                top: 0,
+                child: _pipe(offset.dy),
+              ),
+              // Bottom
+              Positioned(
+                left: offset.dx,
+                top: offset.dy + _pipeGap,
+                child: _pipe(screenHeight - offset.dy - _pipeGap),
+              ),
+            ],
 
             // Bird
-            Align(
-              alignment: Alignment(0, birdY),
-              child: Container(
-                width: MediaQuery.of(context).size.width * birdWidth,
-                height: MediaQuery.of(context).size.width * birdWidth,
-                decoration: BoxDecoration(
-                  color: Colors.yellow,
-                  border: Border.all(color: Colors.orange, width: 2),
-                  borderRadius: BorderRadius.circular(8),
+            Positioned(
+              left: screenWidth / 2 - _birdSize / 2,
+              top: _birdY,
+              child: SizedBox(
+                width: _birdSize,
+                height: _birdSize,
+                child: Image.asset('assets/wombat.png'),
+              ),
+            ),
+
+            // Score
+            Positioned(
+              top: 50,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Text(
+                  '$_score',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 60,
+                    fontWeight: FontWeight.bold,
+                    shadows: [
+                      Shadow(
+                          blurRadius: 3,
+                          color: Colors.black,
+                          offset: Offset(2, 2))
+                    ],
+                  ),
                 ),
               ),
             ),
 
-            // Pipes
-            ...pipes.map((pipe) {
-              return Stack(
-                children: [
-                  Align(
-                    alignment: Alignment(pipe[0], -1.0),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * pipeWidth,
-                      height:
-                          MediaQuery.of(context).size.height * (1.0 - pipe[1]),
-                      color: Colors.green,
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment(pipe[0], 1.0),
-                    child: Container(
-                      width: MediaQuery.of(context).size.width * pipeWidth,
-                      height:
-                          MediaQuery.of(context).size.height * (1.0 + pipe[2]),
-                      color: Colors.green,
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-
-            // Score display
-            Align(
-              alignment: const Alignment(0, -0.8),
-              child: Text(
-                'Score: $score',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-
-            // Game Over screen
-            if (gameOver)
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text(
-                      'Game Over',
-                      style: TextStyle(
-                        color: Colors.red,
-                        fontSize: 48,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _startGame,
-                      child: const Text(
-                        'Play Again',
-                        style: TextStyle(fontSize: 24),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+            // Start / Game‑over overlays
+            if (_gameState == GameState.ready)
+              _overlayText('TAP BUTTON TO START'),
+            if (_gameState == GameState.gameOver) _gameOverOverlay(),
           ],
         ),
       ),
     );
   }
+
+  Widget _pipe(double height) => Container(
+        width: _pipeWidth,
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.green,
+          border: Border.all(color: Colors.black, width: 2),
+          borderRadius: BorderRadius.circular(5),
+        ),
+      );
+
+  Widget _overlayText(String msg) => Center(
+        child: Text(
+          msg,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 30,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+
+  Widget _gameOverOverlay() => Center(
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.black.withOpacity(0.7),
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'GAME OVER',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontSize: 30,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text('Score: $_score',
+                  style: const TextStyle(color: Colors.white, fontSize: 24)),
+              Text('High Score: $_highScore',
+                  style: const TextStyle(color: Colors.white, fontSize: 24)),
+              const SizedBox(height: 20),
+              const Text('Press button to play again',
+                  style: TextStyle(color: Colors.white, fontSize: 18)),
+            ],
+          ),
+        ),
+      );
 }

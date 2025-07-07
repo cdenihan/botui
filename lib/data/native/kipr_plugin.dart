@@ -253,4 +253,8 @@ class KiprPlugin {
       return 0;
     }
   }
+
+  static Future<void> setSpiMode(bool mode) {
+    return _channel.invokeMethod('spiMode', {'mode': mode});
+  }
 }

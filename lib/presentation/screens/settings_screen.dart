@@ -61,25 +61,64 @@ class SettingsScreen extends StatelessWidget {
         color: Colors.grey[800],
         borderRadius: BorderRadius.circular(8.0),
       ),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(8.0),
-        onTap: () {
-          context
-              .read<SettingsBloc>()
-              .add(SettingTappedEvent(setting: setting, context: context));
-        },
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(setting.icon, size: 48, color: setting.color),
-            const SizedBox(height: 8),
-            Text(
-              setting.label,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+      child: setting.type == SettingType.button
+          ? InkWell(
+              borderRadius: BorderRadius.circular(8.0),
+              onTap: () {
+                context.read<SettingsBloc>().add(
+                    SettingTappedEvent(setting: setting, context: context));
+              },
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(setting.icon, size: 48, color: setting.color),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      setting.label,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                  )
+                ],
+              ),
             )
-          ],
-        ),
-      ),
+          : InkWell(
+              borderRadius: BorderRadius.circular(8.0),
+              onTap: () {
+                context.read<SettingsBloc>().add(
+                      SettingTappedEvent(
+                        setting: setting,
+                        context: context,
+                      ),
+                    );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(setting.icon, size: 48, color: setting.color),
+                    const SizedBox(height: 8),
+                    Text(
+                      setting.label,
+                      style: const TextStyle(color: Colors.white, fontSize: 18),
+                    ),
+                    Switch(
+                      value: setting.value!(),
+                      onChanged: (newValue) {
+                        context.read<SettingsBloc>().add(
+                              SettingTappedEvent(
+                                setting: setting,
+                                context: context,
+                              ),
+                            );
+                      },
+                      activeColor: setting.color,
+                    ),
+                  ],
+                ),
+              ),
+            ),
     );
   }
 }

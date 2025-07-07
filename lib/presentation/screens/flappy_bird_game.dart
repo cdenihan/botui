@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/data/native/kipr_plugin.dart';
+import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 /// Simple Flappy‑Bird‑style game controlled by a digital input on port 10.
 /// Touch input is completely disabled – every flap is triggered by a rising
@@ -45,9 +46,14 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   final List<Offset> _pipeOffsets = [];
 
   /*──────────────────────────────
-  │  Game loop
+  │  Game loop & Dimensions
   └─────────────────────────────*/
   late final AnimationController _controller;
+
+  // MODIFICATION: Game dimensions are now member variables
+  // This avoids passing `context` everywhere and makes logic more reliable.
+  double _gameWidth = 0;
+  double _gameHeight = 0;
 
   /*──────────────────────────────
   │  Hardware input (KIPR)
@@ -83,8 +89,10 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   └─────────────────────────────*/
   Future<void> _loadHighScore() async {
     final prefs = await SharedPreferences.getInstance();
-    _highScore = prefs.getInt('highScore') ?? 0;
-    setState(() {});
+    if (!mounted) return;
+    setState(() {
+      _highScore = prefs.getInt('highScore') ?? 0;
+    });
   }
 
   Future<void> _saveHighScore() async {
@@ -102,11 +110,9 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
     try {
       current = await KiprPlugin.getDigital(_sensorPort) == 1;
     } catch (e) {
-      // If the read fails, treat as "not pressed" to keep game alive
       current = false;
     }
 
-    // Rising‑edge detection → flap
     if (current && !_lastSensorState) _onTap();
     _lastSensorState = current;
   }
@@ -125,22 +131,22 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   }
 
   void _startGame() {
-    final screenWidth = MediaQuery.of(context).size.width;
     setState(() {
       _gameState = GameState.running;
       _pipeOffsets
         ..clear()
         ..addAll([
-          _generatePipeOffset(screenWidth + 100),
-          _generatePipeOffset(screenWidth + 100 + screenWidth / 2),
+          _generatePipeOffset(_gameWidth + 100),
+          _generatePipeOffset(_gameWidth + 100 + _gameWidth / 2),
         ]);
     });
     _controller.repeat();
   }
 
-  void _gameOver() {
+  Future<void> _gameOver() async {
     _controller.stop();
-    _saveHighScore();
+    await _saveHighScore();
+    if (!mounted) return;
     setState(() => _gameState = GameState.gameOver);
   }
 
@@ -166,9 +172,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   void _gameLoop() {
     if (_gameState != GameState.running) return;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     setState(() {
       // Bird physics
       _birdVelocity += _gravity;
@@ -182,9 +185,9 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
       // Scoring
       for (var offset in _pipeOffsets) {
         final pipeCenterX = offset.dx + _pipeWidth / 2;
-        final birdCenterX = screenWidth / 2;
-        if (pipeCenterX < birdCenterX &&
-            pipeCenterX > birdCenterX - _pipeSpeed) {
+        final birdCenterX = _gameWidth / 2;
+        if (pipeCenterX <= birdCenterX &&
+            pipeCenterX >= birdCenterX - _pipeSpeed) {
           _score++;
         }
       }
@@ -192,7 +195,7 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
       // Recycle pipes
       if (_pipeOffsets.isNotEmpty && _pipeOffsets.first.dx < -_pipeWidth) {
         _pipeOffsets.removeAt(0);
-        _pipeOffsets.add(_generatePipeOffset(screenWidth));
+        _pipeOffsets.add(_generatePipeOffset(_gameWidth));
       }
 
       _checkCollisions();
@@ -200,19 +203,22 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   }
 
   void _checkCollisions() {
-    final screenHeight = MediaQuery.of(context).size.height;
-    final screenWidth = MediaQuery.of(context).size.width;
-
     // Bird bounding box
     final birdRect = Rect.fromLTWH(
-      screenWidth / 2 - _birdSize / 2,
+      _gameWidth / 2 - _birdSize / 2,
       _birdY,
       _birdSize,
       _birdSize,
     );
 
+    // Ceiling collision
+    if (_birdY < 0) {
+      _gameOver();
+      return;
+    }
+
     // Ground collision
-    if (_birdY > screenHeight - _birdSize) {
+    if (_birdY > _gameHeight - _birdSize) {
       _gameOver();
       return;
     }
@@ -224,7 +230,7 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
 
       final topPipe = Rect.fromLTWH(offset.dx, 0, _pipeWidth, topPipeHeight);
       final bottomPipe = Rect.fromLTWH(
-          offset.dx, bottomPipeY, _pipeWidth, screenHeight - bottomPipeY);
+          offset.dx, bottomPipeY, _pipeWidth, _gameHeight - bottomPipeY);
 
       if (birdRect.overlaps(topPipe) || birdRect.overlaps(bottomPipe)) {
         _gameOver();
@@ -237,9 +243,9 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   │  Utility
   └─────────────────────────────*/
   Offset _generatePipeOffset(double x) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    const minTop = 100.0;
-    final maxTop = screenHeight - _pipeGap - 100;
+    const minTop = 200.0;
+    // Use the reliable _gameHeight variable
+    final maxTop = _gameHeight - _pipeGap - 200;
     final topHeight = minTop + Random().nextDouble() * (maxTop - minTop);
     return Offset(x, topHeight);
   }
@@ -249,78 +255,86 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   └─────────────────────────────*/
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final screenHeight = MediaQuery.of(context).size.height;
-
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.blue, Colors.lightBlueAccent],
-          ),
-        ),
-        child: Stack(
-          children: [
-            // Pipes
-            for (final offset in _pipeOffsets) ...[
-              // Top
-              Positioned(
-                left: offset.dx,
-                top: 0,
-                child: _pipe(offset.dy),
-              ),
-              // Bottom
-              Positioned(
-                left: offset.dx,
-                top: offset.dy + _pipeGap,
-                child: _pipe(screenHeight - offset.dy - _pipeGap),
-              ),
-            ],
+      appBar: createTopBar(context, "Flappy Wombat"),
+      // MODIFICATION: Using LayoutBuilder to get the correct game dimensions
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Update our game dimension variables whenever the layout changes
+          _gameWidth = constraints.maxWidth;
+          _gameHeight = constraints.maxHeight;
 
-            // Bird
-            Positioned(
-              left: screenWidth / 2 - _birdSize / 2,
-              top: _birdY,
-              child: SizedBox(
-                width: _birdSize,
-                height: _birdSize,
-                child: Image.asset('assets/wombat.png'),
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.blue, Colors.lightBlueAccent],
               ),
             ),
+            child: Stack(
+              children: [
+                // Pipes
+                for (final offset in _pipeOffsets) ...[
+                  // Top
+                  Positioned(
+                    left: offset.dx,
+                    top: 0,
+                    child: _pipe(offset.dy),
+                  ),
+                  // Bottom
+                  Positioned(
+                    left: offset.dx,
+                    top: offset.dy + _pipeGap,
+                    // Use correct game height for the bottom pipe
+                    child: _pipe(_gameHeight - offset.dy - _pipeGap),
+                  ),
+                ],
 
-            // Score
-            Positioned(
-              top: 50,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Text(
-                  '$_score',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 60,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                          blurRadius: 3,
-                          color: Colors.black,
-                          offset: Offset(2, 2))
-                    ],
+                // Bird - MODIFICATION: Reverted to the correct Positioned widget
+                Positioned(
+                  left: _gameWidth / 2 - _birdSize / 2,
+                  top: _birdY,
+                  child: SizedBox(
+                    width: _birdSize,
+                    height: _birdSize,
+                    child: Image.asset('assets/wombat.png'),
                   ),
                 ),
-              ),
-            ),
 
-            // Start / Game‑over overlays
-            if (_gameState == GameState.ready)
-              _overlayText('TAP BUTTON TO START'),
-            if (_gameState == GameState.gameOver) _gameOverOverlay(),
-          ],
-        ),
+                // Score
+                Positioned(
+                  top: 50,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Text(
+                      '$_score',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 60,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                              blurRadius: 3,
+                              color: Colors.black,
+                              offset: Offset(2, 2))
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Start / Game-over overlays
+                if (_gameState == GameState.ready)
+                  _overlayText('TAP BUTTON TO START'),
+                if (_gameState == GameState.gameOver) _gameOverOverlay(),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

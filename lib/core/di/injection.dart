@@ -27,6 +27,7 @@ import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/touch_calibrator.dart';
+import 'package:stpvelox/core/service/battery_check_service.dart';
 
 final sl = GetIt.instance;
 
@@ -35,6 +36,7 @@ Future<void> init() async {
   sl.registerLazySingleton(() => sharedPreferences);
 
   sl.registerLazySingleton(() => TouchCalibrator());
+  sl.registerLazySingleton(() => BatteryCheckService());
   sl.registerFactory(() => SensorBloc(getSensors: sl()));
   sl.registerFactory(() => ProgramBloc(startProgram: sl(), rebootDevice: sl()));
   sl.registerFactory(() => SettingsBloc(repository: sl()));

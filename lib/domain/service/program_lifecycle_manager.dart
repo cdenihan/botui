@@ -39,12 +39,12 @@ class ProgramSession {
     pty.resize(800, 480);
 
     pty.exitCode.then((exitCode) {
-      terminal.write("\r\nProcess finished with exit code $exitCode\r\n");
+      terminal.write("Process finished with exit code $exitCode");
       _isRunning = false;
     });
 
     pty.out.listen((event) => terminal.write(event));
-    pty.write("cd ${program.parentDir} && bash ${program.runScript} ${args.entries.map((e) => pairToString(e.key, e.value)).join(' ')}\n");
+    pty.write("trap 'kill 0' EXIT; cd ${program.parentDir} && bash ${program.runScript} ${args.entries.map((e) => pairToString(e.key, e.value)).join(' ')}");
     _isRunning = true;
   }
 

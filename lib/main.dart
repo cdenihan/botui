@@ -11,6 +11,7 @@ import 'package:stpvelox/presentation/screens/dashboard_screen.dart';
 import 'package:flutter/gestures.dart';
 
 import 'core/utils/touch_calibrator.dart';
+import 'package:stpvelox/core/service/battery_check_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,8 +52,30 @@ class CalibratedGestureRecognizerFactory extends GestureRecognizerFactory<Calibr
   }
 }
 
-class StpVeloxApp extends StatelessWidget {
+class StpVeloxApp extends StatefulWidget {
   const StpVeloxApp({super.key});
+
+  @override
+  State<StpVeloxApp> createState() => _StpVeloxAppState();
+}
+
+class _StpVeloxAppState extends State<StpVeloxApp> {
+  late final BatteryCheckService _batteryCheckService;
+
+  @override
+  void initState() {
+    super.initState();
+    _batteryCheckService = di.sl<BatteryCheckService>();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _batteryCheckService.setContext(context);
+    });
+  }
+
+  @override
+  void dispose() {
+    _batteryCheckService.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {

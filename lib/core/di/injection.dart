@@ -16,9 +16,14 @@ import 'package:stpvelox/domain/usecases/connect_to_wifi.dart';
 import 'package:stpvelox/domain/usecases/forget_wifi.dart';
 import 'package:stpvelox/domain/usecases/get_available_networks.dart';
 import 'package:stpvelox/domain/usecases/get_device_info.dart';
+import 'package:stpvelox/domain/usecases/get_network_mode.dart';
 import 'package:stpvelox/domain/usecases/get_programs.dart';
 import 'package:stpvelox/domain/usecases/get_sensors.dart';
+import 'package:stpvelox/domain/usecases/manage_access_point.dart';
+import 'package:stpvelox/domain/usecases/manage_lan_only_mode.dart';
+import 'package:stpvelox/domain/usecases/manage_saved_networks.dart';
 import 'package:stpvelox/domain/usecases/reboot.dart';
+import 'package:stpvelox/domain/usecases/set_network_mode.dart';
 import 'package:stpvelox/domain/usecases/start_program.dart';
 import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
@@ -46,6 +51,11 @@ Future<void> init() async {
         forgetWifi: sl(),
         getAvailableNetworks: sl(),
         getDeviceInfo: sl(),
+        getNetworkMode: sl(),
+        setNetworkMode: sl(),
+        manageAccessPoint: sl(),
+        manageSavedNetworks: sl(),
+        manageLanOnlyMode: sl(),
       ));
 
   sl.registerLazySingleton(() => GetSensors(repository: sl()));
@@ -55,6 +65,11 @@ Future<void> init() async {
   sl.registerLazySingleton(() => ForgetWifi(repository: sl()));
   sl.registerLazySingleton(() => GetAvailableNetworks(repository: sl()));
   sl.registerLazySingleton(() => GetDeviceInfo(repository: sl()));
+  sl.registerLazySingleton(() => GetNetworkMode(sl()));
+  sl.registerLazySingleton(() => SetNetworkMode(sl()));
+  sl.registerLazySingleton(() => ManageAccessPoint(sl()));
+  sl.registerLazySingleton(() => ManageSavedNetworks(sl()));
+  sl.registerLazySingleton(() => ManageLanOnlyMode(sl()));
   sl.registerLazySingleton(() => RebootDevice());
   sl.registerLazySingleton(() => ProgramLifecycleManager());
   sl.registerLazySingleton(() => LinuxNetworkManager());

@@ -1,5 +1,8 @@
 import 'package:equatable/equatable.dart';
+import 'package:stpvelox/domain/entities/access_point_config.dart';
 import 'package:stpvelox/domain/entities/device_info.dart';
+import 'package:stpvelox/domain/entities/network_mode.dart';
+import 'package:stpvelox/domain/entities/saved_network.dart';
 import 'package:stpvelox/domain/entities/wifi_network.dart';
 
 abstract class WifiState extends Equatable {
@@ -61,3 +64,75 @@ class DeviceInfoLoadedState extends WifiState {
   @override
   List<Object?> get props => [deviceInfo];
 }
+
+// Network Mode States
+class NetworkModeLoadedState extends WifiState {
+  final NetworkMode mode;
+
+  const NetworkModeLoadedState(this.mode);
+
+  @override
+  List<Object?> get props => [mode];
+}
+
+class NetworkModeChangingState extends WifiState {}
+
+class NetworkModeChangedState extends WifiState {
+  final NetworkMode mode;
+
+  const NetworkModeChangedState(this.mode);
+
+  @override
+  List<Object?> get props => [mode];
+}
+
+// Access Point States
+class AccessPointStartingState extends WifiState {}
+
+class AccessPointStartedState extends WifiState {
+  final AccessPointConfig config;
+
+  const AccessPointStartedState(this.config);
+
+  @override
+  List<Object?> get props => [config];
+}
+
+class AccessPointStoppingState extends WifiState {}
+
+class AccessPointStoppedState extends WifiState {}
+
+class AccessPointConfigLoadedState extends WifiState {
+  final AccessPointConfig? config;
+
+  const AccessPointConfigLoadedState(this.config);
+
+  @override
+  List<Object?> get props => [config];
+}
+
+// Saved Networks States
+class SavedNetworksLoadedState extends WifiState {
+  final List<SavedNetwork> networks;
+
+  const SavedNetworksLoadedState(this.networks);
+
+  @override
+  List<Object?> get props => [networks];
+}
+
+class SavedNetworkRemovedState extends WifiState {
+  final String ssid;
+
+  const SavedNetworkRemovedState(this.ssid);
+
+  @override
+  List<Object?> get props => [ssid];
+}
+
+// LAN Only Mode States
+class LanOnlyModeTogglingState extends WifiState {}
+
+class LanOnlyModeEnabledState extends WifiState {}
+
+class LanOnlyModeDisabledState extends WifiState {}

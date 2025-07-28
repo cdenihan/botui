@@ -20,12 +20,12 @@ abstract class IWifiRepository {
 
   Future<DeviceInfo> getDeviceInfo();
 
-  // New methods for network modes and saved networks
+  
   Future<NetworkMode> getCurrentNetworkMode();
   Future<void> setNetworkMode(NetworkMode mode);
   Future<void> initializeNetworkMode();
   
-  // Access Point Mode
+  
   Future<void> startAccessPoint(AccessPointConfig config);
   Future<void> stopAccessPoint();
   Future<bool> isAccessPointActive();
@@ -33,13 +33,13 @@ abstract class IWifiRepository {
   Future<WifiBand> findBestWifiBand();
   Future<int> findBestChannel(WifiBand band);
   
-  // Saved Networks
+  
   Future<List<SavedNetwork>> getSavedNetworks();
   Future<void> saveNetwork(SavedNetwork network);
   Future<void> removeSavedNetwork(String ssid);
   Future<SavedNetwork?> getSavedNetwork(String ssid);
   
-  // LAN Only Mode
+  
   Future<void> enableLanOnlyMode();
   Future<void> disableLanOnlyMode();
   Future<bool> isLanOnlyModeActive();

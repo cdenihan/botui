@@ -1,36 +1,29 @@
 import 'package:flutter/material.dart';
 
 class LargeCheckbox extends StatefulWidget {
-  /// Indicates whether the checkbox is initially checked.
+
   final bool initialValue;
 
-  /// Callback function to notify when the checkbox state changes.
-  final ValueChanged<bool> onChanged;
+    final ValueChanged<bool> onChanged;
 
-  /// Optional label displayed next to the checkbox.
-  final String? label;
+    final String? label;
 
-  /// Size of the checkbox in pixels.
-  final double size;
+    final double size;
 
-  /// Color of the checkbox when checked.
-  final Color activeColor;
+    final Color activeColor;
 
-  /// Color of the checkmark icon.
-  final Color checkColor;
+    final Color checkColor;
 
-  /// Color of the checkbox border when unchecked.
-  final Color borderColor;
+    final Color borderColor;
 
-  /// Duration of the animation when toggling.
-  final Duration animationDuration;
+    final Duration animationDuration;
 
   const LargeCheckbox({
     Key? key,
     this.initialValue = false,
     required this.onChanged,
     this.label,
-    this.size = 60.0, // Default size
+    this.size = 60.0, 
     this.activeColor = Colors.blue,
     this.checkColor = Colors.white,
     this.borderColor = Colors.grey,
@@ -52,13 +45,13 @@ class _LargeCheckboxState extends State<LargeCheckbox>
     super.initState();
     _isChecked = widget.initialValue;
 
-    // Initialize animation controller for scaling effect
+    
     _animationController = AnimationController(
       duration: widget.animationDuration,
       vsync: this,
     );
 
-    // Define a Tween for scaling from 1.0 to 1.2
+    
     _scaleAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
       CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
     );
@@ -75,7 +68,7 @@ class _LargeCheckboxState extends State<LargeCheckbox>
       _isChecked = !_isChecked;
     });
 
-    // Trigger the scaling animation
+    
     if (_isChecked) {
       _animationController.forward().then((_) {
         _animationController.reverse();
@@ -86,7 +79,7 @@ class _LargeCheckboxState extends State<LargeCheckbox>
       });
     }
 
-    // Notify external widgets
+    
     widget.onChanged(_isChecked);
   }
 
@@ -101,7 +94,7 @@ class _LargeCheckboxState extends State<LargeCheckbox>
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Animated Checkbox Container
+            
             ScaleTransition(
               scale: _scaleAnimation,
               child: AnimatedContainer(

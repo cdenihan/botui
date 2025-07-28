@@ -34,7 +34,7 @@ class KiprPlugin {
     }
   }
 
-  // Existing Gyro Methods
+  
   static Future<double> getGyroX() async {
     try {
       final double gyroXValue = await _channel.invokeMethod<double>('gyroX') ?? 0;
@@ -125,7 +125,7 @@ class KiprPlugin {
     }
   }
 
-  // Existing Analog Method
+  
   static Future<int> getAnalog(int port) async {
     try {
       final int analogValue = await _channel.invokeMethod<int>(

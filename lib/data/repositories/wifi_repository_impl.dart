@@ -39,7 +39,7 @@ class WifiRepositoryImpl implements IWifiRepository {
     }
   }
 
-  // Network Mode Management
+  
   @override
   Future<NetworkMode> getCurrentNetworkMode() async {
     return await networkManager.getCurrentNetworkMode();
@@ -55,9 +55,9 @@ class WifiRepositoryImpl implements IWifiRepository {
     final currentMode = await networkManager.getCurrentNetworkMode();
     print('Initializing network mode: $currentMode');
     
-    // Don't auto-fallback to client mode - preserve user's choice
+    
     if (currentMode == NetworkMode.accessPoint) {
-      // Auto-start AP if it was the last selected mode
+      
       final config = await networkManager.getAccessPointConfig();
       if (config != null) {
         try {
@@ -65,25 +65,25 @@ class WifiRepositoryImpl implements IWifiRepository {
           print('Successfully auto-started AP with config: ${config.ssid}');
         } catch (e) {
           print('Failed to auto-start AP: $e - but keeping AP mode selection');
-          // Don't change mode - let user manually start AP or switch modes
+          
         }
       } else {
         print('No AP config found - keeping AP mode selection');
-        // Keep the mode as AP even if no config - user can configure later
+        
       }
     } else if (currentMode == NetworkMode.lanOnly) {
-      // Ensure LAN only mode is properly enabled
+      
       try {
         await networkManager.enableLanOnlyMode();
         print('Successfully enabled LAN only mode');
       } catch (e) {
         print('Failed to enable LAN only mode: $e - but keeping LAN mode selection');
-        // Don't change mode - let user manually troubleshoot or switch modes
+        
       }
     } else {
-      // Client mode - ensure WiFi is ready
+      
       try {
-        // Just ensure WiFi is enabled, don't force any connections
+        
         print('Client mode - ensuring WiFi is enabled');
       } catch (e) {
         print('Note: Issue preparing client mode: $e');
@@ -91,7 +91,7 @@ class WifiRepositoryImpl implements IWifiRepository {
     }
   }
 
-  // Access Point Mode
+  
   @override
   Future<void> startAccessPoint(AccessPointConfig config) async {
     await networkManager.startAccessPoint(config);
@@ -122,7 +122,7 @@ class WifiRepositoryImpl implements IWifiRepository {
     return await networkManager.findBestChannel(band);
   }
 
-  // Saved Networks
+  
   @override
   Future<List<SavedNetwork>> getSavedNetworks() async {
     return await networkManager.getSavedNetworks();
@@ -143,7 +143,7 @@ class WifiRepositoryImpl implements IWifiRepository {
     return await networkManager.getSavedNetwork(ssid);
   }
 
-  // LAN Only Mode
+  
   @override
   Future<void> enableLanOnlyMode() async {
     await networkManager.enableLanOnlyMode();

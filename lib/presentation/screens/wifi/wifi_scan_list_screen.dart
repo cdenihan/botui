@@ -4,8 +4,8 @@ import 'package:stpvelox/domain/entities/wifi_encryption_type.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_event.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_state.dart';
-import 'package:stpvelox/presentation/screens/wifi/wifi_manual_connect_screen.dart';
 import 'package:stpvelox/presentation/screens/wifi/wifi_detail_screen.dart';
+import 'package:stpvelox/presentation/screens/wifi/wifi_manual_connect_screen.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 class WifiScanListScreen extends StatefulWidget {
@@ -32,7 +32,6 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
             padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
-                // Refresh Button - Larger for better touch
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
@@ -41,7 +40,8 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                     icon: const Icon(Icons.refresh, size: 28),
                     label: const Text(
                       'Refresh',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -55,7 +55,6 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                   ),
                 ),
                 const SizedBox(width: 16),
-                // Manual Connect Button
                 Expanded(
                   child: ElevatedButton.icon(
                     onPressed: () {
@@ -68,7 +67,8 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                     icon: const Icon(Icons.add, size: 28),
                     label: const Text(
                       'Manual',
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                     ),
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -85,7 +85,6 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
             ),
           ),
           const Divider(height: 1),
-          // Expanded List View
           Expanded(
             child: BlocBuilder<WifiBloc, WifiState>(
               builder: (context, state) {
@@ -104,8 +103,10 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                       itemBuilder: (context, index) {
                         final network = state.networks[index];
                         return Card(
-                          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          margin: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 4),
                           child: ListTile(
+                            tileColor: Colors.grey[900],
                             title: Text(
                               network.ssid,
                               style: TextStyle(
@@ -122,17 +123,18 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                                   network.isConnected
                                       ? 'Connected'
                                       : network.isKnown
-                                      ? 'Saved Network - Tap to connect'
-                                      : 'Tap to configure',
+                                          ? 'Saved Network - Tap to connect'
+                                          : 'Tap to configure',
                                   style: TextStyle(
                                     color: network.isConnected
                                         ? Colors.green
                                         : network.isKnown
-                                        ? Colors.blue
-                                        : Colors.grey,
+                                            ? Colors.blue
+                                            : Colors.grey,
                                   ),
                                 ),
-                                if (network.encryptionType != WifiEncryptionType.open)
+                                if (network.encryptionType !=
+                                    WifiEncryptionType.open)
                                   Text(
                                     _getEncryptionLabel(network.encryptionType),
                                     style: const TextStyle(
@@ -150,10 +152,11 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                                   color: network.isConnected
                                       ? Colors.green
                                       : network.isKnown
-                                      ? Colors.blue
-                                      : Colors.grey,
+                                          ? Colors.blue
+                                          : Colors.grey,
                                 ),
-                                if (network.encryptionType != WifiEncryptionType.open)
+                                if (network.encryptionType !=
+                                    WifiEncryptionType.open)
                                   const Icon(
                                     Icons.lock,
                                     size: 12,
@@ -165,10 +168,12 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                                 ? IconButton(
                                     onPressed: () {
                                       context.read<WifiBloc>().add(
-                                        ConnectToSavedNetworkEvent(network.ssid),
-                                      );
+                                            ConnectToSavedNetworkEvent(
+                                                network.ssid),
+                                          );
                                     },
-                                    icon: const Icon(Icons.play_arrow, color: Colors.green),
+                                    icon: const Icon(Icons.play_arrow,
+                                        color: Colors.green),
                                     tooltip: 'Quick Connect',
                                   )
                                 : Icon(
@@ -178,17 +183,16 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                                   ),
                             onTap: () {
                               if (network.isKnown && !network.isConnected) {
-                                // Quick connect for saved networks
                                 context.read<WifiBloc>().add(
-                                  ConnectToSavedNetworkEvent(network.ssid),
-                                );
+                                      ConnectToSavedNetworkEvent(network.ssid),
+                                    );
                               } else {
-                                // Navigate to detail screen for configuration
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (_) =>
-                                          WifiDetailScreen(network: network)),
+                                    builder: (_) =>
+                                        WifiDetailScreen(network: network),
+                                  ),
                                 );
                               }
                             },
@@ -200,9 +204,9 @@ class _WifiScanListScreenState extends State<WifiScanListScreen> {
                 } else if (state is WifiErrorState) {
                   return Center(
                       child: Text(
-                        'Error: ${state.message}',
-                        style: const TextStyle(color: Colors.red),
-                      ));
+                    'Error: ${state.message}',
+                    style: const TextStyle(color: Colors.red),
+                  ));
                 }
                 return const SizedBox();
               },

@@ -1,38 +1,27 @@
 import 'package:flutter/material.dart';
 
 class LargeDropdown extends StatefulWidget {
-  /// List of string options to display in the dropdown.
-  final List<String> options;
+    final List<String> options;
 
-  /// The initially selected value.
-  final String? initialSelected;
+    final String? initialSelected;
 
-  /// Callback function to notify parent widgets of selection changes.
-  final ValueChanged<String> onChanged;
+    final ValueChanged<String> onChanged;
 
-  /// Optional hint text when no value is selected.
-  final String? hint;
+    final String? hint;
 
-  /// Optional label text displayed above the dropdown.
-  final String? label;
+    final String? label;
 
-  /// Font size for the dropdown items and texts.
-  final double fontSize;
+    final double fontSize;
 
-  /// Height of the dropdown button.
-  final double height;
+    final double height;
 
-  /// Width of the dropdown button.
-  final double width;
+    final double width;
 
-  /// Background color of the dropdown button.
-  final Color backgroundColor;
+    final Color backgroundColor;
 
-  /// Text color of the selected value.
-  final Color textColor;
+    final Color textColor;
 
-  /// Border color of the dropdown button.
-  final Color borderColor;
+    final Color borderColor;
 
   const LargeDropdown({
     Key? key,
@@ -50,7 +39,7 @@ class LargeDropdown extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  _LargeDropdownState createState() => _LargeDropdownState();
+  State<LargeDropdown> createState() => _LargeDropdownState();
 }
 
 class _LargeDropdownState extends State<LargeDropdown> {
@@ -59,7 +48,7 @@ class _LargeDropdownState extends State<LargeDropdown> {
   @override
   void initState() {
     super.initState();
-    // Initialize the selected value. If initialSelected is not in options, default to the first option.
+    
     if (widget.initialSelected != null &&
         widget.options.contains(widget.initialSelected)) {
       _currentSelected = widget.initialSelected;
@@ -73,7 +62,7 @@ class _LargeDropdownState extends State<LargeDropdown> {
   @override
   void didUpdateWidget(covariant LargeDropdown oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // If the options list changes and the current selected is no longer valid, update it.
+    
     if (!widget.options.contains(_currentSelected)) {
       if (widget.initialSelected != null &&
           widget.options.contains(widget.initialSelected)) {
@@ -88,7 +77,7 @@ class _LargeDropdownState extends State<LargeDropdown> {
 
   @override
   Widget build(BuildContext context) {
-    // Handle the case where options list is empty
+    
     if (widget.options.isEmpty) {
       return Text(
         'No options available',
@@ -99,7 +88,7 @@ class _LargeDropdownState extends State<LargeDropdown> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Optional label
+        
         if (widget.label != null) ...[
           Text(
             widget.label!,

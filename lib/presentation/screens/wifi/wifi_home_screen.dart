@@ -8,6 +8,8 @@ import 'package:stpvelox/presentation/screens/wifi/device_info_screen.dart';
 import 'package:stpvelox/presentation/screens/wifi/saved_networks_screen.dart';
 import 'package:stpvelox/presentation/screens/wifi/wifi_scan_list_screen.dart';
 import 'package:stpvelox/presentation/widgets/dashboard_tile.dart';
+import 'package:stpvelox/presentation/widgets/grid_tile.dart';
+import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 import 'package:stpvelox/domain/entities/network_mode.dart';
 
@@ -30,12 +32,12 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
     
     print('Mode change requested: $currentMode -> $selectedMode');
     
-    // Set new mode first - the BLoC will handle stopping current services
+    
     bloc.add(SetNetworkModeEvent(selectedMode));
     
-    // Then start new mode services
+    
     if (selectedMode == NetworkMode.accessPoint) {
-      // Auto-start AP with last saved config or default
+      
       Future.delayed(const Duration(milliseconds: 300), () {
         bloc.add(StartAccessPointWithLastConfigEvent());
       });
@@ -45,7 +47,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
       });
     }
     
-    // Show feedback to user
+    
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Switching to ${_getModeDisplayName(selectedMode)}...'),
@@ -75,7 +77,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
           padding: const EdgeInsets.all(32.0),
           child: Column(
             children: [
-              // Network Mode Selection - Compact layout for small screen
+              
               BlocBuilder<WifiBloc, WifiState>(
                 builder: (context, state) {
                   NetworkMode currentMode = NetworkMode.client;
@@ -139,7 +141,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                               ],
                               onChanged: (NetworkMode? selectedMode) {
                                 if (selectedMode != null && selectedMode != currentMode) {
-                                  // Handle mode switching with proper AP management
+                                  
                                   _handleModeChange(context, currentMode, selectedMode);
                                 }
                               },
@@ -152,7 +154,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              // Network Options Grid
+              
               Expanded(
                 child: BlocBuilder<WifiBloc, WifiState>(
                   builder: (context, state) {
@@ -161,15 +163,10 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                       currentMode = state.mode;
                     }
 
-                    return GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 20,
-                      mainAxisSpacing: 20,
-                      childAspectRatio: 1.1, // Slightly taller for better touch targets
+                    return ResponsiveGrid(
                       children: [
-                        // Client Mode Options
                         if (currentMode == NetworkMode.client) ...[
-                          DashboardTile(
+                          ResponsiveGridTile(
                             label: "Connect to WiFi",
                             icon: Icons.wifi,
                             destination: const WifiScanListScreen(),
@@ -183,7 +180,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                           ),
                         ],
                         
-                        // Access Point Mode Options
+                        
                         if (currentMode == NetworkMode.accessPoint) ...[
                           DashboardTile(
                             label: "Hotspot Settings",
@@ -199,7 +196,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                           ),
                         ],
                         
-                        // Common Options (always shown)
+                        
                         DashboardTile(
                           label: "Device Info",
                           icon: Icons.info,
@@ -207,7 +204,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                           color: Colors.teal[600]!,
                         ),
                         
-                        // Tournament Mode specific
+                        
                         if (currentMode == NetworkMode.lanOnly)
                           DashboardTile(
                             label: "LAN Status",

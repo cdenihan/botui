@@ -33,7 +33,7 @@ class ForgetNetworkEvent extends WifiEvent {
 
 class LoadDeviceInfoEvent extends WifiEvent {}
 
-// Network Mode Events
+
 class LoadNetworkModeEvent extends WifiEvent {}
 
 class SetNetworkModeEvent extends WifiEvent {
@@ -44,7 +44,7 @@ class SetNetworkModeEvent extends WifiEvent {
   List<Object?> get props => [mode];
 }
 
-// Access Point Events
+
 class StartAccessPointEvent extends WifiEvent {
   final AccessPointConfig config;
   const StartAccessPointEvent(this.config);
@@ -59,7 +59,7 @@ class LoadAccessPointConfigEvent extends WifiEvent {}
 
 class StartAccessPointWithLastConfigEvent extends WifiEvent {}
 
-// Saved Networks Events
+
 class LoadSavedNetworksEvent extends WifiEvent {}
 
 class RemoveSavedNetworkEvent extends WifiEvent {
@@ -78,7 +78,7 @@ class ConnectToSavedNetworkEvent extends WifiEvent {
   List<Object?> get props => [ssid];
 }
 
-// LAN Only Mode Events
+
 class EnableLanOnlyModeEvent extends WifiEvent {}
 
 class DisableLanOnlyModeEvent extends WifiEvent {}

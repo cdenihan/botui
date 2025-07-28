@@ -30,11 +30,11 @@ extension WifiBandExtension on WifiBand {
   List<int> get channels {
     switch (this) {
       case WifiBand.band2_4GHz:
-        return [1, 6, 11]; // Common non-overlapping channels
+        return [1, 6, 11]; 
       case WifiBand.band5GHz:
-        return [36, 40, 44, 48, 149, 153, 157, 161]; // Common 5GHz channels
+        return [36, 40, 44, 48, 149, 153, 157, 161]; 
       case WifiBand.bandAuto:
-        return [36, 40, 44, 48, 149, 153, 157, 161]; // Prefer 5GHz
+        return [36, 40, 44, 48, 149, 153, 157, 161]; 
     }
   }
 }

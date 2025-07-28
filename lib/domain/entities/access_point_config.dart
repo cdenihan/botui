@@ -14,7 +14,7 @@ class AccessPointConfig {
     required this.ssid,
     required this.password,
     this.band = WifiBand.bandAuto,
-    this.channel = 0, // 0 means auto-select
+    this.channel = 0, 
     this.encryptionType = WifiEncryptionType.wpa3Personal,
     this.hidden = false,
     this.maxClients = 8,

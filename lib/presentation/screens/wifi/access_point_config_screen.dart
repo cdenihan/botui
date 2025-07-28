@@ -32,7 +32,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
     super.initState();
     context.read<WifiBloc>().add(LoadAccessPointConfigEvent());
     
-    // Set default values
+    
     _ssidController.text = 'STP-Velox-Robot';
     _passwordController.text = PasswordGenerator.generateReadablePassword();
   }
@@ -86,7 +86,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // Status Card with better contrast
+                
                 Container(
                   decoration: BoxDecoration(
                     color: _isStarted ? Colors.green[900] : Colors.grey[800],
@@ -135,7 +135,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Network Configuration
+                
                 Card(
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
@@ -148,7 +148,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // SSID
+                        
                         TextFormField(
                           controller: _ssidController,
                           decoration: const InputDecoration(
@@ -168,7 +168,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Password
+                        
                         TextFormField(
                           controller: _passwordController,
                           obscureText: !_showPassword,
@@ -212,7 +212,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // WiFi Band
+                        
                         DropdownButtonFormField<WifiBand>(
                           value: _selectedBand,
                           decoration: const InputDecoration(
@@ -236,7 +236,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Security
+                        
                         DropdownButtonFormField<WifiEncryptionType>(
                           value: _encryptionType,
                           decoration: const InputDecoration(
@@ -278,7 +278,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Hidden Network
+                        
                         SwitchListTile(
                           title: const Text('Hidden Network'),
                           subtitle: const Text('Network won\'t appear in WiFi scan results'),
@@ -295,7 +295,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                 ),
                 const SizedBox(height: 24),
 
-                // Control Buttons - Larger for better touch targets
+                
                 Row(
                   children: [
                     if (_isStarted) ...[
@@ -378,7 +378,7 @@ class _AccessPointConfigScreenState extends State<AccessPointConfigScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Info Card with better contrast
+                
                 Container(
                   decoration: BoxDecoration(
                     color: Colors.blue[900],

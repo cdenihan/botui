@@ -14,28 +14,28 @@ import '../../domain/entities/wifi_encryption_type.dart';
 
 class LinuxNetworkManager {
   Future<List<WifiNetwork>> scanNetworks() async {
-    // Ensure WiFi is enabled and interface is ready
+    
     await _ensureWifiEnabled();
     
-    // Force a fresh scan first
+    
     await SudoProcess.run('nmcli', ['device', 'wifi', 'rescan']);
     
-    // Wait a moment for scan to complete
+    
     await Future.delayed(const Duration(milliseconds: 1000));
     
-    // Now get the results
+    
     final result = await SudoProcess.run('nmcli', ['-f', 'SSID,SECURITY,IN-USE', 'dev', 'wifi']);
     if (result.exitCode != 0) {
       throw Exception('Failed to scan WiFi networks: ${result.stderr}');
     }
 
-    // Get saved networks to check if scanned networks are known
+    
     final savedNetworks = await getSavedNetworks();
     final savedSSIDs = savedNetworks.map((n) => n.ssid).toSet();
 
-    // Parse the output
-    // Example line: "MyHomeWifi  WPA2     *"
-    // This is a simplification; real parsing might differ.
+    
+    
+    
     final lines = (result.stdout as String).split('\n').skip(1);
     final networks = <WifiNetwork>[];
     for (var line in lines) {
@@ -71,11 +71,11 @@ class LinuxNetworkManager {
   Future<void> connect(String ssid, WifiEncryptionType encType,
       WifiCredentials credentials) async {
     List<String> cmd = ['device', 'wifi', 'connect', ssid];
-    // For enterprise networks, nmcli might require a connection add or modify command.
-    // This is a simplified assumption.
+    
+    
     switch (encType) {
       case WifiEncryptionType.open:
-        // Just try to connect no password
+        
         break;
       case WifiEncryptionType.wpa2Personal:
       case WifiEncryptionType.wpa3Personal:
@@ -85,10 +85,10 @@ class LinuxNetworkManager {
       case WifiEncryptionType.wpa2Enterprise:
       case WifiEncryptionType.wpa3Enterprise:
         final entCred = credentials as EnterpriseCredentials;
-        // Enterprise networks often require nmcli con add ... with 802-1x settings.
-        // For simplicity:
-        // nmcli connection add type wifi con-name "$SSID" ifname wlan0 ssid "$SSID" -- wifi-sec.key-mgmt wpa-eap 802-1x.eap peap 802-1x.identity user 802-1x.password pass
-        // This is a one-liner example. Adjust as needed. In reality, you'd create a connection profile.
+        
+        
+        
+        
         await SudoProcess.run('nmcli', [
           'connection',
           'add',
@@ -111,7 +111,7 @@ class LinuxNetworkManager {
           if (entCred.caCertificatePath != null) '802-1x.ca-cert' else '',
           if (entCred.caCertificatePath != null) entCred.caCertificatePath!,
         ]);
-        // After adding, try to bring it up
+        
         await SudoProcess.run('nmcli', ['connection', 'up', ssid]);
         return;
     }
@@ -131,14 +131,14 @@ class LinuxNetworkManager {
 
   Future<DeviceInfo> getDeviceInfo() async {
     try {
-      // Get IP Address
+      
       final ipResult = await SudoProcess.run('hostname', ['-I']);
       if (ipResult.exitCode != 0) {
         throw Exception('Failed to retrieve IP address: ${ipResult.stderr}');
       }
       final ipAddress = (ipResult.stdout as String).trim().split(' ').first;
 
-      // Get Currently Connected Network
+      
       final connResult = await SudoProcess.run(
           'nmcli', ['-t', '-f', 'SSID,SECURITY,IN-USE', 'dev', 'wifi']);
       if (connResult.exitCode != 0) {
@@ -150,7 +150,7 @@ class LinuxNetworkManager {
       WifiNetwork? connectedNetwork;
       for (var line in lines) {
         if (line.contains('*')) {
-          // '*' indicates current connection
+          
           final parts = line.split(':');
           if (parts.isNotEmpty) {
             final ssid = parts[0];
@@ -184,7 +184,7 @@ class LinuxNetworkManager {
     }
   }
 
-  // Network Mode Management
+  
   Future<NetworkMode> getCurrentNetworkMode() async {
     final prefs = await SharedPreferences.getInstance();
     final mode = prefs.getString('network_mode') ?? 'client';
@@ -217,13 +217,13 @@ class LinuxNetworkManager {
     await prefs.setString('network_mode', modeString);
   }
 
-  // Access Point Management
+  
   Future<void> startAccessPoint(AccessPointConfig config) async {
     try {
-      // Stop any existing AP
+      
       await stopAccessPoint();
       
-      // Find best channel if not specified
+      
       if (config.channel == 0) {
         final bestChannel = await findBestChannel(config.band);
         config = AccessPointConfig(
@@ -237,7 +237,7 @@ class LinuxNetworkManager {
         );
       }
       
-      // Create AP connection
+      
       final connectionName = 'STP-Velox-AP';
       final args = [
         'connection', 'add',
@@ -267,13 +267,13 @@ class LinuxNetworkManager {
         throw Exception('Failed to create AP: ${result.stderr}');
       }
       
-      // Activate the connection
+      
       final activateResult = await SudoProcess.run('nmcli', ['connection', 'up', connectionName]);
       if (activateResult.exitCode != 0) {
         throw Exception('Failed to activate AP: ${activateResult.stderr}');
       }
       
-      // Save AP config
+      
       await _saveAccessPointConfig(config);
       await setNetworkMode(NetworkMode.accessPoint);
       
@@ -286,22 +286,22 @@ class LinuxNetworkManager {
     try {
       final connectionName = 'STP-Velox-AP';
       
-      // Try to deactivate
+      
       await SudoProcess.run('nmcli', ['connection', 'down', connectionName]);
       
-      // Delete the connection
+      
       await SudoProcess.run('nmcli', ['connection', 'delete', connectionName]);
       
-      // Ensure WiFi interface is properly reset for client mode
+      
       await _resetWifiInterface();
       
     } catch (e) {
-      // Ignore errors when stopping - connection might not exist
-      // But still try to reset the interface
+      
+      
       try {
         await _resetWifiInterface();
       } catch (resetError) {
-        // Ignore reset errors too
+        
       }
     }
   }
@@ -366,7 +366,7 @@ class LinuxNetworkManager {
 
   Future<WifiBand> findBestWifiBand() async {
     try {
-      // Check if 5GHz is supported
+      
       final result = await SudoProcess.run('iw', ['phy', 'phy0', 'info']);
       if (result.exitCode == 0 && (result.stdout as String).contains('5180')) {
         return WifiBand.band5GHz;
@@ -380,7 +380,7 @@ class LinuxNetworkManager {
 
   Future<int> findBestChannel(WifiBand band) async {
     try {
-      // Scan for interference and find the least used channel
+      
       final channels = band.channels;
       final interference = <int, int>{};
       
@@ -388,7 +388,7 @@ class LinuxNetworkManager {
         interference[channel] = 0;
       }
       
-      // Simple scan for networks and count overlaps
+      
       final scanResult = await SudoProcess.run('iwlist', ['wlan0', 'scan']);
       if (scanResult.exitCode == 0) {
         final output = scanResult.stdout as String;
@@ -407,7 +407,7 @@ class LinuxNetworkManager {
         }
       }
       
-      // Return the channel with least interference
+      
       int bestChannel = channels.first;
       int minInterference = interference[bestChannel] ?? 0;
       
@@ -421,12 +421,12 @@ class LinuxNetworkManager {
       
       return bestChannel;
     } catch (e) {
-      // Return default channel
+      
       return band.channels.first;
     }
   }
 
-  // Saved Networks Management
+  
   Future<List<SavedNetwork>> getSavedNetworks() async {
     final prefs = await SharedPreferences.getInstance();
     final savedNetworksJson = prefs.getStringList('saved_networks') ?? [];
@@ -463,13 +463,13 @@ class LinuxNetworkManager {
     final prefs = await SharedPreferences.getInstance();
     final savedNetworks = await getSavedNetworks();
     
-    // Remove existing network with same SSID
+    
     savedNetworks.removeWhere((n) => n.ssid == network.ssid);
     
-    // Add new network
+    
     savedNetworks.add(network);
     
-    // Convert to JSON and save
+    
     final networksJson = savedNetworks.map((n) {
       final Map<String, dynamic> networkMap = {
         'ssid': n.ssid,
@@ -537,13 +537,13 @@ class LinuxNetworkManager {
     }
   }
 
-  // LAN Only Mode
+  
   Future<void> enableLanOnlyMode() async {
     try {
-      // Disable WiFi
+      
       await SudoProcess.run('nmcli', ['radio', 'wifi', 'off']);
       
-      // Ensure ethernet is enabled
+      
       await SudoProcess.run('nmcli', ['connection', 'up', 'Wired connection 1']);
       
       await setNetworkMode(NetworkMode.lanOnly);
@@ -554,7 +554,7 @@ class LinuxNetworkManager {
 
   Future<void> disableLanOnlyMode() async {
     try {
-      // Re-enable WiFi
+      
       await SudoProcess.run('nmcli', ['radio', 'wifi', 'on']);
       
       await setNetworkMode(NetworkMode.client);
@@ -588,47 +588,47 @@ class LinuxNetworkManager {
     }
   }
   
-  // Helper method to ensure WiFi is enabled and ready
+  
   Future<void> _ensureWifiEnabled() async {
     try {
-      // Check if WiFi radio is enabled
+      
       final radioResult = await SudoProcess.run('nmcli', ['radio', 'wifi']);
       if (radioResult.exitCode == 0) {
         final output = (radioResult.stdout as String).trim();
         if (output.contains('disabled')) {
-          // Enable WiFi radio
+          
           await SudoProcess.run('nmcli', ['radio', 'wifi', 'on']);
-          // Wait for interface to come up
+          
           await Future.delayed(const Duration(milliseconds: 2000));
         }
       }
       
-      // Ensure wlan0 interface is up
+      
       await SudoProcess.run('nmcli', ['device', 'set', 'wlan0', 'managed', 'yes']);
       
     } catch (e) {
-      // Log but don't throw - scanning might still work
+      
       print('Warning: Could not ensure WiFi enabled: $e');
     }
   }
   
-  // Helper method to reset WiFi interface after AP mode
+  
   Future<void> _resetWifiInterface() async {
     try {
-      // Bring interface down and up to reset state
+      
       await SudoProcess.run('ip', ['link', 'set', 'wlan0', 'down']);
       await Future.delayed(const Duration(milliseconds: 500));
       await SudoProcess.run('ip', ['link', 'set', 'wlan0', 'up']);
       await Future.delayed(const Duration(milliseconds: 500));
       
-      // Ensure it's managed by NetworkManager
+      
       await SudoProcess.run('nmcli', ['device', 'set', 'wlan0', 'managed', 'yes']);
       
-      // Force a reconnect to any available saved networks
+      
       await SudoProcess.run('nmcli', ['device', 'wifi', 'rescan']);
       
     } catch (e) {
-      // Log but don't throw
+      
       print('Warning: Could not reset WiFi interface: $e');
     }
   }

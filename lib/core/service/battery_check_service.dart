@@ -66,9 +66,9 @@ class BatteryCheckService {
   }
 
   Future<void> _shutdownRobot() async {
-    // Assuming reboot use case can also handle shutdown.
-    // If there's a separate shutdown function, it should be used here.
-    await sl<RebootDevice>().call(true); // Pass true for shutdown
+    
+    
+    await sl<RebootDevice>().call(true); 
   }
 
   void dispose() {

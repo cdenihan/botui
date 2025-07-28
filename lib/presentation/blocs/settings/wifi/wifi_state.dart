@@ -65,7 +65,7 @@ class DeviceInfoLoadedState extends WifiState {
   List<Object?> get props => [deviceInfo];
 }
 
-// Network Mode States
+
 class NetworkModeLoadedState extends WifiState {
   final NetworkMode mode;
 
@@ -86,7 +86,7 @@ class NetworkModeChangedState extends WifiState {
   List<Object?> get props => [mode];
 }
 
-// Access Point States
+
 class AccessPointStartingState extends WifiState {}
 
 class AccessPointStartedState extends WifiState {
@@ -111,7 +111,7 @@ class AccessPointConfigLoadedState extends WifiState {
   List<Object?> get props => [config];
 }
 
-// Saved Networks States
+
 class SavedNetworksLoadedState extends WifiState {
   final List<SavedNetwork> networks;
 
@@ -130,7 +130,7 @@ class SavedNetworkRemovedState extends WifiState {
   List<Object?> get props => [ssid];
 }
 
-// LAN Only Mode States
+
 class LanOnlyModeTogglingState extends WifiState {}
 
 class LanOnlyModeEnabledState extends WifiState {}

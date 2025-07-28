@@ -84,7 +84,7 @@ class _SavedNetworksScreenState extends State<SavedNetworksScreen> {
                     );
                   }
 
-                  // Sort networks by last connected time (most recent first)
+                  
                   final sortedNetworks = List.of(state.networks)
                     ..sort((a, b) => b.lastConnected.compareTo(a.lastConnected));
 
@@ -169,7 +169,7 @@ class _SavedNetworksScreenState extends State<SavedNetworksScreen> {
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              // Connect button - larger for better touch targets
+                              
                               Container(
                                 margin: const EdgeInsets.only(right: 8),
                                 child: ElevatedButton(
@@ -189,7 +189,7 @@ class _SavedNetworksScreenState extends State<SavedNetworksScreen> {
                                   child: const Icon(Icons.wifi, size: 24),
                                 ),
                               ),
-                              // Remove button
+                              
                               ElevatedButton(
                                 onPressed: () {
                                   _showRemoveDialog(context, network.ssid);

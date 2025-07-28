@@ -41,22 +41,22 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     on<ForgetNetworkEvent>(_onForgetNetwork);
     on<LoadDeviceInfoEvent>(_onLoadDeviceInfo);
     
-    // Network Mode Events
+    
     on<LoadNetworkModeEvent>(_onLoadNetworkMode);
     on<SetNetworkModeEvent>(_onSetNetworkMode);
     
-    // Access Point Events  
+    
     on<StartAccessPointEvent>(_onStartAccessPoint);
     on<StopAccessPointEvent>(_onStopAccessPoint);
     on<LoadAccessPointConfigEvent>(_onLoadAccessPointConfig);
     on<StartAccessPointWithLastConfigEvent>(_onStartAccessPointWithLastConfig);
     
-    // Saved Networks Events
+    
     on<LoadSavedNetworksEvent>(_onLoadSavedNetworks);
     on<RemoveSavedNetworkEvent>(_onRemoveSavedNetwork);
     on<ConnectToSavedNetworkEvent>(_onConnectToSavedNetwork);
     
-    // LAN Only Mode Events
+    
     on<EnableLanOnlyModeEvent>(_onEnableLanOnlyMode);
     on<DisableLanOnlyModeEvent>(_onDisableLanOnlyMode);
   }
@@ -76,7 +76,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     try {
       await connectToWifi(event.ssid, event.encryptionType, event.credentials);
       
-      // Save the network for future use
+      
       final savedNetwork = SavedNetwork(
         ssid: event.ssid,
         encryptionType: event.encryptionType,
@@ -86,7 +86,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
       await manageSavedNetworks.saveNetwork(savedNetwork);
       
       emit(WifiConnectedState(event.ssid));
-      // Reload networks and device info after connection
+      
       final networks = await getAvailableNetworks();
       emit(WifiLoadedState(networks));
       add(LoadDeviceInfoEvent());
@@ -100,7 +100,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     try {
       await forgetWifi(event.ssid);
       emit(WifiForgottenState(event.ssid));
-      // Reload networks and device info after forgetting
+      
       final networks = await getAvailableNetworks();
       emit(WifiLoadedState(networks));
       add(LoadDeviceInfoEvent());
@@ -118,7 +118,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     }
   }
 
-  // Network Mode Event Handlers
+  
   Future<void> _onLoadNetworkMode(LoadNetworkModeEvent event, Emitter<WifiState> emit) async {
     try {
       final mode = await getNetworkMode();
@@ -131,7 +131,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
   Future<void> _onSetNetworkMode(SetNetworkModeEvent event, Emitter<WifiState> emit) async {
     emit(NetworkModeChangingState());
     try {
-      // First stop any existing services based on current mode
+      
       final currentMode = await getNetworkMode();
       if (currentMode == NetworkMode.accessPoint && event.mode != NetworkMode.accessPoint) {
         await manageAccessPoint.stopAccessPoint();
@@ -139,26 +139,26 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
         await manageLanOnlyMode.disableLanOnlyMode();
       }
       
-      // Set the new mode
+      
       await setNetworkMode(event.mode);
       emit(NetworkModeChangedState(event.mode));
       
-      // Emit loaded state immediately to update UI
+      
       emit(NetworkModeLoadedState(event.mode));
       
     } catch (e) {
       emit(WifiErrorState(e.toString()));
-      // Reload the actual current mode if setting failed
+      
       try {
         final actualMode = await getNetworkMode();
         emit(NetworkModeLoadedState(actualMode));
       } catch (reloadError) {
-        // If we can't even reload, something is seriously wrong
+        
       }
     }
   }
 
-  // Access Point Event Handlers
+  
   Future<void> _onStartAccessPoint(StartAccessPointEvent event, Emitter<WifiState> emit) async {
     emit(AccessPointStartingState());
     try {
@@ -196,7 +196,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
         await manageAccessPoint.startAccessPoint(config);
         emit(AccessPointStartedState(config));
       } else {
-        // Use default config if none exists
+        
         final defaultBand = await manageAccessPoint.findBestWifiBand();
         final defaultConfig = AccessPointConfig(
           ssid: 'STP-Velox-Robot',
@@ -211,7 +211,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     }
   }
 
-  // Saved Networks Event Handlers
+  
   Future<void> _onLoadSavedNetworks(LoadSavedNetworksEvent event, Emitter<WifiState> emit) async {
     emit(WifiLoadingState());
     try {
@@ -226,7 +226,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     try {
       await manageSavedNetworks.removeSavedNetwork(event.ssid);
       emit(SavedNetworkRemovedState(event.ssid));
-      // Reload saved networks
+      
       add(LoadSavedNetworksEvent());
     } catch (e) {
       emit(WifiErrorState(e.toString()));
@@ -240,7 +240,6 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
       if (savedNetwork != null) {
         await connectToWifi(savedNetwork.ssid, savedNetwork.encryptionType, savedNetwork.credentials);
         
-        // Update last connected time
         final updatedNetwork = savedNetwork.copyWith(lastConnected: DateTime.now());
         await manageSavedNetworks.saveNetwork(updatedNetwork);
         
@@ -254,7 +253,7 @@ class WifiBloc extends Bloc<WifiEvent, WifiState> {
     }
   }
 
-  // LAN Only Mode Event Handlers
+  
   Future<void> _onEnableLanOnlyMode(EnableLanOnlyModeEvent event, Emitter<WifiState> emit) async {
     emit(LanOnlyModeTogglingState());
     try {

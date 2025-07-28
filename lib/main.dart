@@ -48,7 +48,7 @@ class CalibratedGestureRecognizerFactory extends GestureRecognizerFactory<Calibr
 
   @override
   void initializer(CalibratedTapGestureRecognizer instance) {
-    // TODO: implement initializer
+    
   }
 }
 
@@ -115,6 +115,8 @@ class _StpVeloxAppState extends State<StpVeloxApp> {
             ),
             elevatedButtonTheme: ElevatedButtonThemeData(
               style: ElevatedButton.styleFrom(
+                minimumSize: const Size(150, 80),
+                textStyle: const TextStyle(fontSize: 24),
                 foregroundColor: Colors.white,
                 backgroundColor: AppColors.programs,
                 shape: RoundedRectangleBorder(

@@ -7,7 +7,7 @@ import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 import '../../../data/native/kipr_plugin.dart';
 
-// Servo utility class for angle conversions
+
 class ServoUtils {
   static const double minAngle = 0.0;
   static const double maxAngle = 170.0;
@@ -43,9 +43,9 @@ class SensorServoScreen extends StatefulWidget {
 
 class _SensorServoScreenState extends State<SensorServoScreen> {
   double _currentPosition = 0.0;
-  bool _angleMode = true; // Default to angle mode
+  bool _angleMode = true; 
 
-  // Computed properties
+  
   double get currentAngle => ServoUtils.positionToAngle(_currentPosition.toInt());
 
   Future<void> _setServoPosition(int position) async {
@@ -60,14 +60,14 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
   void _onSliderChange(double value) {
     setState(() {
       if (_angleMode) {
-        // In angle mode, convert to position before storing
+        
         _currentPosition = ServoUtils.angleToPosition(value).toDouble();
       } else {
         _currentPosition = value;
       }
     });
 
-    // Update servo position continuously during slider movement
+    
     if (_angleMode) {
       _setServoPosition(ServoUtils.angleToPosition(value));
     } else {
@@ -77,7 +77,7 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
 
   void _onSliderChangeEnd(double value) {
     if (_angleMode) {
-      // In angle mode, convert to position before sending to servo
+      
       _setServoPosition(ServoUtils.angleToPosition(value));
     } else {
       _setServoPosition(value.toInt());
@@ -92,16 +92,16 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Set the range based on the current mode
+    
     final double minValue = _angleMode ? ServoUtils.minAngle : ServoUtils.minPosition.toDouble();
     final double maxValue = _angleMode ? ServoUtils.maxAngle : ServoUtils.maxPosition.toDouble();
 
-    // Calculate the current value based on mode for the slider
+    
     final double sliderValue = _angleMode
         ? ServoUtils.positionToAngle(_currentPosition.toInt())
         : _currentPosition;
 
-    // Create mode toggle for top bar
+    
     final modeToggle = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: ElevatedButton(
@@ -217,7 +217,7 @@ class _SensorServoScreenState extends State<SensorServoScreen> {
               height: 70,
               child: Row(
                 children: [
-                  // Disable button
+                  
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _disableServo,

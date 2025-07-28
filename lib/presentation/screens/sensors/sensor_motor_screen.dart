@@ -70,11 +70,11 @@ class _SensorMotorScreenState extends State<SensorMotorScreen> {
       _currentVelocity = value;
     });
 
-    // Update motor velocity continuously during slider movement
+    
     _setMotorVelocity(value.toInt());
   }
 
-  // Keep onChangeEnd as a fallback
+  
   void _onSliderChangeEnd(double value) {
     _setMotorVelocity(value.toInt());
   }

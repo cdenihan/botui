@@ -16,7 +16,7 @@ class CalibrationScreen extends StatefulWidget {
 class _CalibrationScreenState extends State<CalibrationScreen> {
   late CalibrationBloc calibrationBloc;
   CalibrationStep currentStep = CalibrationStep.Potato;
-  String? _cachedImage; // Cache for the last valid frame
+  String? _cachedImage; 
   bool _hasLoadedFirstFrame = false;
   Size _imageWidgetSize = Size.zero;
 
@@ -33,12 +33,12 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
     super.dispose();
   }
 
-  // Safely decode a Base64 string
+  
   Uint8List? _safeBase64Decode(String? base64String) {
     if (base64String == null || base64String.isEmpty) return null;
     
     try {
-      // Make sure the base64 string is properly padded
+      
       String paddedBase64 = base64String;
       while (paddedBase64.length % 4 != 0) {
         paddedBase64 += '=';
@@ -52,7 +52,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
   }
 
   void _handleTap(Offset tapPosition) {
-    // Use raw pixel coordinates directly - no normalization
+    
     switch (currentStep) {
       case CalibrationStep.Potato:
         calibrationBloc.add(CalibratePotato(tapPosition));
@@ -74,7 +74,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
         break;
       case CalibrationStep.PomYellow:
         calibrationBloc.add(CalibratePomYellow(tapPosition));
-        // Remain at the last step until user confirms with Done.
+        
         break;
     }
   }
@@ -91,7 +91,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
             
             if (state is CalibrationInProgress) {
               promptText = state.message;
-              // Update cached image only if we get a valid new frame
+              
               if (state.frameBase64 != null && state.frameBase64!.isNotEmpty) {
                 _cachedImage = state.frameBase64;
                 _hasLoadedFirstFrame = true;
@@ -100,14 +100,14 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
               promptText = "Calibration complete!";
             }
             
-            // Safely decode the cached image
+            
             final decodedImage = _safeBase64Decode(_cachedImage);
             
-            // Always use the cached image if available and successfully decoded
+            
             final imageWidget = decodedImage != null && _hasLoadedFirstFrame
                 ? LayoutBuilder(
                     builder: (context, constraints) {
-                      // Store the image widget dimensions for coordinate normalization
+                      
                       _imageWidgetSize = Size(constraints.maxWidth, constraints.maxHeight);
                       
                       return Image.memory(
@@ -115,7 +115,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                         fit: BoxFit.cover,
                         gaplessPlayback: true,
                         errorBuilder: (context, error, stackTrace) {
-                          // Show placeholder on image error
+                          
                           return Container(
                             color: Colors.grey[800],
                             child: const Center(
@@ -135,10 +135,10 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
 
             return Stack(
               children: [
-                // Display the image with the cached frame
+                
                 Positioned.fill(child: imageWidget),
                 
-                // Transparent overlay to handle tap events.
+                
                 Positioned.fill(
                   child: GestureDetector(
                     onTapDown: (details) {
@@ -159,7 +159,7 @@ class _CalibrationScreenState extends State<CalibrationScreen> {
                     ),
                   ),
                 ),
-                // Bottom buttons: Retry and Done.
+                
                 Positioned(
                   bottom: 20,
                   left: 20,

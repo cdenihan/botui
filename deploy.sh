@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 USER=pi
 HOST=10.117.224.14
 flutterpi_tool build --arch=arm64 --cpu=pi3 --release

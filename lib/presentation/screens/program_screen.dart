@@ -7,8 +7,8 @@ import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 import 'package:xterm/xterm.dart';
 
-// TODO: This si a very ugly and hacky way to get the terminal to work with arguments, overlay, etc.
-// TODO: This should be refactored to be more clean and maintainable
+
+
 class ProgramScreen extends StatefulWidget {
   final Program program;
 
@@ -166,17 +166,17 @@ class _ProgramScreenState extends State<ProgramScreen> {
                       onPressed: () => removeOverlay(),
                     ),
                   ),
-                  // SizedBox(
-                  //   width: 200,
-                  //   height: 200,
-                  //   child: ResponsiveGridTile(
-                  //     label: 'Reboot',
-                  //     icon: Icons.restart_alt,
-                  //     color: Colors.orange,
-                  //     onPressed: () =>
-                  //         context.read<ProgramBloc>().add(RebootEvent()),
-                  //   ),
-                  // ),
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
+                  
                 ],
               ),
             ),

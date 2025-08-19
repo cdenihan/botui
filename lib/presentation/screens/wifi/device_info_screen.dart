@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stpvelox/domain/entities/wifi_encryption_type.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_event.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_state.dart';
@@ -47,7 +48,7 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen> {
                         Text('SSID: ${state.deviceInfo.connectedNetwork!.ssid}',
                             style: const TextStyle(fontSize: 16)),
                         Text(
-                            'Encryption: ${state.deviceInfo.connectedNetwork!.encryptionType}',
+                            'Encryption: ${state.deviceInfo.connectedNetwork!.encryptionType.formatted}',
                             style: const TextStyle(fontSize: 16)),
                       ],
                     )

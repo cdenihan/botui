@@ -1,4 +1,4 @@
-// calibration_bloc.dart
+
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -9,7 +9,7 @@ import 'package:flutter/material.dart';
 const String host = "127.0.0.1";
 const int port = 9995;
 
-// --- Events ---
+
 abstract class CalibrationEvent extends Equatable {
   const CalibrationEvent();
   @override
@@ -52,7 +52,7 @@ class CalibrationDone extends CalibrationEvent {}
 
 class CalibrationRetry extends CalibrationEvent {}
 
-// --- States ---
+
 abstract class CalibrationState extends Equatable {
   const CalibrationState();
   @override
@@ -71,15 +71,15 @@ class CalibrationInProgress extends CalibrationState {
 
 class CalibrationComplete extends CalibrationState {}
 
-// --- Bloc ---
+
 class CalibrationBloc extends Bloc<CalibrationEvent, CalibrationState> {
   Timer? _frameTimer;
-  // Current calibration step
-  int _step = 0; // 0: Potato, 1: Pom Red, 2: Pom Orange, 3: Pom Yellow
+  
+  int _step = 0; 
 
   CalibrationBloc() : super(CalibrationInitial()) {
     on<StartCalibration>((event, emit) async {
-      // Start periodic frame updates.
+      
       _frameTimer?.cancel();
       _frameTimer = Timer.periodic(const Duration(milliseconds: 50), (_) {
         add(UpdateFrame());
@@ -140,7 +140,7 @@ class CalibrationBloc extends Bloc<CalibrationEvent, CalibrationState> {
       socket.write("$command\n");
       await socket.flush();
       final response = await socket
-          .cast<List<int>>() // added cast for correct type
+          .cast<List<int>>() 
           .transform(utf8.decoder)
           .join();
       socket.destroy();
@@ -156,7 +156,7 @@ class CalibrationBloc extends Bloc<CalibrationEvent, CalibrationState> {
       socket.write("GET_FRAME\n");
       await socket.flush();
       
-      // Set a timeout to prevent hanging connections
+      
       final completer = Completer<String>();
       socket.listen(
         (data) {
@@ -171,7 +171,7 @@ class CalibrationBloc extends Bloc<CalibrationEvent, CalibrationState> {
         cancelOnError: true,
       );
       
-      // Use a timeout to avoid waiting too long
+      
       String response;
       try {
         response = await completer.future.timeout(const Duration(seconds: 1));
@@ -183,7 +183,7 @@ class CalibrationBloc extends Bloc<CalibrationEvent, CalibrationState> {
       socket.destroy();
       if (response.startsWith("FRAME ")) {
         String base64Data = response.substring(6).trim();
-        // Ensure the Base64 string is properly padded
+        
         while (base64Data.length % 4 != 0) {
           base64Data += '=';
         }

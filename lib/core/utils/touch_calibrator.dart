@@ -17,7 +17,7 @@ class TouchCalibrator {
 
   Offset applyCalibration(Offset raw) {
     if (_coefficients == null) {
-      return raw; // No calibration applied if coefficients are not loaded
+      return raw; 
     }
     final c = _coefficients!;
     return Offset(

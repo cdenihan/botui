@@ -18,7 +18,7 @@ class ProgramSelectionScreen extends StatelessWidget {
     return BlocListener<ProgramSelectionBloc, ProgramSelectionState>(
       listener: (context, state) {
         if (state is ProgramTappedState) {
-          // Navigate to the ProgramScreen with the selected program
+          
           Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => ProgramScreen(program: state.program)),

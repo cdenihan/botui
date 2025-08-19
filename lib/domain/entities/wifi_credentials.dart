@@ -8,7 +8,7 @@ class PersonalCredentials extends WifiCredentials {
 class EnterpriseCredentials extends WifiCredentials {
   final String username;
   final String password;
-  final String? caCertificatePath; // if needed
+  final String? caCertificatePath; 
 
   EnterpriseCredentials({
     required this.username,

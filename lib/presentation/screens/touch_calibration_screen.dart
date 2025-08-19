@@ -4,13 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 
-/// A simple 5-point touchscreen calibration flow.
-///
-/// Records the raw touch coordinates for five cross-hairs, computes an affine
-/// transformation that maps raw → logical screen coordinates, then stores the
-/// six coefficients in SharedPreferences *and* prints a pointercal-formatted
-/// line you can copy to /etc/pointercal if you prefer kernel-level
-/// calibration.
 class TouchCalibrationScreen extends StatefulWidget {
   const TouchCalibrationScreen({super.key, this.onFinished});
 
@@ -32,11 +25,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
   int _index = 0;
   bool _complete = false;
 
-  /// The solved affine-transform coefficients once calibration finishes.
-  /// [c0..c5] map raw → logical as follows:
-  ///   x' = c0 * x + c1 * y + c2
-  ///   y' = c3 * x + c4 * y + c5
-  List<double>? _coeffs;
+          List<double>? _coeffs;
 
   @override
   Widget build(BuildContext context) {
@@ -55,12 +44,12 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // Draw the red cross-hair.
+            
             CustomPaint(painter: _CrossPainter(point: target)),
 
-            // ─────────────────────────────────────────────────────────────
-            // User guidance: show instructions while we are still sampling.
-            // ─────────────────────────────────────────────────────────────
+            
+            
+            
             if (!_complete && target != null)
               Positioned(
                 top: 32,
@@ -85,7 +74,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
                 ),
               ),
 
-            // Show the calibration wombat while we’re still collecting points.
+            
             if (!_complete && target != null)
               Positioned(
                 left: target.dx - 48,
@@ -93,7 +82,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
                 child: Image.asset('assets/wombat.png', width: 96, height: 96),
               ),
 
-            // Calibration finished → show summary & coefficients.
+            
             if (_complete && _coeffs != null)
               Center(
                 child: Padding(
@@ -123,9 +112,9 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
     );
   }
 
-  // ────────────────────────────────────────────────────────────────────────
-  // Event handling & linear-algebra helpers.
-  // ────────────────────────────────────────────────────────────────────────
+  
+  
+  
   void _handleTap(TapDownDetails details) {
     if (_complete) return;
 
@@ -153,7 +142,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
     ].join(' ');
 
     try {
-      // Needs root permissions!
+      
       final result = await Process.run('sudo', [
         'sh',
         '-c',
@@ -173,7 +162,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
   Future<void> _solveAndStore(Size size) async {
     final int n = _targets.length;
 
-    // Build normal-equation components (AtA 6×6, Atb 6×1).
+    
     final List<List<double>> ata = List.generate(6, (_) => List.filled(6, 0));
     final List<double> atb = List.filled(6, 0);
 
@@ -183,15 +172,15 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
       final double dx = _targets[i].dx * size.width;
       final double dy = _targets[i].dy * size.height;
 
-      // Row for x': [rx, ry, 1, 0, 0, 0] * coeffs = dx
+      
       _accumulate(ata, atb, [rx, ry, 1, 0, 0, 0], dx);
-      // Row for y': [0, 0, 0, rx, ry, 1] * coeffs = dy
+      
       _accumulate(ata, atb, [0, 0, 0, rx, ry, 1], dy);
     }
 
     final List<double> coeffs = _gaussSolve(ata, atb);
 
-    // Persist so the app can re-use them on next launch.
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
       'touch_calibration',
@@ -200,12 +189,12 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
 
     await _writePointercal(coeffs, size);
 
-    // Update state so UI can show the numbers.
+    
     setState(() => _coeffs = coeffs);
 
     widget.onFinished?.call();
 
-    // Restart the UI to apply the new calibration.
+    
     await SudoProcess.run('systemctl', ['restart', 'flutter-ui.service']);
   }
 
@@ -280,7 +269,6 @@ class _CrossPainter extends CustomPainter {
   bool shouldRepaint(covariant _CrossPainter oldDelegate) => true;
 }
 
-/// Apply the stored calibration to any raw pointer position.
 Offset applyCalibration(Offset raw, List<double> c) => Offset(
       c[0] * raw.dx + c[1] * raw.dy + c[2],
       c[3] * raw.dx + c[4] * raw.dy + c[5],

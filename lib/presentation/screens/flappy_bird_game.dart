@@ -6,10 +6,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/data/native/kipr_plugin.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
-/// Simple Flappy‑Bird‑style game controlled by a digital input on port 10.
-/// Touch input is completely disabled – every flap is triggered by a rising
-/// edge on KiprPlugin.digital(10).
-
 enum GameState { ready, running, gameOver }
 
 class FlappyBirdGame extends StatefulWidget {
@@ -21,47 +17,30 @@ class FlappyBirdGame extends StatefulWidget {
 
 class _FlappyBirdGameState extends State<FlappyBirdGame>
     with SingleTickerProviderStateMixin {
-  /*──────────────────────────────
-  │  Gameplay state & scores
-  └─────────────────────────────*/
   GameState _gameState = GameState.ready;
   int _score = 0;
   int _highScore = 0;
 
-  /*──────────────────────────────
-  │  Bird physics
-  └─────────────────────────────*/
   double _birdY = 0;
   double _birdVelocity = 0;
   final double _gravity = 0.5;
   final double _jumpStrength = -10.0;
   final double _birdSize = 50.0;
 
-  /*──────────────────────────────
-  │  Pipes
-  └─────────────────────────────*/
   final double _pipeWidth = 80.0;
   final double _pipeGap = 200.0;
   final double _pipeSpeed = 4.0;
   final List<Offset> _pipeOffsets = [];
 
-  /*──────────────────────────────
-  │  Game loop & Dimensions
-  └─────────────────────────────*/
   late final AnimationController _controller;
 
-  // MODIFICATION: Game dimensions are now member variables
-  // This avoids passing `context` everywhere and makes logic more reliable.
   double _gameWidth = 0;
   double _gameHeight = 0;
 
-  /*──────────────────────────────
-  │  Hardware input (KIPR)
-  └─────────────────────────────*/
   Timer? _sensorTimer;
   bool _lastSensorState = false;
   final Duration _pollInterval = const Duration(milliseconds: 50);
-  final int _sensorPort = 10; // Digital port to read
+  final int _sensorPort = 10; 
 
   @override
   void initState() {
@@ -73,7 +52,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
       duration: const Duration(milliseconds: 16),
     )..addListener(_gameLoop);
 
-    // Start polling the hardware button
     _sensorTimer = Timer.periodic(_pollInterval, (_) => _pollSensor());
   }
 
@@ -84,9 +62,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
     super.dispose();
   }
 
-  /*──────────────────────────────
-  │  Persistent high‑score helpers
-  └─────────────────────────────*/
   Future<void> _loadHighScore() async {
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -102,9 +77,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
     _highScore = _score;
   }
 
-  /*──────────────────────────────
-  │  Hardware polling & tap simulation
-  └─────────────────────────────*/
   Future<void> _pollSensor() async {
     bool current;
     try {
@@ -117,9 +89,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
     _lastSensorState = current;
   }
 
-  /*──────────────────────────────
-  │  Game control routines
-  └─────────────────────────────*/
   void _resetGame() {
     setState(() {
       _gameState = GameState.ready;
@@ -166,23 +135,17 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
     }
   }
 
-  /*──────────────────────────────
-  │  Game loop & collisions
-  └─────────────────────────────*/
   void _gameLoop() {
     if (_gameState != GameState.running) return;
 
     setState(() {
-      // Bird physics
       _birdVelocity += _gravity;
       _birdY += _birdVelocity;
 
-      // Move pipes
       for (var i = 0; i < _pipeOffsets.length; i++) {
         _pipeOffsets[i] = _pipeOffsets[i].translate(-_pipeSpeed, 0);
       }
 
-      // Scoring
       for (var offset in _pipeOffsets) {
         final pipeCenterX = offset.dx + _pipeWidth / 2;
         final birdCenterX = _gameWidth / 2;
@@ -192,7 +155,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
         }
       }
 
-      // Recycle pipes
       if (_pipeOffsets.isNotEmpty && _pipeOffsets.first.dx < -_pipeWidth) {
         _pipeOffsets.removeAt(0);
         _pipeOffsets.add(_generatePipeOffset(_gameWidth));
@@ -203,64 +165,52 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
   }
 
   void _checkCollisions() {
-    // Bird bounding box
-    final birdRect = Rect.fromLTWH(
-      _gameWidth / 2 - _birdSize / 2,
-      _birdY,
-      _birdSize,
-      _birdSize,
-    );
+    final birdRadius = _birdSize / 2;
+    final birdCenter = Offset(_gameWidth / 2, _birdY + birdRadius);
 
-    // Ceiling collision
-    if (_birdY < 0) {
+    if (_birdY < 0 || _birdY > _gameHeight - _birdSize) {
       _gameOver();
       return;
     }
 
-    // Ground collision
-    if (_birdY > _gameHeight - _birdSize) {
-      _gameOver();
-      return;
-    }
-
-    // Pipe collision
     for (var offset in _pipeOffsets) {
       final topPipeHeight = offset.dy;
       final bottomPipeY = offset.dy + _pipeGap;
 
       final topPipe = Rect.fromLTWH(offset.dx, 0, _pipeWidth, topPipeHeight);
-      final bottomPipe = Rect.fromLTWH(
-          offset.dx, bottomPipeY, _pipeWidth, _gameHeight - bottomPipeY);
+      final bottomPipe = Rect.fromLTWH(offset.dx, bottomPipeY, _pipeWidth, _gameHeight - bottomPipeY);
 
-      if (birdRect.overlaps(topPipe) || birdRect.overlaps(bottomPipe)) {
+      if (_circleRectCollision(birdCenter, birdRadius, topPipe) ||
+          _circleRectCollision(birdCenter, birdRadius, bottomPipe)) {
         _gameOver();
         return;
       }
     }
   }
 
-  /*──────────────────────────────
-  │  Utility
-  └─────────────────────────────*/
+  bool _circleRectCollision(Offset center, double radius, Rect rect) {
+    final closestX = center.dx.clamp(rect.left, rect.right);
+    final closestY = center.dy.clamp(rect.top, rect.bottom);
+
+    final dx = center.dx - closestX;
+    final dy = center.dy - closestY;
+
+    return (dx * dx + dy * dy) < (radius * radius);
+  }
+
   Offset _generatePipeOffset(double x) {
     const minTop = 200.0;
-    // Use the reliable _gameHeight variable
     final maxTop = _gameHeight - _pipeGap - 200;
     final topHeight = minTop + Random().nextDouble() * (maxTop - minTop);
     return Offset(x, topHeight);
   }
 
-  /*──────────────────────────────
-  │  UI
-  └─────────────────────────────*/
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: createTopBar(context, "Flappy Wombat"),
-      // MODIFICATION: Using LayoutBuilder to get the correct game dimensions
       body: LayoutBuilder(
         builder: (context, constraints) {
-          // Update our game dimension variables whenever the layout changes
           _gameWidth = constraints.maxWidth;
           _gameHeight = constraints.maxHeight;
 
@@ -276,24 +226,18 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
             ),
             child: Stack(
               children: [
-                // Pipes
                 for (final offset in _pipeOffsets) ...[
-                  // Top
                   Positioned(
                     left: offset.dx,
                     top: 0,
                     child: _pipe(offset.dy),
                   ),
-                  // Bottom
                   Positioned(
                     left: offset.dx,
                     top: offset.dy + _pipeGap,
-                    // Use correct game height for the bottom pipe
                     child: _pipe(_gameHeight - offset.dy - _pipeGap),
                   ),
                 ],
-
-                // Bird - MODIFICATION: Reverted to the correct Positioned widget
                 Positioned(
                   left: _gameWidth / 2 - _birdSize / 2,
                   top: _birdY,
@@ -303,8 +247,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
                     child: Image.asset('assets/wombat.png'),
                   ),
                 ),
-
-                // Score
                 Positioned(
                   top: 50,
                   left: 0,
@@ -326,8 +268,6 @@ class _FlappyBirdGameState extends State<FlappyBirdGame>
                     ),
                   ),
                 ),
-
-                // Start / Game-over overlays
                 if (_gameState == GameState.ready)
                   _overlayText('TAP BUTTON TO START'),
                 if (_gameState == GameState.gameOver) _gameOverOverlay(),

@@ -47,22 +47,19 @@ class _LargeButtonCounterState extends State<LargeButtonCounter> {
 
   @override
   Widget build(BuildContext context) {
-    // Determine button size based on screen size
     double buttonSize = MediaQuery.of(context).size.width * 0.15;
-    buttonSize = buttonSize < 60 ? 60 : buttonSize; // Minimum size
+    buttonSize = buttonSize < 60 ? 60 : buttonSize;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Decrement Button
         ElevatedButton(
           onPressed: _value > widget.min ? _decrement : null,
           style: ElevatedButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.all(buttonSize * 0.2),
             minimumSize: Size(buttonSize, buttonSize),
-            backgroundColor:
-            _value > widget.min ? Colors.blue : Colors.grey, // Disabled color
+            backgroundColor: _value > widget.min ? Colors.blue : Colors.grey,
           ),
           child: const Icon(
             Icons.remove,
@@ -71,7 +68,6 @@ class _LargeButtonCounterState extends State<LargeButtonCounter> {
           ),
         ),
         const SizedBox(width: 30),
-        // Current Value Display
         Container(
           padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
           decoration: BoxDecoration(
@@ -82,7 +78,7 @@ class _LargeButtonCounterState extends State<LargeButtonCounter> {
                 color: Colors.grey.withOpacity(0.5),
                 spreadRadius: 2,
                 blurRadius: 5,
-                offset: const Offset(0, 3), // changes position of shadow
+                offset: const Offset(0, 3),
               ),
             ],
           ),
@@ -96,15 +92,13 @@ class _LargeButtonCounterState extends State<LargeButtonCounter> {
           ),
         ),
         const SizedBox(width: 30),
-        // Increment Button
         ElevatedButton(
           onPressed: _value < widget.max ? _increment : null,
           style: ElevatedButton.styleFrom(
             shape: const CircleBorder(),
             padding: EdgeInsets.all(buttonSize * 0.2),
             minimumSize: Size(buttonSize, buttonSize),
-            backgroundColor:
-            _value < widget.max ? Colors.blue : Colors.grey, // Disabled color
+            backgroundColor: _value < widget.max ? Colors.blue : Colors.grey,
           ),
           child: const Icon(
             Icons.add,

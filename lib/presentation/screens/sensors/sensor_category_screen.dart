@@ -26,8 +26,7 @@ class SensorCategoryScreen extends StatefulWidget {
 }
 
 class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
-  /// === MOTOR & SERVO HELPERS ===
-  Future<void> _stopAllMotors() async {
+    Future<void> _stopAllMotors() async {
     for (int i = 0; i < 4; i++) {
       await KiprPlugin.stopMotor(i);
     }
@@ -37,8 +36,7 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
     await KiprPlugin.fullyDisableServos();
   }
 
-  /// === DIGITAL‑10 "HOLD TO UNLOCK" EASTER EGG ===
-  static const _holdDuration = Duration(seconds: 5);
+    static const _holdDuration = Duration(seconds: 5);
   DateTime? _heldStart;
   Timer? _digital10Timer;
   int _prevDigital10 = 0;
@@ -49,14 +47,14 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
       final current = await KiprPlugin.getDigital(10);
 
       if (current == 1) {
-        _heldStart ??= DateTime.now(); // start hold timer
+        _heldStart ??= DateTime.now(); 
         final heldTime = DateTime.now().difference(_heldStart!);
         if (heldTime >= _holdDuration) {
-          _heldStart = null; // reset to avoid repeated triggering
+          _heldStart = null; 
           if (mounted) _openFlappyBirdGame();
         }
       } else {
-        _heldStart = null; // reset if released
+        _heldStart = null; 
       }
 
       _prevDigital10 = current;

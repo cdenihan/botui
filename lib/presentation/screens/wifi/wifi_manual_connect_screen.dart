@@ -135,6 +135,14 @@ class _WifiManualConnectScreenState extends State<WifiManualConnectScreen> {
                 builder: (context, state) {
                   final isLoading = state is WifiConnectingState;
                   return ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isLoading
+                          ? Colors.grey
+                          : Theme.of(context).colorScheme.primary,
+                      foregroundColor: isLoading
+                          ? Colors.white
+                          : Theme.of(context).colorScheme.onPrimary,
+                    ),
                     onPressed: isLoading
                         ? null
                         : () {

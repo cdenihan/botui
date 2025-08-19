@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:stpvelox/domain/entities/wifi_encryption_type.dart';
-import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
-import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_event.dart';
-import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_state.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/client/wifi_client_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/client/wifi_client_event.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/client/wifi_client_state.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
 
 class DeviceInfoScreen extends StatefulWidget {
@@ -14,10 +14,9 @@ class DeviceInfoScreen extends StatefulWidget {
 }
 
 class _DeviceInfoScreenState extends State<DeviceInfoScreen> {
-
   @override
   void initState() {
-    context.read<WifiBloc>().add(LoadDeviceInfoEvent());
+    context.read<WifiClientBloc>().add(LoadDeviceInfoEvent());
     super.initState();
   }
 
@@ -25,9 +24,9 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: createTopBar(context, 'Device Information'),
-      body: BlocBuilder<WifiBloc, WifiState>(
+      body: BlocBuilder<WifiClientBloc, WifiClientState>(
         builder: (context, state) {
-          if (state is WifiLoadingState) {
+          if (state is WifiClientLoadingState) {
             return const Center(child: CircularProgressIndicator());
           } else if (state is DeviceInfoLoadedState) {
             return Padding(
@@ -45,7 +44,8 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen> {
                         const Text('Connected Network:',
                             style: TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text('SSID: ${state.deviceInfo.connectedNetwork!.ssid}',
+                        Text(
+                            'SSID: ${state.deviceInfo.connectedNetwork!.ssid}',
                             style: const TextStyle(fontSize: 16)),
                         Text(
                             'Encryption: ${state.deviceInfo.connectedNetwork!.encryptionType.formatted}',
@@ -58,7 +58,7 @@ class _DeviceInfoScreenState extends State<DeviceInfoScreen> {
                 ],
               ),
             );
-          } else if (state is WifiErrorState) {
+          } else if (state is WifiClientErrorState) {
             return Center(
                 child: Text('Error: ${state.message}',
                     style: const TextStyle(color: Colors.red)));

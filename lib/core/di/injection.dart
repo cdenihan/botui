@@ -29,7 +29,10 @@ import 'package:stpvelox/presentation/blocs/program/program_bloc.dart';
 import 'package:stpvelox/presentation/blocs/program_selection/program_selection_bloc.dart';
 import 'package:stpvelox/presentation/blocs/sensor/sensor_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/settings_bloc.dart';
-import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/access_point/access_point_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/client/wifi_client_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/network_mode/network_mode_bloc.dart';
+import 'package:stpvelox/presentation/blocs/settings/wifi/saved_networks/saved_networks_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/touch_calibrator.dart';
 import 'package:stpvelox/core/service/battery_check_service.dart';
@@ -46,16 +49,25 @@ Future<void> init() async {
   sl.registerFactory(() => ProgramBloc(startProgram: sl(), rebootDevice: sl()));
   sl.registerFactory(() => SettingsBloc(repository: sl()));
   sl.registerFactory(() => ProgramSelectionBloc(getPrograms: sl()));
-  sl.registerFactory(() => WifiBloc(
-        connectToWifi: sl(),
-        forgetWifi: sl(),
-        getAvailableNetworks: sl(),
-        getDeviceInfo: sl(),
+
+  // New Wifi BLoCs
+  sl.registerFactory(() => NetworkModeBloc(
         getNetworkMode: sl(),
         setNetworkMode: sl(),
+      ));
+  sl.registerFactory(() => AccessPointBloc(
         manageAccessPoint: sl(),
+      ));
+  sl.registerFactory(() => SavedNetworksBloc(
         manageSavedNetworks: sl(),
-        manageLanOnlyMode: sl(),
+        connectToWifi: sl(),
+      ));
+  sl.registerFactory(() => WifiClientBloc(
+        getAvailableNetworks: sl(),
+        connectToWifi: sl(),
+        forgetWifi: sl(),
+        getDeviceInfo: sl(),
+        manageSavedNetworks: sl(),
       ));
 
   sl.registerLazySingleton(() => GetSensors(repository: sl()));

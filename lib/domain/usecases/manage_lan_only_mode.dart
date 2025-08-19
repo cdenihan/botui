@@ -12,8 +12,4 @@ class ManageLanOnlyMode {
   Future<void> disableLanOnlyMode() async {
     await repository.disableLanOnlyMode();
   }
-
-  Future<bool> isLanOnlyModeActive() async {
-    return await repository.isLanOnlyModeActive();
-  }
 }

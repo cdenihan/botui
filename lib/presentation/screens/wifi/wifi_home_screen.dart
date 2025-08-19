@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:stpvelox/domain/entities/network_mode.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_event.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/wifi_state.dart';
@@ -7,11 +8,9 @@ import 'package:stpvelox/presentation/screens/wifi/access_point_config_screen.da
 import 'package:stpvelox/presentation/screens/wifi/device_info_screen.dart';
 import 'package:stpvelox/presentation/screens/wifi/saved_networks_screen.dart';
 import 'package:stpvelox/presentation/screens/wifi/wifi_scan_list_screen.dart';
-import 'package:stpvelox/presentation/widgets/dashboard_tile.dart';
 import 'package:stpvelox/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/presentation/widgets/responsive_grid.dart';
 import 'package:stpvelox/presentation/widgets/top_bar.dart';
-import 'package:stpvelox/domain/entities/network_mode.dart';
 
 class WifiHomeScreen extends StatefulWidget {
   const WifiHomeScreen({super.key});
@@ -27,17 +26,15 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
     context.read<WifiBloc>().add(LoadNetworkModeEvent());
   }
 
-  void _handleModeChange(BuildContext context, NetworkMode currentMode, NetworkMode selectedMode) {
+  void _handleModeChange(
+      BuildContext context, NetworkMode currentMode, NetworkMode selectedMode) {
     final bloc = context.read<WifiBloc>();
-    
+
     print('Mode change requested: $currentMode -> $selectedMode');
-    
-    
+
     bloc.add(SetNetworkModeEvent(selectedMode));
-    
-    
+
     if (selectedMode == NetworkMode.accessPoint) {
-      
       Future.delayed(const Duration(milliseconds: 300), () {
         bloc.add(StartAccessPointWithLastConfigEvent());
       });
@@ -46,8 +43,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
         bloc.add(EnableLanOnlyModeEvent());
       });
     }
-    
-    
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Switching to ${_getModeDisplayName(selectedMode)}...'),
@@ -56,7 +52,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
       ),
     );
   }
-  
+
   String _getModeDisplayName(NetworkMode mode) {
     switch (mode) {
       case NetworkMode.client:
@@ -68,7 +64,7 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
     }
   }
 
-  @override  
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: createTopBar(context, 'Network Control'),
@@ -77,7 +73,6 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
           padding: const EdgeInsets.all(32.0),
           child: Column(
             children: [
-              
               BlocBuilder<WifiBloc, WifiState>(
                 builder: (context, state) {
                   NetworkMode currentMode = NetworkMode.client;
@@ -91,12 +86,16 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(color: Colors.grey[700]!, width: 2),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       children: [
                         const Text(
                           'Mode:',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                          style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -105,14 +104,19 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                               value: currentMode,
                               dropdownColor: Colors.grey[800],
                               isExpanded: true,
-                              icon: const Icon(Icons.arrow_drop_down, color: Colors.white, size: 28),
-                              style: const TextStyle(fontSize: 16, color: Colors.white, fontWeight: FontWeight.w500),
+                              icon: const Icon(Icons.arrow_drop_down,
+                                  color: Colors.white, size: 28),
+                              style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w500),
                               items: [
                                 DropdownMenuItem(
                                   value: NetworkMode.client,
                                   child: Row(
                                     children: [
-                                      Icon(Icons.wifi, color: Colors.blue[300], size: 24),
+                                      Icon(Icons.wifi,
+                                          color: Colors.blue[300], size: 24),
                                       const SizedBox(width: 12),
                                       const Text('WiFi Client'),
                                     ],
@@ -122,7 +126,8 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                                   value: NetworkMode.accessPoint,
                                   child: Row(
                                     children: [
-                                      Icon(Icons.router, color: Colors.purple[300], size: 24),
+                                      Icon(Icons.router,
+                                          color: Colors.purple[300], size: 24),
                                       const SizedBox(width: 12),
                                       const Text('Hotspot Mode'),
                                     ],
@@ -132,7 +137,8 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                                   value: NetworkMode.lanOnly,
                                   child: Row(
                                     children: [
-                                      Icon(Icons.cable, color: Colors.grey[400], size: 24),
+                                      Icon(Icons.cable,
+                                          color: Colors.grey[400], size: 24),
                                       const SizedBox(width: 12),
                                       const Text('LAN Only'),
                                     ],
@@ -140,9 +146,10 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                                 ),
                               ],
                               onChanged: (NetworkMode? selectedMode) {
-                                if (selectedMode != null && selectedMode != currentMode) {
-                                  
-                                  _handleModeChange(context, currentMode, selectedMode);
+                                if (selectedMode != null &&
+                                    selectedMode != currentMode) {
+                                  _handleModeChange(
+                                      context, currentMode, selectedMode);
                                 }
                               },
                             ),
@@ -154,7 +161,6 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                 },
               ),
               const SizedBox(height: 12),
-              
               Expanded(
                 child: BlocBuilder<WifiBloc, WifiState>(
                   builder: (context, state) {
@@ -169,48 +175,85 @@ class _WifiHomeScreenState extends State<WifiHomeScreen> {
                           ResponsiveGridTile(
                             label: "Connect to WiFi",
                             icon: Icons.wifi,
-                            destination: const WifiScanListScreen(),
                             color: Colors.blue[600]!,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const WifiScanListScreen(),
+                                ),
+                              );
+                            },
                           ),
-                          DashboardTile(
+                          ResponsiveGridTile(
                             label: "Saved Networks",
                             icon: Icons.bookmark,
-                            destination: const SavedNetworksScreen(),
                             color: Colors.green[600]!,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const SavedNetworksScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ],
-                        
-                        
                         if (currentMode == NetworkMode.accessPoint) ...[
-                          DashboardTile(
+                          ResponsiveGridTile(
                             label: "Hotspot Settings",
                             icon: Icons.router,
-                            destination: const AccessPointConfigScreen(),
                             color: Colors.purple[600]!,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const AccessPointConfigScreen(),
+                                ),
+                              );
+                            },
                           ),
-                          DashboardTile(
+                          ResponsiveGridTile(
                             label: "Network Status",
                             icon: Icons.network_check,
-                            destination: const DeviceInfoScreen(),
                             color: Colors.orange[600]!,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const DeviceInfoScreen(),
+                                ),
+                              );
+                            },
                           ),
                         ],
-                        
-                        
-                        DashboardTile(
+                        ResponsiveGridTile(
                           label: "Device Info",
                           icon: Icons.info,
-                          destination: const DeviceInfoScreen(),
                           color: Colors.teal[600]!,
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DeviceInfoScreen(),
+                              ),
+                            );
+                          },
                         ),
-                        
-                        
                         if (currentMode == NetworkMode.lanOnly)
-                          DashboardTile(
+                          ResponsiveGridTile(
                             label: "LAN Status",
                             icon: Icons.cable,
-                            destination: const DeviceInfoScreen(),
                             color: Colors.grey[600]!,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const DeviceInfoScreen(),
+                                ),
+                              );
+                            },
                           ),
                       ],
                     );

@@ -10,7 +10,7 @@ import 'package:stpvelox/presentation/blocs/settings/wifi/access_point/access_po
 import 'package:stpvelox/presentation/blocs/settings/wifi/client/wifi_client_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/network_mode/network_mode_bloc.dart';
 import 'package:stpvelox/presentation/blocs/settings/wifi/saved_networks/saved_networks_bloc.dart';
-import 'package:stpvelox/presentation/screens/dashboard_screen.dart';
+import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 import 'package:flutter/gestures.dart';
 
 import 'core/utils/touch_calibrator.dart';
@@ -85,9 +85,9 @@ class _StpVeloxAppState extends State<StpVeloxApp> {
     final TouchCalibrator calibrator = di.sl<TouchCalibrator>();
 
     return RawGestureDetector(
-      gestures: {
-        TapGestureRecognizer: CalibratedGestureRecognizerFactory(calibrator: calibrator),
-      },
+      //gestures: {
+      //  TapGestureRecognizer: CalibratedGestureRecognizerFactory(calibrator: calibrator),
+      //},
       child: MultiBlocProvider(
         providers: [
           BlocProvider(create: (_) => di.sl<SensorBloc>()),
@@ -131,7 +131,7 @@ class _StpVeloxAppState extends State<StpVeloxApp> {
               ),
             ),
           ),
-          home: const DashboardScreen(),
+          home: const RobotFaceScreen(),
         ),
       ),
     );

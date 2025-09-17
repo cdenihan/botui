@@ -1,9 +1,8 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:stpvelox/core/di/injection.dart';
-import 'package:stpvelox/domain/usecases/reboot.dart';
-import 'package:stpvelox/data/native/kipr_plugin.dart';
+import 'dart:async' show Timer;
 
+import 'package:flutter/material.dart';
+import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
+import 'package:stpvelox/shared/data/native/kipr_plugin.dart';
 
 class BatteryCheckService {
   Timer? _shutdownTimer;
@@ -66,9 +65,9 @@ class BatteryCheckService {
   }
 
   Future<void> _shutdownRobot() async {
-    
-    
-    await sl<RebootDevice>().call(true); 
+    // Direct instantiation instead of using service locator
+    final rebootDevice = RebootDevice();
+    await rebootDevice.call(true);
   }
 
   void dispose() {

@@ -1,6 +1,7 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/core/service/battery_check_service.dart';
 import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
@@ -110,7 +111,9 @@ class _StpVeloxAppState extends State<StpVeloxApp> {
             ),
           ),
         ),
-        home: const RobotFaceScreen(),
+        home: const InactivityListener(
+            child: DashboardScreen(),
+        ),
       ),
     );
   }

@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
 import 'package:stpvelox/core/utils/colors.dart';
 import 'package:stpvelox/core/widgets/dashboard_tile.dart';
 import 'package:stpvelox/features/program/application/program_selection_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/pages/sensor_selection_screen.dart';
 import 'package:stpvelox/features/settings/presentation/pages/settings_screen.dart';
+import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Listen for state changes
+    ref.listen<bool>(inactivityProvider, (previous, next) {
+      if (next == true) {
+        // Navigate to the inactive screen
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const RobotFaceScreen()),
+        );
+      }
+    });
+
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

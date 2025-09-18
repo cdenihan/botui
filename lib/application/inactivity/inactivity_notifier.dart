@@ -32,5 +32,5 @@ class InactivityNotifier extends StateNotifier<bool> {
 
 final inactivityProvider =
 StateNotifierProvider<InactivityNotifier, bool>((ref) {
-  return InactivityNotifier(const Duration(seconds: 5)); // adjust duration
+  return InactivityNotifier(const Duration(seconds: 30)); // adjust duration
 });

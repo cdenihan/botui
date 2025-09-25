@@ -8,6 +8,7 @@ class RobotEyebrowPainter {
     Canvas canvas,
     Size size,
     EyebrowConfiguration config,
+    {required Color eyebrowColor}
   ) {
     final scaleFactor = math.min(
       size.width / RobotFaceConstants.referenceWidth,
@@ -15,7 +16,7 @@ class RobotEyebrowPainter {
     );
 
     final eyebrowPaint = Paint()
-      ..color = RobotFaceConstants.eyeColor
+      ..color = eyebrowColor
       ..style = PaintingStyle.fill;
 
     final eyebrowStrokePaint = Paint()
@@ -41,7 +42,6 @@ class RobotEyebrowPainter {
       eyebrowStrokePaint,
       true,
     );
-
     _drawSingleEyebrow(
       canvas,
       rightEyeCenter,
@@ -255,4 +255,3 @@ class RobotEyebrowPainter {
     canvas.drawPath(eyebrowPath, strokePaint);
   }
 }
-

@@ -131,30 +131,30 @@ class ExpressionStateManager extends ChangeNotifier {
   }
 
   // Visual effects with transition blending
-  void drawEffects(Canvas canvas, Size size, Paint eyePaint) {
+  void drawEffects(Canvas canvas, Size size, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
     final intensity = effectiveIntensity;
 
     switch (_phase) {
       case StatePhase.entering:
         // Fade in current state effects
         if (intensity > 0.1) {
-          _currentState.drawEffects(canvas, size, intensity, eyePaint);
+          _currentState.drawEffects(canvas, size, intensity, eyePaint, effectColor: effectColor, glowColor: glowColor);
         }
         // Also fade out previous state effects if transitioning
         if (_previousState != null && (1.0 - intensity) > 0.1) {
-          _previousState!.drawEffects(canvas, size, 1.0 - intensity, eyePaint);
+          _previousState!.drawEffects(canvas, size, 1.0 - intensity, eyePaint, effectColor: effectColor, glowColor: glowColor);
         }
         break;
 
       case StatePhase.holding:
         // Full intensity for current state
-        _currentState.drawEffects(canvas, size, 1.0, eyePaint);
+        _currentState.drawEffects(canvas, size, 1.0, eyePaint, effectColor: effectColor, glowColor: glowColor);
         break;
 
       case StatePhase.exiting:
         // Fade out current state effects
         if (intensity > 0.1) {
-          _currentState.drawEffects(canvas, size, intensity, eyePaint);
+          _currentState.drawEffects(canvas, size, intensity, eyePaint, effectColor: effectColor, glowColor: glowColor);
         }
         break;
     }

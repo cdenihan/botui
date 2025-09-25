@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
-import 'robot_face/robot_expressions.dart';
+import 'package:stpvelox/core/di/injection.dart';
+import 'package:stpvelox/core/utils/colors/device_color_generator.dart';
+import 'package:stpvelox/core/utils/colors/robot_color_scheme.dart';
 import 'robot_face/robot_face_animation_manager.dart';
 import 'robot_face/robot_face_painter.dart';
 
@@ -24,7 +25,6 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
     _animationManager.startAnimations();
   }
 
-
   @override
   void dispose() {
     _animationManager.dispose();
@@ -39,10 +39,12 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
       }
     });
 
-    return InactivityListener(
-      child: Scaffold(
-        backgroundColor: RobotFaceConstants.backgroundColor,
-        body: AnimatedBuilder(
+    final colorSchemeAsync = ref.watch(robotColorSchemeProvider);
+
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: colorSchemeAsync.when(
+        data: (colorScheme) => AnimatedBuilder(
           animation: Listenable.merge([
             _animationManager.blinkAnimation,
             _animationManager.gazeAnimation,
@@ -55,13 +57,20 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
                 blinkValue: _animationManager.blinkAnimation.value,
                 gazeOffset: _animationManager.gazeAnimation.value,
                 stateManager: _animationManager.expressionStateManager,
+                colorScheme: colorScheme,
               ),
               child: Container(),
             );
           },
         ),
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (error, stack) => Center(
+          child: Text(
+            'Error loading colors: $error',
+            style: const TextStyle(color: Colors.white),
+          ),
+        ),
       ),
     );
   }
 }
-

@@ -14,10 +14,23 @@ class InactivityListener extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final notifier = ref.watch(inactivityProvider.notifier);
 
-    return Listener(
-      behavior: HitTestBehavior.translucent, // captures even on empty space
-      onPointerDown: (_) => notifier.userActivityDetected(),
-      child: child,
+    void handleUserActivity(String source) {
+      print('User activity detected from: $source');
+      notifier.userActivityDetected();
+    }
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: () => handleUserActivity('GestureDetector.onTap'),
+      onScaleStart: (_) => handleUserActivity('GestureDetector.onScaleStart'),
+      child: Listener(
+        behavior: HitTestBehavior.translucent,
+        onPointerDown: (_) => handleUserActivity('Listener.onPointerDown'),
+        onPointerMove: (_) => handleUserActivity('Listener.onPointerMove'),
+        onPointerUp: (_) => handleUserActivity('Listener.onPointerUp'),
+        onPointerSignal: (_) => handleUserActivity('Listener.onPointerSignal'),
+        child: child,
+      ),
     );
   }
 }

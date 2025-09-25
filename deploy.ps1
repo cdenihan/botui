@@ -3,7 +3,7 @@
 # User and host configuration
 $user = "pi"
 $hostAddr = $env:RPI_HOST
-if (-not $hostAddr) { $hostAddr = "10.101.156.134" }
+if (-not $hostAddr) { $hostAddr = "10.101.156.14" }
 
 # Build the Flutter project for Raspberry Pi
 flutterpi_tool build --arch=arm64 --cpu=pi3 --release

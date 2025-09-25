@@ -1,25 +1,54 @@
+import 'dart:io';
+import 'dart:async';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/touch_calibrator.dart';
 
-// Global SharedPreferences instance
-SharedPreferences? _sharedPreferences;
+// SharedPreferences Provider
+final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
+  throw UnimplementedError('SharedPreferences must be overridden with actual instance');
+});
 
-// Getter for SharedPreferences
-SharedPreferences get sharedPreferences {
-  if (_sharedPreferences == null) {
-    throw Exception('SharedPreferences not initialized. Call init() first.');
-  }
-  return _sharedPreferences!;
-}
+// MAC Address Provider
+final macAddressProvider = FutureProvider<String?>((ref) async {
+  return await _getMacAddress();
+});
 
-// Initialize core services that need to be available before Riverpod providers
-Future<void> init() async {
+// Touch Calibrator Provider
+final touchCalibratorProvider = Provider<TouchCalibrator>((ref) {
+  final calibrator = TouchCalibrator();
+  // Note: loadCalibration will be called in initialization
+  return calibrator;
+});
+
+// Initialize and override providers with actual instances
+Future<List<Override>> initializeProviders() async {
   // Initialize SharedPreferences
-  _sharedPreferences = await SharedPreferences.getInstance();
+  final sharedPreferences = await SharedPreferences.getInstance();
 
   // Initialize TouchCalibrator
   final touchCalibrator = TouchCalibrator();
   await touchCalibrator.loadCalibration();
 
-  // Providers will handle their own dependency injection
+  return [
+    sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+    touchCalibratorProvider.overrideWithValue(touchCalibrator),
+  ];
+}
+
+Future<String?> _getMacAddress() async {
+  try {
+    return await getMacAddressLinux("wlan0"); // or eth0
+  } on PlatformException {
+    return 'Failed to get mac address.';
+  }
+}
+
+Future<String?> getMacAddressLinux([String interface = "eth0"]) async {
+  final result = await Process.run("cat", ["/sys/class/net/$interface/address"]);
+  if (result.exitCode == 0) {
+    return result.stdout.toString().trim();
+  }
+  return null;
 }

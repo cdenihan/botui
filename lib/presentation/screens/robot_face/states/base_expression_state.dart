@@ -24,7 +24,7 @@ abstract class BaseExpressionState {
   EyebrowConfiguration getEyebrowConfiguration(double intensity, double scaleFactor);
 
   // Visual effects
-  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint) {}
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {}
 
   // State transitions
   bool canTransitionTo(BaseExpressionState newState) => true;
@@ -189,7 +189,7 @@ class HappyState extends BaseExpressionState {
   }
 
   @override
-  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint) {
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
     SparkleEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
@@ -269,7 +269,7 @@ class ExcitedState extends BaseExpressionState {
   }
 
   @override
-  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint) {
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
     EnergyLineEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
@@ -349,7 +349,7 @@ class SurprisedState extends BaseExpressionState {
   }
 
   @override
-  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint) {
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
     ShockLineEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
@@ -456,7 +456,7 @@ class DizzyState extends BaseExpressionState {
   }
 
   @override
-  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint) {
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
     DizzySwirlEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
@@ -486,7 +486,7 @@ class LoveState extends BaseExpressionState {
   }
 
   @override
-  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint) {
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
     HeartEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
@@ -540,4 +540,3 @@ class SkepticalState extends BaseExpressionState {
     );
   }
 }
-

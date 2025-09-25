@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/colors/robot_color_scheme.dart';
 import 'robot_expressions.dart';
 import 'robot_eye_painter.dart';
 import 'robot_eyebrow_painter.dart';
@@ -10,11 +11,13 @@ class RobotFacePainter extends CustomPainter {
   final double blinkValue;
   final Offset gazeOffset;
   final ExpressionStateManager stateManager;
+  final RobotColorScheme colorScheme;
 
   const RobotFacePainter({
     required this.blinkValue,
     required this.gazeOffset,
     required this.stateManager,
+    required this.colorScheme,
   });
 
   @override
@@ -34,6 +37,8 @@ class RobotFacePainter extends CustomPainter {
       size,
       gazeOffset,
       transformedDimensions,
+      eyeColor: colorScheme.eyeColor,
+      eyeAccentColor: colorScheme.eyeAccentColor,
     );
 
     // Get eyebrow configuration from state manager
@@ -42,14 +47,15 @@ class RobotFacePainter extends CustomPainter {
       canvas,
       size,
       eyebrowConfig,
+      eyebrowColor: colorScheme.eyebrowColor,
     );
 
     // Draw expression effects using state manager
     final eyePaint = Paint()
-      ..color = RobotFaceConstants.eyeColor
+      ..color = colorScheme.eyeColor
       ..style = PaintingStyle.fill;
 
-    stateManager.drawEffects(canvas, size, eyePaint);
+    stateManager.drawEffects(canvas, size, eyePaint, effectColor: colorScheme.effectColor, glowColor: colorScheme.glowColor);
   }
 
   double _getScaleFactor(Size size) {

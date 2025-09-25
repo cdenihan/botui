@@ -8,7 +8,7 @@ import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/presentation/pages/sensor_category_screen.dart';
 import 'package:stpvelox/features/sensors/application/sensor_providers.dart';
-import 'package:stpvelox/core/utils/colors.dart';
+import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 
 class SensorSelectionScreen extends ConsumerWidget {

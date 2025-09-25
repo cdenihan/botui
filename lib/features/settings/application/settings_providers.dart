@@ -1,17 +1,18 @@
 // application/settings_providers.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stpvelox/core/di/injection.dart' as di;
+import 'package:stpvelox/core/di/injection.dart';
 import 'package:stpvelox/features/settings/data/datasources/settings_remote_data_source.dart';
 import 'package:stpvelox/features/settings/data/repositories/settings_repository_impl.dart';
 import 'package:stpvelox/features/settings/domain/entities/setting.dart';
 import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
 
-// Data source provider using global SharedPreferences
+// Data source provider using Riverpod SharedPreferences provider
 final settingsRemoteDataSourceProvider = Provider<SettingsRemoteDataSourceImpl>((ref) {
+  final sharedPreferences = ref.watch(sharedPreferencesProvider);
   return SettingsRemoteDataSourceImpl(
     reboot: RebootDevice(),
-    sharedPreferences: di.sharedPreferences,
+    sharedPreferences: sharedPreferences,
   );
 });
 

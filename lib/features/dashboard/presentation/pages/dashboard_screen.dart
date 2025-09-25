@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
-import 'package:stpvelox/core/utils/colors.dart';
+import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/dashboard_tile.dart';
 import 'package:stpvelox/features/program/application/program_selection_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/pages/sensor_selection_screen.dart';

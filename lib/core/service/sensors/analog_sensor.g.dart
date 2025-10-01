@@ -6,169 +6,94 @@ part of 'analog_sensor.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$analogSensorHash() => r'4db07976ae1e27ad28ee0776c839818c638a61a3';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$AnalogSensor extends BuildlessAutoDisposeNotifier<int?> {
-  late final int port;
-
-  int? build(
-    int port,
-  );
-}
-
-/// See also [AnalogSensor].
 @ProviderFor(AnalogSensor)
-const analogSensorProvider = AnalogSensorFamily();
+const analogSensorProvider = AnalogSensorFamily._();
 
-/// See also [AnalogSensor].
-class AnalogSensorFamily extends Family<int?> {
-  /// See also [AnalogSensor].
-  const AnalogSensorFamily();
-
-  /// See also [AnalogSensor].
-  AnalogSensorProvider call(
-    int port,
-  ) {
-    return AnalogSensorProvider(
-      port,
-    );
-  }
-
-  @override
-  AnalogSensorProvider getProviderOverride(
-    covariant AnalogSensorProvider provider,
-  ) {
-    return call(
-      provider.port,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'analogSensorProvider';
-}
-
-/// See also [AnalogSensor].
-class AnalogSensorProvider
-    extends AutoDisposeNotifierProviderImpl<AnalogSensor, int?> {
-  /// See also [AnalogSensor].
-  AnalogSensorProvider(
-    int port,
-  ) : this._internal(
-          () => AnalogSensor()..port = port,
-          from: analogSensorProvider,
+final class AnalogSensorProvider extends $NotifierProvider<AnalogSensor, int?> {
+  const AnalogSensorProvider._(
+      {required AnalogSensorFamily super.from, required int super.argument})
+      : super(
+          retry: null,
           name: r'analogSensorProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$analogSensorHash,
-          dependencies: AnalogSensorFamily._dependencies,
-          allTransitiveDependencies:
-              AnalogSensorFamily._allTransitiveDependencies,
-          port: port,
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  AnalogSensorProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.port,
-  }) : super.internal();
-
-  final int port;
+  @override
+  String debugGetCreateSourceHash() => _$analogSensorHash();
 
   @override
-  int? runNotifierBuild(
-    covariant AnalogSensor notifier,
-  ) {
-    return notifier.build(
-      port,
-    );
+  String toString() {
+    return r'analogSensorProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(AnalogSensor Function() create) {
-    return ProviderOverride(
+  AnalogSensor create() => AnalogSensor();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(int? value) {
+    return $ProviderOverride(
       origin: this,
-      override: AnalogSensorProvider._internal(
-        () => create()..port = port,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        port: port,
-      ),
+      providerOverride: $SyncValueProvider<int?>(value),
     );
-  }
-
-  @override
-  AutoDisposeNotifierProviderElement<AnalogSensor, int?> createElement() {
-    return _AnalogSensorProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is AnalogSensorProvider && other.port == port;
+    return other is AnalogSensorProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, port.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin AnalogSensorRef on AutoDisposeNotifierProviderRef<int?> {
-  /// The parameter `port` of this provider.
-  int get port;
-}
+String _$analogSensorHash() => r'4db07976ae1e27ad28ee0776c839818c638a61a3';
 
-class _AnalogSensorProviderElement
-    extends AutoDisposeNotifierProviderElement<AnalogSensor, int?>
-    with AnalogSensorRef {
-  _AnalogSensorProviderElement(super.provider);
+final class AnalogSensorFamily extends $Family
+    with $ClassFamilyOverride<AnalogSensor, int?, int?, int?, int> {
+  const AnalogSensorFamily._()
+      : super(
+          retry: null,
+          name: r'analogSensorProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  AnalogSensorProvider call(
+    int port,
+  ) =>
+      AnalogSensorProvider._(argument: port, from: this);
 
   @override
-  int get port => (origin as AnalogSensorProvider).port;
+  String toString() => r'analogSensorProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+abstract class _$AnalogSensor extends $Notifier<int?> {
+  late final _$args = ref.$arg as int;
+  int get port => _$args;
+
+  int? build(
+    int port,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<int?, int?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<int?, int?>, int?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}

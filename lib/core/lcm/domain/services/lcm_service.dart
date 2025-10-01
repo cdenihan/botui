@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:typed_data';
 
+import 'package:lcm_dart/lcm_dart.dart' as lcm;
 import 'package:stpvelox/core/lcm/domain/repositories/lcm_repo.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/lcm/models/lcm_message.dart';
@@ -52,11 +53,12 @@ class LcmService with HasLogger {
     }
   }
 
-  Future<void> publish(String topic, List<int> bytes) async {
+  Future<void> publish(String topic, lcm.LcmMessage message) async {
     if (topic.isEmpty) throw ArgumentError('empty topic');
 
-    final data = Uint8List.fromList(bytes);
-    repo.publish(topic, data);
+    final buffer = lcm.LcmBuffer(1024);
+    message.encode(buffer);
+    repo.publish(topic, buffer.uint8List);
   }
 
   Future<void> poll({int timeoutMs = 0, int maxMessages = 64}) async {
@@ -106,11 +108,12 @@ class LcmService with HasLogger {
     return base.map((m) {
       log.fine('LCM message on $topic: ${m.data.length} bytes');
       log.finer('Raw data: ${m.data.toList()}');
+      final lcmBuffer = lcm.LcmBuffer.fromUint8List(m.data);
       return LcmDecoded<T>(
         topic: m.topic,
         utime: m.utime,
         raw: m.data,
-        value: decode(m.data),
+        value: decode(lcmBuffer),
       );
     });
   }

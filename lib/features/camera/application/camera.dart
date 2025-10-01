@@ -23,11 +23,15 @@ class CalibrationInProgress extends CalibrationState {
 class CalibrationComplete extends CalibrationState {}
 
 // --- NOTIFIER ---
-class CalibrationNotifier extends StateNotifier<CalibrationState> {
+class CalibrationNotifier extends Notifier<CalibrationState> {
   Timer? _frameTimer;
   int _step = 0;
 
-  CalibrationNotifier() : super(CalibrationInitial());
+  @override
+  CalibrationState build() {
+    ref.onDispose(() => _frameTimer?.cancel());
+    return CalibrationInitial();
+  }
 
   void startCalibration() {
     _frameTimer?.cancel();
@@ -141,14 +145,10 @@ class CalibrationNotifier extends StateNotifier<CalibrationState> {
     }
   }
 
-  @override
-  void dispose() {
-    _frameTimer?.cancel();
-    super.dispose();
-  }
 }
 
 // --- PROVIDER ---
 final calibrationProvider =
-StateNotifierProvider<CalibrationNotifier, CalibrationState>(
-        (ref) => CalibrationNotifier());
+    NotifierProvider<CalibrationNotifier, CalibrationState>(
+  CalibrationNotifier.new,
+);

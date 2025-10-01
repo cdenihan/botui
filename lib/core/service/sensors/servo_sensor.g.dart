@@ -6,171 +6,97 @@ part of 'servo_sensor.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$servoModeSensorHash() => r'02d9920d6493e6420880d4669258d66ca260cd27';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// Copied from Dart SDK
-class _SystemHash {
-  _SystemHash._();
-
-  static int combine(int hash, int value) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + value);
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x0007ffff & hash) << 10));
-    return hash ^ (hash >> 6);
-  }
-
-  static int finish(int hash) {
-    // ignore: parameter_assignments
-    hash = 0x1fffffff & (hash + ((0x03ffffff & hash) << 3));
-    // ignore: parameter_assignments
-    hash = hash ^ (hash >> 11);
-    return 0x1fffffff & (hash + ((0x00003fff & hash) << 15));
-  }
-}
-
-abstract class _$ServoModeSensor
-    extends BuildlessAutoDisposeNotifier<ServoMode?> {
-  late final int port;
-
-  ServoMode? build(
-    int port,
-  );
-}
-
-/// See also [ServoModeSensor].
 @ProviderFor(ServoModeSensor)
-const servoModeSensorProvider = ServoModeSensorFamily();
+const servoModeSensorProvider = ServoModeSensorFamily._();
 
-/// See also [ServoModeSensor].
-class ServoModeSensorFamily extends Family<ServoMode?> {
-  /// See also [ServoModeSensor].
-  const ServoModeSensorFamily();
-
-  /// See also [ServoModeSensor].
-  ServoModeSensorProvider call(
-    int port,
-  ) {
-    return ServoModeSensorProvider(
-      port,
-    );
-  }
-
-  @override
-  ServoModeSensorProvider getProviderOverride(
-    covariant ServoModeSensorProvider provider,
-  ) {
-    return call(
-      provider.port,
-    );
-  }
-
-  static const Iterable<ProviderOrFamily>? _dependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get dependencies => _dependencies;
-
-  static const Iterable<ProviderOrFamily>? _allTransitiveDependencies = null;
-
-  @override
-  Iterable<ProviderOrFamily>? get allTransitiveDependencies =>
-      _allTransitiveDependencies;
-
-  @override
-  String? get name => r'servoModeSensorProvider';
-}
-
-/// See also [ServoModeSensor].
-class ServoModeSensorProvider
-    extends AutoDisposeNotifierProviderImpl<ServoModeSensor, ServoMode?> {
-  /// See also [ServoModeSensor].
-  ServoModeSensorProvider(
-    int port,
-  ) : this._internal(
-          () => ServoModeSensor()..port = port,
-          from: servoModeSensorProvider,
+final class ServoModeSensorProvider
+    extends $NotifierProvider<ServoModeSensor, ServoMode?> {
+  const ServoModeSensorProvider._(
+      {required ServoModeSensorFamily super.from, required int super.argument})
+      : super(
+          retry: null,
           name: r'servoModeSensorProvider',
-          debugGetCreateSourceHash:
-              const bool.fromEnvironment('dart.vm.product')
-                  ? null
-                  : _$servoModeSensorHash,
-          dependencies: ServoModeSensorFamily._dependencies,
-          allTransitiveDependencies:
-              ServoModeSensorFamily._allTransitiveDependencies,
-          port: port,
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
         );
 
-  ServoModeSensorProvider._internal(
-    super._createNotifier, {
-    required super.name,
-    required super.dependencies,
-    required super.allTransitiveDependencies,
-    required super.debugGetCreateSourceHash,
-    required super.from,
-    required this.port,
-  }) : super.internal();
-
-  final int port;
+  @override
+  String debugGetCreateSourceHash() => _$servoModeSensorHash();
 
   @override
-  ServoMode? runNotifierBuild(
-    covariant ServoModeSensor notifier,
-  ) {
-    return notifier.build(
-      port,
-    );
+  String toString() {
+    return r'servoModeSensorProvider'
+        ''
+        '($argument)';
   }
 
+  @$internal
   @override
-  Override overrideWith(ServoModeSensor Function() create) {
-    return ProviderOverride(
+  ServoModeSensor create() => ServoModeSensor();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ServoMode? value) {
+    return $ProviderOverride(
       origin: this,
-      override: ServoModeSensorProvider._internal(
-        () => create()..port = port,
-        from: from,
-        name: null,
-        dependencies: null,
-        allTransitiveDependencies: null,
-        debugGetCreateSourceHash: null,
-        port: port,
-      ),
+      providerOverride: $SyncValueProvider<ServoMode?>(value),
     );
-  }
-
-  @override
-  AutoDisposeNotifierProviderElement<ServoModeSensor, ServoMode?>
-      createElement() {
-    return _ServoModeSensorProviderElement(this);
   }
 
   @override
   bool operator ==(Object other) {
-    return other is ServoModeSensorProvider && other.port == port;
+    return other is ServoModeSensorProvider && other.argument == argument;
   }
 
   @override
   int get hashCode {
-    var hash = _SystemHash.combine(0, runtimeType.hashCode);
-    hash = _SystemHash.combine(hash, port.hashCode);
-
-    return _SystemHash.finish(hash);
+    return argument.hashCode;
   }
 }
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-mixin ServoModeSensorRef on AutoDisposeNotifierProviderRef<ServoMode?> {
-  /// The parameter `port` of this provider.
-  int get port;
-}
+String _$servoModeSensorHash() => r'02d9920d6493e6420880d4669258d66ca260cd27';
 
-class _ServoModeSensorProviderElement
-    extends AutoDisposeNotifierProviderElement<ServoModeSensor, ServoMode?>
-    with ServoModeSensorRef {
-  _ServoModeSensorProviderElement(super.provider);
+final class ServoModeSensorFamily extends $Family
+    with
+        $ClassFamilyOverride<ServoModeSensor, ServoMode?, ServoMode?,
+            ServoMode?, int> {
+  const ServoModeSensorFamily._()
+      : super(
+          retry: null,
+          name: r'servoModeSensorProvider',
+          dependencies: null,
+          $allTransitiveDependencies: null,
+          isAutoDispose: true,
+        );
+
+  ServoModeSensorProvider call(
+    int port,
+  ) =>
+      ServoModeSensorProvider._(argument: port, from: this);
 
   @override
-  int get port => (origin as ServoModeSensorProvider).port;
+  String toString() => r'servoModeSensorProvider';
 }
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+
+abstract class _$ServoModeSensor extends $Notifier<ServoMode?> {
+  late final _$args = ref.$arg as int;
+  int get port => _$args;
+
+  ServoMode? build(
+    int port,
+  );
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build(
+      _$args,
+    );
+    final ref = this.ref as $Ref<ServoMode?, ServoMode?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<ServoMode?, ServoMode?>, ServoMode?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}

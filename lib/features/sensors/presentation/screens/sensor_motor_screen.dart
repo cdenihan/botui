@@ -6,7 +6,7 @@ import 'package:stpvelox/core/service/sensors/back_emf_sensor.dart';
 import 'package:stpvelox/core/service/sensors/motor_power_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.lcm.g.dart';
+import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 
 class SensorMotorScreen extends HookConsumerWidget {
   final int port;
@@ -25,8 +25,7 @@ class SensorMotorScreen extends HookConsumerWidget {
     final backEmfValue = useBackEmfValue(ref, port);
 
     void onSliderChange(double value) {
-      lcmService.publish("motors_${port}_power_cmd",
-          ScalarI32T(value: value.toInt()).encode());
+      lcmService.publish("motors_${port}_power_cmd", ScalarI32T(value: value.toInt()));
     }
 
     void onSliderChangeEnd(double value) {
@@ -35,7 +34,7 @@ class SensorMotorScreen extends HookConsumerWidget {
 
     void stopMotor() {
       lcmService.publish(
-          "motors_${port}_power_cmd", ScalarI32T(value: 0).encode());
+          "motors_${port}_power_cmd", ScalarI32T(value: 0));
     }
 
     const double minValue = -100;

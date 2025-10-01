@@ -6,22 +6,56 @@ part of 'magnetometer_sensor.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$magnetometerSensorHash() =>
-    r'3819554df4329fd205ab4f0a1d138e7fa1ff6d28';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [MagnetometerSensor].
 @ProviderFor(MagnetometerSensor)
-final magnetometerSensorProvider =
-    AutoDisposeNotifierProvider<MagnetometerSensor, Vector3fT?>.internal(
-  MagnetometerSensor.new,
-  name: r'magnetometerSensorProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$magnetometerSensorHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const magnetometerSensorProvider = MagnetometerSensorProvider._();
 
-typedef _$MagnetometerSensor = AutoDisposeNotifier<Vector3fT?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class MagnetometerSensorProvider
+    extends $NotifierProvider<MagnetometerSensor, Magnetometer?> {
+  const MagnetometerSensorProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'magnetometerSensorProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$magnetometerSensorHash();
+
+  @$internal
+  @override
+  MagnetometerSensor create() => MagnetometerSensor();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Magnetometer? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Magnetometer?>(value),
+    );
+  }
+}
+
+String _$magnetometerSensorHash() =>
+    r'e93776ce5f3e81f25efbab373ad3c7cb3c181e89';
+
+abstract class _$MagnetometerSensor extends $Notifier<Magnetometer?> {
+  Magnetometer? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<Magnetometer?, Magnetometer?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Magnetometer?, Magnetometer?>,
+        Magnetometer?,
+        Object?,
+        Object?>;
+    element.handleValue(ref, created);
+  }
+}

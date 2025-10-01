@@ -10,35 +10,37 @@ import 'package:stpvelox/features/wifi/domain/usecases/forget_wifi.dart';
 import 'package:stpvelox/features/wifi/usecases/connect_to_wifi.dart';
 import 'package:stpvelox/features/wifi/usecases/get_available_networks.dart';
 
-class WifiClientNotifier extends StateNotifier<WifiClientState> {
-  final GetAvailableNetworks getAvailableNetworks;
-  final ConnectToWifi connectToWifi;
-  final ForgetWifi forgetWifi;
-  final GetDeviceInfo getDeviceInfo;
-  final ManageSavedNetworks manageSavedNetworks;
+class WifiClientNotifier extends Notifier<WifiClientState> {
+  late final GetAvailableNetworks _getAvailableNetworks;
+  late final ConnectToWifi _connectToWifi;
+  late final ForgetWifi _forgetWifi;
+  late final GetDeviceInfo _getDeviceInfo;
+  late final ManageSavedNetworks _manageSavedNetworks;
 
-  WifiClientNotifier({
-    required this.getAvailableNetworks,
-    required this.connectToWifi,
-    required this.forgetWifi,
-    required this.getDeviceInfo,
-    required this.manageSavedNetworks,
-  }) : super(WifiClientState());
+  @override
+  WifiClientState build() {
+    _getAvailableNetworks = ref.read(getAvailableNetworksProvider);
+    _connectToWifi = ref.read(connectToWifiProvider);
+    _forgetWifi = ref.read(forgetWifiProvider);
+    _getDeviceInfo = ref.read(getDeviceInfoProvider);
+    _manageSavedNetworks = ref.read(manageSavedNetworksProvider);
+    return WifiClientState();
+  }
 
   Future<void> loadNetworks() async {
-    state.isLoading = true;
+    state = state.copyWith(isLoading: true);
     try {
-      final networks = await getAvailableNetworks();
+      final networks = await _getAvailableNetworks();
       state = state.copyWith(isLoading: false, networks: networks);
     } catch (e) {
-      state.errorMessage = e.toString();
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> connectToNetwork(String ssid, WifiEncryptionType encryptionType, WifiCredentials credentials) async {
-    state.isLoading = true;
+    state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await connectToWifi(ssid, encryptionType, credentials);
+      await _connectToWifi(ssid, encryptionType, credentials);
 
       final savedNetwork = SavedNetwork(
         ssid: ssid,
@@ -46,52 +48,50 @@ class WifiClientNotifier extends StateNotifier<WifiClientState> {
         credentials: credentials,
         lastConnected: DateTime.now(),
       );
-      await manageSavedNetworks.saveNetwork(savedNetwork);
+      await _manageSavedNetworks.saveNetwork(savedNetwork);
 
-      state.connectedSsid = ssid;
-
-      final networks = await getAvailableNetworks();
-      state.networks = networks;
-      state.isLoading = false;
+      final networks = await _getAvailableNetworks();
+      state = state.copyWith(
+        isLoading: false,
+        networks: networks,
+        connectedSsid: ssid,
+      );
 
       await loadDeviceInfo();
     } catch (e) {
-      state.errorMessage = (e.toString());
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> forgetNetwork(String ssid) async {
-    state.isLoading = true;
+    state = state.copyWith(isLoading: true, errorMessage: null);
     try {
-      await forgetWifi(ssid);
-      state.forgottenSsid = ssid;
+      await _forgetWifi(ssid);
 
-      final networks = await getAvailableNetworks();
-      state.networks = networks;
+      final networks = await _getAvailableNetworks();
+      state = state.copyWith(
+        networks: networks,
+        isLoading: false,
+        forgottenSsid: ssid,
+      );
 
       await loadDeviceInfo();
     } catch (e) {
-      state.errorMessage = e.toString();
+      state = state.copyWith(isLoading: false, errorMessage: e.toString());
     }
   }
 
   Future<void> loadDeviceInfo() async {
     try {
-      final deviceInfo = await getDeviceInfo();
-      state.deviceInfo = deviceInfo;
+      final deviceInfo = await _getDeviceInfo();
+      state = state.copyWith(deviceInfo: deviceInfo);
     } catch (e) {
-      state.errorMessage = e.toString();
+      state = state.copyWith(errorMessage: e.toString());
     }
   }
 }
 
 final wifiClientProvider =
-StateNotifierProvider<WifiClientNotifier, WifiClientState>((ref) {
-  return WifiClientNotifier(
-    getAvailableNetworks: ref.read(getAvailableNetworksProvider),
-    connectToWifi: ref.read(connectToWifiProvider),
-    forgetWifi: ref.read(forgetWifiProvider),
-    getDeviceInfo: ref.read(getDeviceInfoProvider),
-    manageSavedNetworks: ref.read(manageSavedNetworksProvider),
-  );
-});
+    NotifierProvider<WifiClientNotifier, WifiClientState>(
+  WifiClientNotifier.new,
+);

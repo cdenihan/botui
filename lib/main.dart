@@ -16,10 +16,13 @@ void main() async {
   setupLogging();
 
   // Initialize providers
-  final overrides = await initializeProviders();
+  final (sharedPreferences, touchCalibrator) = await initializeProviders();
 
   runApp(ProviderScope(
-    overrides: overrides,
+    overrides: [
+      sharedPreferencesProvider.overrideWithValue(sharedPreferences),
+      touchCalibratorProvider.overrideWithValue(touchCalibrator),
+    ],
     child: const StpVeloxApp(),
   ));
 }

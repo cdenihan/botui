@@ -5,8 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/scalar_f_t.lcm.g.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.lcm.g.dart';
+import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 
 part 'back_emf_sensor.g.dart';
 

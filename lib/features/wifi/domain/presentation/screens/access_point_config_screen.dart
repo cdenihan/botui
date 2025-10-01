@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/wifi/application/access_point_notifier.dart';
+import 'package:stpvelox/features/wifi/application/wifi_provider.dart';
 import 'package:stpvelox/features/wifi/domain/application/access_point_state.dart';
 import 'package:stpvelox/features/wifi/domain/enities/access_point_config.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/access_point_form.dart';

@@ -1,6 +1,7 @@
 import 'dart:typed_data';
+import 'package:lcm_dart/lcm_dart.dart';
 
-typedef LcmDecoder<T> = T Function(Uint8List bytes);
+typedef LcmDecoder<T> = T Function(LcmBuffer buffer);
 
 class LcmDecoded<T> {
   final String topic;

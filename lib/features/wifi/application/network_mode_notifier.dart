@@ -5,42 +5,39 @@ import 'package:stpvelox/features/wifi/domain/application/network_mode_state.dar
 import 'package:stpvelox/features/wifi/domain/enities/network_mode.dart';
 import 'package:stpvelox/features/wifi/usecases/get_network_mode.dart';
 
-class NetworkModeNotifier extends StateNotifier<NetworkModeState> {
-  final GetNetworkMode getNetworkMode;
-  final SetNetworkMode setNetworkMode;
+class NetworkModeNotifier extends Notifier<NetworkModeState> {
+  late final GetNetworkMode _getNetworkMode;
+  late final SetNetworkMode _setNetworkMode;
 
-  NetworkModeNotifier({
-    required this.getNetworkMode,
-    required this.setNetworkMode,
-  }) : super(NetworkModeState());
+  @override
+  NetworkModeState build() {
+    _getNetworkMode = ref.read(getNetworkModeProvider);
+    _setNetworkMode = ref.read(setNetworkModeProvider);
+    return NetworkModeState();
+  }
 
   Future<void> loadNetworkMode() async {
-    state.isLoading = true;
+    state = state.copyWith(isLoading: true);
     try {
-      final mode = await getNetworkMode();
-      state.mode = mode;
-      state.isLoading = false;
+      final mode = await _getNetworkMode();
+      state = state.copyWith(mode: mode, isLoading: false);
     } catch (e) {
-      state.errorMessage = e.toString();
+      state = state.copyWith(errorMessage: e.toString(), isLoading: false);
     }
   }
 
   Future<void> updateNetworkMode(NetworkMode mode) async {
-    state.isLoading = true;
+    state = state.copyWith(isLoading: true);
     try {
-      await setNetworkMode(mode);
-      state.mode = mode;
-      state.isLoading = false;
+      await _setNetworkMode(mode);
+      state = state.copyWith(mode: mode, isLoading: false);
     } catch (e) {
-      state.errorMessage = e.toString();
+      state = state.copyWith(errorMessage: e.toString(), isLoading: false);
     }
   }
 }
 
 final networkModeProvider =
-StateNotifierProvider<NetworkModeNotifier, NetworkModeState>((ref) {
-  return NetworkModeNotifier(
-    getNetworkMode: ref.read(getNetworkModeProvider),
-    setNetworkMode: ref.read(setNetworkModeProvider),
-  );
-});
+    NotifierProvider<NetworkModeNotifier, NetworkModeState>(
+  NetworkModeNotifier.new,
+);

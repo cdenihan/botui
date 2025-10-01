@@ -6,21 +6,46 @@ part of 'reboot.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$rebootDeviceHash() => r'd31a4205a63a1b82ee5d9494c97ef2175d73d37d';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [rebootDevice].
 @ProviderFor(rebootDevice)
-final rebootDeviceProvider = AutoDisposeProvider<RebootDevice>.internal(
-  rebootDevice,
-  name: r'rebootDeviceProvider',
-  debugGetCreateSourceHash:
-      const bool.fromEnvironment('dart.vm.product') ? null : _$rebootDeviceHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const rebootDeviceProvider = RebootDeviceProvider._();
 
-@Deprecated('Will be removed in 3.0. Use Ref instead')
-// ignore: unused_element
-typedef RebootDeviceRef = AutoDisposeProviderRef<RebootDevice>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class RebootDeviceProvider
+    extends $FunctionalProvider<RebootDevice, RebootDevice, RebootDevice>
+    with $Provider<RebootDevice> {
+  const RebootDeviceProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'rebootDeviceProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$rebootDeviceHash();
+
+  @$internal
+  @override
+  $ProviderElement<RebootDevice> $createElement($ProviderPointer pointer) =>
+      $ProviderElement(pointer);
+
+  @override
+  RebootDevice create(Ref ref) {
+    return rebootDevice(ref);
+  }
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(RebootDevice value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<RebootDevice>(value),
+    );
+  }
+}
+
+String _$rebootDeviceHash() => r'd31a4205a63a1b82ee5d9494c97ef2175d73d37d';

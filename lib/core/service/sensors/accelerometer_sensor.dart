@@ -6,22 +6,26 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.lcm.g.dart';
+import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
 
 part 'accelerometer_sensor.g.dart';
 
+class Accel {
+  final double x, y, z;
+  const Accel(this.x, this.y, this.z);
+}
 
-Vector3fT? useAccelerometer(WidgetRef ref) {
+Accel? useAccelerometer(WidgetRef ref) {
   return ref.watch(accelerometerSensorProvider);
 }
 
 @riverpod
 class AccelerometerSensor extends _$AccelerometerSensor with HasLogger {
   StreamSubscription<LcmDecoded<Vector3fT>>? _subscription;
-  Vector3fT? _currentValue;
+  Accel? _currentValue;
 
   @override
-  Vector3fT? build() {
+  Accel? build() {
     ref.onDispose(_dispose);
     _startSubscription();
     return _currentValue;
@@ -33,7 +37,7 @@ class AccelerometerSensor extends _$AccelerometerSensor with HasLogger {
         .subscribeAs<Vector3fT>('libstp/accel/value', Vector3fT.decode)
         .listen(
           (decoded) {
-        _currentValue = decoded.value;
+        _currentValue = Accel(decoded.value.x, decoded.value.y, decoded.value.z);
         state = _currentValue;
       },
       onError: (error) {

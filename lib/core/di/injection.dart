@@ -25,17 +25,14 @@ final touchCalibratorProvider = Provider<TouchCalibrator>((ref) {
 });
 
 // Initialize and override providers with actual instances
-Future<List<Override>> initializeProviders() async {
+Future<(SharedPreferences, TouchCalibrator)> initializeProviders() async {
   // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
   // Initialize TouchCalibrator
   final touchCalibrator = TouchCalibrator();
   await touchCalibrator.loadCalibration();
 
-  return [
-    sharedPreferencesProvider.overrideWithValue(sharedPreferences),
-    touchCalibratorProvider.overrideWithValue(touchCalibrator),
-  ];
+  return (sharedPreferences, touchCalibrator);
 }
 
 Future<String?> _getMacAddress() async {

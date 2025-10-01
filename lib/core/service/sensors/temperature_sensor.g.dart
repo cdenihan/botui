@@ -6,21 +6,52 @@ part of 'temperature_sensor.dart';
 // RiverpodGenerator
 // **************************************************************************
 
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
+
+@ProviderFor(TemperatureSensor)
+const temperatureSensorProvider = TemperatureSensorProvider._();
+
+final class TemperatureSensorProvider
+    extends $NotifierProvider<TemperatureSensor, double?> {
+  const TemperatureSensorProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'temperatureSensorProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$temperatureSensorHash();
+
+  @$internal
+  @override
+  TemperatureSensor create() => TemperatureSensor();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(double? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<double?>(value),
+    );
+  }
+}
+
 String _$temperatureSensorHash() => r'2accc75791da2fbb2a988c21a709ebe502902bb7';
 
-/// See also [TemperatureSensor].
-@ProviderFor(TemperatureSensor)
-final temperatureSensorProvider =
-    AutoDisposeNotifierProvider<TemperatureSensor, double?>.internal(
-  TemperatureSensor.new,
-  name: r'temperatureSensorProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$temperatureSensorHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
-
-typedef _$TemperatureSensor = AutoDisposeNotifier<double?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+abstract class _$TemperatureSensor extends $Notifier<double?> {
+  double? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<double?, double?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<double?, double?>, double?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}

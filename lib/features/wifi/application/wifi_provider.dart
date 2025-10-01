@@ -22,9 +22,10 @@ final wifiRepositoryProvider = Provider<IWifiRepository>((ref) =>
 final forgetWifiProvider = Provider<ForgetWifi>(
     (ref) => ForgetWifi(repository: ref.watch(wifiRepositoryProvider)));
 
-final accessPointProvider = StateNotifierProvider<AccessPointNotifier, AccessPointState>((ref) {
-    return AccessPointNotifier(ref.watch(manageAccessPointProvider));
-});
+final accessPointProvider =
+    NotifierProvider<AccessPointNotifier, AccessPointState>(
+  AccessPointNotifier.new,
+);
 
 final manageAccessPointProvider = Provider<ManageAccessPoint>(
     (ref) => ManageAccessPoint(ref.watch(wifiRepositoryProvider)));

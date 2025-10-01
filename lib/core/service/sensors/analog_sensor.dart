@@ -6,7 +6,7 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.lcm.g.dart';
+import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 
 part 'analog_sensor.g.dart';
 

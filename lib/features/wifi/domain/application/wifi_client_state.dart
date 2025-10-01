@@ -24,7 +24,7 @@ class WifiClientState {
     String? errorMessage,
     String? connectedSsid,
     String? forgottenSsid,
-    bool? deviceInfo,
+    DeviceInfo? deviceInfo,
   }) {
     return WifiClientState(
       isLoading: isLoading ?? this.isLoading,
@@ -32,7 +32,7 @@ class WifiClientState {
       errorMessage: errorMessage ?? this.errorMessage,
       connectedSsid: connectedSsid ?? this.connectedSsid,
       forgottenSsid: forgottenSsid ?? this.forgottenSsid,
-      deviceInfo: deviceInfo == null ? this.deviceInfo : null,
+      deviceInfo: deviceInfo ?? this.deviceInfo,
     );
   }
 }

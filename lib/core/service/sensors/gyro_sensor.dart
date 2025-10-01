@@ -6,21 +6,26 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.lcm.g.dart';
+import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
 
 part 'gyro_sensor.g.dart';
 
-Vector3fT? useGyro(WidgetRef ref) {
+class Gyro {
+  final double x, y, z;
+  const Gyro(this.x, this.y, this.z);
+}
+
+Gyro? useGyro(WidgetRef ref) {
   return ref.watch(gyroSensorProvider);
 }
 
 @riverpod
 class GyroSensor extends _$GyroSensor with HasLogger {
   StreamSubscription<LcmDecoded<Vector3fT>>? _subscription;
-  Vector3fT? _currentValue;
+  Gyro? _currentValue;
 
   @override
-  Vector3fT? build() {
+  Gyro? build() {
     ref.onDispose(_dispose);
     _startSubscription();
     return _currentValue;
@@ -32,7 +37,7 @@ class GyroSensor extends _$GyroSensor with HasLogger {
         .subscribeAs<Vector3fT>('libstp/gyro/value', Vector3fT.decode)
         .listen(
           (decoded) {
-        _currentValue = decoded.value;
+        _currentValue = Gyro(decoded.value.x, decoded.value.y, decoded.value.z);
         state = _currentValue;
       },
       onError: (error) {

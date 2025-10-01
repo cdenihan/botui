@@ -6,21 +6,26 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.lcm.g.dart';
+import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
 
 part 'magnetometer_sensor.g.dart';
 
-Vector3fT? useMagnetometer(WidgetRef ref) {
+class Magnetometer {
+  final double x, y, z;
+  const Magnetometer(this.x, this.y, this.z);
+}
+
+Magnetometer? useMagnetometer(WidgetRef ref) {
   return ref.watch(magnetometerSensorProvider);
 }
 
 @riverpod
 class MagnetometerSensor extends _$MagnetometerSensor with HasLogger {
   StreamSubscription<LcmDecoded<Vector3fT>>? _subscription;
-  Vector3fT? _currentValue;
+  Magnetometer? _currentValue;
 
   @override
-  Vector3fT? build() {
+  Magnetometer? build() {
     ref.onDispose(_dispose);
     _startSubscription();
     return _currentValue;
@@ -31,7 +36,7 @@ class MagnetometerSensor extends _$MagnetometerSensor with HasLogger {
     _subscription =
         lcm.subscribeAs<Vector3fT>('libstp/mag/value', Vector3fT.decode).listen(
               (decoded) {
-            _currentValue = decoded.value;
+            _currentValue = Magnetometer(decoded.value.x, decoded.value.y, decoded.value.z);
             state = _currentValue;
           },
           onError: (error) {

@@ -29,7 +29,7 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
   }
 
   void _handleModeChange(NetworkMode selectedMode) {
-    ref.read(networkModeProvider.notifier).setNetworkMode(selectedMode);
+    ref.read(networkModeProvider.notifier).updateNetworkMode(selectedMode);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

@@ -6,22 +6,53 @@ part of 'accelerometer_sensor.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$accelerometerSensorHash() =>
-    r'679e92e8cad6d056486410dbd835c44e95b4b310';
+// GENERATED CODE - DO NOT MODIFY BY HAND
+// ignore_for_file: type=lint, type=warning
 
-/// See also [AccelerometerSensor].
 @ProviderFor(AccelerometerSensor)
-final accelerometerSensorProvider =
-    AutoDisposeNotifierProvider<AccelerometerSensor, Vector3fT?>.internal(
-  AccelerometerSensor.new,
-  name: r'accelerometerSensorProvider',
-  debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
-      ? null
-      : _$accelerometerSensorHash,
-  dependencies: null,
-  allTransitiveDependencies: null,
-);
+const accelerometerSensorProvider = AccelerometerSensorProvider._();
 
-typedef _$AccelerometerSensor = AutoDisposeNotifier<Vector3fT?>;
-// ignore_for_file: type=lint
-// ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+final class AccelerometerSensorProvider
+    extends $NotifierProvider<AccelerometerSensor, Accel?> {
+  const AccelerometerSensorProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'accelerometerSensorProvider',
+          isAutoDispose: true,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$accelerometerSensorHash();
+
+  @$internal
+  @override
+  AccelerometerSensor create() => AccelerometerSensor();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(Accel? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<Accel?>(value),
+    );
+  }
+}
+
+String _$accelerometerSensorHash() =>
+    r'e143be8d078bf16f92d2e18ecdc8b89ed4061c04';
+
+abstract class _$AccelerometerSensor extends $Notifier<Accel?> {
+  Accel? build();
+  @$mustCallSuper
+  @override
+  void runBuild() {
+    final created = build();
+    final ref = this.ref as $Ref<Accel?, Accel?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<Accel?, Accel?>, Accel?, Object?, Object?>;
+    element.handleValue(ref, created);
+  }
+}

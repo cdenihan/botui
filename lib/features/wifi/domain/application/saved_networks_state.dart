@@ -14,12 +14,12 @@ class SavedNetworksState {
   SavedNetworksState copyWith({
     bool? isLoading,
     List<SavedNetwork>? networks,
-    String? error,
+    String? errorMessage,
   }) {
     return SavedNetworksState(
       isLoading: isLoading ?? this.isLoading,
       networks: networks ?? this.networks,
-      errorMessage: error ?? this.errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
     );
   }
 }

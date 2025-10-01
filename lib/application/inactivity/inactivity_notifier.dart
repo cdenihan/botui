@@ -2,35 +2,31 @@ import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class InactivityNotifier extends StateNotifier<bool> {
-  InactivityNotifier(this._timeout) : super(false) {
-    _startTimer(); // start immediately
-  }
-
-  final Duration _timeout;
+class InactivityNotifier extends Notifier<bool> {
   Timer? _timer;
+  static const _timeout = Duration(seconds: 30);
+
+  @override
+  bool build() {
+    ref.onDispose(() => _timer?.cancel());
+    _startTimer();
+    return false;
+  }
 
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer(_timeout, () {
-      state = true; // User inactive
+      state = true; // user inactive
     });
   }
 
-  /// Call this whenever the user interacts (tap, scroll, etc.)
+  // Call on any user interaction
   void userActivityDetected() {
     state = false;
-    _startTimer(); // reset timer
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
+    _startTimer();
   }
 }
 
-final inactivityProvider =
-StateNotifierProvider<InactivityNotifier, bool>((ref) {
-  return InactivityNotifier(const Duration(seconds: 30)); // adjust duration
-});
+final inactivityProvider = NotifierProvider<InactivityNotifier, bool>(
+  InactivityNotifier.new,
+);

@@ -1,9 +1,9 @@
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
-import 'package:stpvelox/features/sensors/presentation/pages/sensor_graph_screen.dart';
-import 'package:stpvelox/features/sensors/presentation/pages/sensor_motor_screen.dart';
-import 'package:stpvelox/features/sensors/presentation/pages/sensor_servo_screen.dart';
-import 'package:stpvelox/shared/data/native/kipr_plugin.dart';
+import 'package:stpvelox/features/sensors/domain/entities/sensor_type.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/sensor_graph_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/sensor_motor_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/sensor_servo_screen.dart';
 
 abstract class SensorsRemoteDataSource {
   Future<List<Sensor>> fetchSensors();
@@ -18,8 +18,8 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
             sensor: sensor,
             graphMin: 0,
             graphMax: 4095,
-            getSensorValue: () =>
-                KiprPlugin.getAnalog(port).then((value) => value.toDouble())));
+            sensorType: SensorType.analog,
+            port: port));
   }
 
   Sensor getDigitalSensor(int port) {
@@ -30,8 +30,8 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
             sensor: sensor,
             graphMin: 0,
             graphMax: 1,
-            getSensorValue: () =>
-                KiprPlugin.getDigital(port).then((value) => value.toDouble())));
+            sensorType: SensorType.digital,
+            port: port));
   }
 
   Sensor getMotorSensor(int port) {
@@ -53,31 +53,19 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
   @override
   Future<List<Sensor>> fetchSensors() async {
     return [
-      getAnalogSensor(0),
-      getAnalogSensor(1),
-      getAnalogSensor(2),
-      getAnalogSensor(3),
-      getAnalogSensor(4),
-      getAnalogSensor(5),
-      getDigitalSensor(0),
-      getDigitalSensor(1),
-      getDigitalSensor(2),
-      getDigitalSensor(3),
-      getDigitalSensor(4),
-      getDigitalSensor(5),
-      getDigitalSensor(6),
-      getDigitalSensor(7),
-      getDigitalSensor(8),
-      getDigitalSensor(9),
-      getDigitalSensor(10),
-      getMotorSensor(0),
-      getMotorSensor(1),
-      getMotorSensor(2),
-      getMotorSensor(3),
-      getServoSensor(0),
-      getServoSensor(1),
-      getServoSensor(2),
-      getServoSensor(3),
+      // Analog sensors (0-5)
+      for (int port = 0; port < 6; port++) getAnalogSensor(port),
+
+      // Digital sensors (0-9)
+      for (int port = 0; port < 11; port++) getDigitalSensor(port),
+
+      // Motor sensors (0-3)
+      for (int port = 0; port < 4; port++) getMotorSensor(port),
+
+      // Servo sensors (0-3)
+      for (int port = 0; port < 4; port++) getServoSensor(port),
+
+      // IMU sensors - using LCM system
       Sensor(
         category: SensorCategory.gyro,
         name: 'Gyro X',
@@ -85,7 +73,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -180,
           graphMax: 180,
-          getSensorValue: () => KiprPlugin.getGyroX(),
+          sensorType: SensorType.gyroX,
         ),
       ),
       Sensor(
@@ -95,7 +83,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -180,
           graphMax: 180,
-          getSensorValue: () => KiprPlugin.getGyroY(),
+          sensorType: SensorType.gyroY,
         ),
       ),
       Sensor(
@@ -105,7 +93,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -180,
           graphMax: 180,
-          getSensorValue: () => KiprPlugin.getGyroZ(),
+          sensorType: SensorType.gyroZ,
         ),
       ),
       Sensor(
@@ -115,7 +103,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -10,
           graphMax: 10,
-          getSensorValue: () => KiprPlugin.getAccelX(),
+          sensorType: SensorType.accelX,
         ),
       ),
       Sensor(
@@ -125,7 +113,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -10,
           graphMax: 10,
-          getSensorValue: () => KiprPlugin.getAccelY(),
+          sensorType: SensorType.accelY,
         ),
       ),
       Sensor(
@@ -135,7 +123,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -10,
           graphMax: 10,
-          getSensorValue: () => KiprPlugin.getAccelZ(),
+          sensorType: SensorType.accelZ,
         ),
       ),
       Sensor(
@@ -145,8 +133,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -256,
           graphMax: 256,
-          getSensorValue: () =>
-              KiprPlugin.getMagX().then((value) => value.toDouble()),
+          sensorType: SensorType.magX,
         ),
       ),
       Sensor(
@@ -156,8 +143,7 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -256,
           graphMax: 256,
-          getSensorValue: () =>
-              KiprPlugin.getMagY().then((value) => value.toDouble()),
+          sensorType: SensorType.magY,
         ),
       ),
       Sensor(
@@ -167,9 +153,28 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensor: sensor,
           graphMin: -256,
           graphMax: 256,
-          getSensorValue: () => KiprPlugin.getMagZ().then(
-            (value) => value.toDouble(),
-          ),
+          sensorType: SensorType.magZ,
+        ),
+      ),
+      // New sensors using LCM system
+      Sensor(
+        category: SensorCategory.temperature,
+        name: 'Temperature',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: -10,
+          graphMax: 60,
+          sensorType: SensorType.temperature,
+        ),
+      ),
+      Sensor(
+        category: SensorCategory.battery,
+        name: 'Battery Voltage',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: 0,
+          graphMax: 20,
+          sensorType: SensorType.batteryVoltage,
         ),
       ),
     ];

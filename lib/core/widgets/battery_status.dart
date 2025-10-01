@@ -1,44 +1,15 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:stpvelox/shared/data/native/kipr_plugin.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
 
-class BatteryStatus extends StatefulWidget {
+class BatteryStatus extends HookConsumerWidget {
   const BatteryStatus({super.key});
 
   @override
-  State<BatteryStatus> createState() => _BatteryStatusState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final batteryVoltage = useBatteryVoltage(ref) ?? 0.0;
 
-class _BatteryStatusState extends State<BatteryStatus> {
-  double _batteryVoltage = 0.0;
-  Timer? _timer;
-
-  @override
-  void initState() {
-    super.initState();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      _updateBatteryVoltage();
-    });
-    _updateBatteryVoltage();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  Future<void> _updateBatteryVoltage() async {
-    final voltage = await KiprPlugin.getBatteryVoltage();
-    setState(() {
-      _batteryVoltage = voltage;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (_batteryVoltage <= 0) {
+    if (batteryVoltage <= 0) {
       return const SizedBox.shrink();
     }
 
@@ -53,7 +24,7 @@ class _BatteryStatusState extends State<BatteryStatus> {
           ),
           const SizedBox(width: 8),
           Text(
-            '${_batteryVoltage.toStringAsFixed(2)}V',
+            '${batteryVoltage.toStringAsFixed(2)}V',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,

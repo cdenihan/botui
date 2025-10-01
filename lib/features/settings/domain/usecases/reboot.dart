@@ -1,4 +1,13 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
+
+part 'reboot.g.dart';
+
+@riverpod
+RebootDevice rebootDevice(Ref ref) {
+  return RebootDevice();
+}
 
 class RebootDevice {
   Future<void> call([bool isShutdown = false]) async {

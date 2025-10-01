@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
+import 'package:stpvelox/core/logging/has_logging.dart';
 
-class InactivityListener extends ConsumerWidget {
-  const InactivityListener({
+class InactivityListener extends ConsumerWidget with HasLogger {
+  InactivityListener({
     super.key,
     required this.child,
   });
@@ -15,7 +16,7 @@ class InactivityListener extends ConsumerWidget {
     final notifier = ref.watch(inactivityProvider.notifier);
 
     void handleUserActivity(String source) {
-      print('User activity detected from: $source');
+      log.finer('User activity detected from: $source');
       notifier.userActivityDetected();
     }
 

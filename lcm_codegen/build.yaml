@@ -1,0 +1,7 @@
+builders:
+  lcm_builder:
+    import: "package:lcm_codegen/lcm_builder.dart"
+    builder_factories: ["lcmBuilder"]
+    build_extensions: { ".lcm": [".lcm.g.dart"] }
+    auto_apply: root_package
+    build_to: source

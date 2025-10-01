@@ -1,0 +1,17 @@
+enum SensorType {
+  analog,
+  digital,
+  motor,
+  servo,
+  gyroX,
+  gyroY,
+  gyroZ,
+  accelX,
+  accelY,
+  accelZ,
+  magX,
+  magY,
+  magZ,
+  temperature,
+  batteryVoltage,
+}

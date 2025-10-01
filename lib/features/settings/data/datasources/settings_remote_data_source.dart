@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/features/settings/domain/entities/setting.dart';
 import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
+import 'package:stpvelox/features/settings/presentation/pages/service_status_screen.dart';
 import 'package:stpvelox/features/settings/presentation/pages/touch_calibration_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_home_screen.dart';
 import 'package:stpvelox/shared/data/native/kipr_plugin.dart';
@@ -16,7 +17,8 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
   final SharedPreferences sharedPreferences;
   bool allowSpiCommands = false;
 
-  SettingsRemoteDataSourceImpl({required this.reboot, required this.sharedPreferences});
+  SettingsRemoteDataSourceImpl(
+      {required this.reboot, required this.sharedPreferences});
 
   @override
   Future<List<Setting>> fetchSettings() async {
@@ -87,6 +89,18 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         onTap: (_) async {
           allowSpiCommands = !allowSpiCommands;
           await KiprPlugin.setSpiMode(allowSpiCommands);
+        },
+      ),
+      Setting(
+        icon: Icons.analytics_outlined,
+        label: "Status",
+        color: Colors.greenAccent,
+        onTap: (context) async {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ServiceStatusScreen()
+            ),
+          );
         },
       )
     ];

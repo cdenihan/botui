@@ -1,0 +1,58 @@
+import 'dart:async';
+
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:stpvelox/core/lcm/domain/providers.dart';
+import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
+import 'package:stpvelox/core/logging/has_logging.dart';
+import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
+import 'package:stpvelox/lcm/types/scalar_i32_t.lcm.g.dart';
+
+part 'analog_sensor.g.dart';
+
+int? useAnalogValue(WidgetRef ref, int port) {
+  return ref.watch(analogSensorProvider(port));
+}
+
+@riverpod
+class AnalogSensor extends _$AnalogSensor with HasLogger {
+  StreamSubscription<LcmDecoded<ScalarI32T>>? _subscription;
+  int? _currentValue;
+
+  @override
+  int? build(int port) {
+    if (port < 0 || port >= 6) return null;
+
+    ref.onDispose(_dispose);
+    _startSubscription(port);
+    return _currentValue;
+  }
+
+  void _startSubscription(int port) {
+    final lcm = ref.read(lcmServiceProvider);
+    _subscription = lcm
+        .subscribeAs<ScalarI32T>('libstp/analog/$port/value', ScalarI32T.decode)
+        .listen(
+      (decoded) {
+        _currentValue = decoded.value.value;
+        state = _currentValue;
+      },
+      onError: (error) {
+        log.severe('Error in analog $port subscription: $error');
+      },
+    );
+  }
+
+  void _dispose() {
+    _subscription?.cancel();
+    _subscription = null;
+  }
+}
+
+/// Strategy for reading analog sensor values
+class AnalogSensorReadingStrategy extends SensorReadingStrategy {
+  @override
+  double? readValue(WidgetRef ref, int? port) {
+    return useAnalogValue(ref, port ?? 0)?.toDouble();
+  }
+}

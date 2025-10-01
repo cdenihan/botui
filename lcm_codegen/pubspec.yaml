@@ -1,0 +1,12 @@
+name: lcm_codegen
+version: 0.1.0
+publish_to: "none"
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+
+dependencies:
+  build: ^2.4.0
+
+dev_dependencies:
+  build_runner: ^2.4.10

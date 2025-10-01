@@ -1,4 +1,4 @@
-// presentation/pages/settings_screen.dart
+// presentation/screens/settings_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/features/settings/application/settings_providers.dart';

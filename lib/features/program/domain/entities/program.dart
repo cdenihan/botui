@@ -13,4 +13,3 @@ class Program {
     required this.args,
   });
 }
-

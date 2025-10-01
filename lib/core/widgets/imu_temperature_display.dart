@@ -1,49 +1,31 @@
-
-import 'dart:async';
-
 import 'package:flutter/material.dart';
-import 'package:stpvelox/shared/data/native/kipr_plugin.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stpvelox/core/service/sensors/temperature_sensor.dart';
 
-class ImuTemperatureDisplay extends StatefulWidget {
+class ImuTemperatureDisplay extends HookConsumerWidget {
   const ImuTemperatureDisplay({super.key});
 
   @override
-  State<ImuTemperatureDisplay> createState() => _ImuTemperatureDisplayState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final temperature = useTemperature(ref);
+    if (temperature == null) {
+      return const SizedBox.shrink();
+    }
 
-class _ImuTemperatureDisplayState extends State<ImuTemperatureDisplay> {
-  late Future<double> _temperatureFuture;
-  Timer? _timer;
+    final color = temperature < 20
+        ? Colors.blue
+        : (temperature < 30 ? Colors.green : Colors.red);
 
-  @override
-  void initState() {
-    super.initState();
-    _temperatureFuture = KiprPlugin.getImuTemperature();
-    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
-      setState(() {
-        _temperatureFuture = KiprPlugin.getImuTemperature();
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<double>(
-      future: _temperatureFuture,
-      builder: (context, snapshot) {
-        if (snapshot.hasData) {
-          return Text('${snapshot.data!.toStringAsFixed(1)}°C');
-        } else if (snapshot.hasError) {
-          return const Text('Error');
-        }
-        return const CircularProgressIndicator();
-      },
+    return Row(
+      children: [
+        Icon(
+          Icons.thermostat,
+          color: color,
+          size: 40,
+        ),
+        const SizedBox(width: 8),
+        Text('${temperature.toStringAsFixed(1)}°C'),
+      ],
     );
   }
 }

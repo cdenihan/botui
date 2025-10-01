@@ -6,7 +6,6 @@ import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
 import 'package:stpvelox/features/settings/presentation/pages/service_status_screen.dart';
 import 'package:stpvelox/features/settings/presentation/pages/touch_calibration_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_home_screen.dart';
-import 'package:stpvelox/shared/data/native/kipr_plugin.dart';
 
 abstract class SettingsRemoteDataSource {
   Future<List<Setting>> fetchSettings();
@@ -77,18 +76,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         color: Colors.blue,
         type: SettingType.button,
         onTap: (_) async {
-          await SudoProcess.run('systemctl', ['stop', 'flutter-ui.service']);
-        },
-      ),
-      Setting(
-        icon: Icons.usb,
-        label: "Allow SPI Commands",
-        color: Colors.teal,
-        type: SettingType.toggle,
-        value: () => allowSpiCommands,
-        onTap: (_) async {
-          allowSpiCommands = !allowSpiCommands;
-          await KiprPlugin.setSpiMode(allowSpiCommands);
+          await SudoProcess.run('systemctl', ['stop', 'flutter-ui.services']);
         },
       ),
       Setting(

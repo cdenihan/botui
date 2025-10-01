@@ -1,5 +1,6 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +8,8 @@ import 'package:stpvelox/core/utils/touch_calibrator.dart';
 
 // SharedPreferences Provider
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
-  throw UnimplementedError('SharedPreferences must be overridden with actual instance');
+  throw UnimplementedError(
+      'SharedPreferences must be overridden with actual instance');
 });
 
 // MAC Address Provider
@@ -26,7 +28,6 @@ final touchCalibratorProvider = Provider<TouchCalibrator>((ref) {
 Future<List<Override>> initializeProviders() async {
   // Initialize SharedPreferences
   final sharedPreferences = await SharedPreferences.getInstance();
-
   // Initialize TouchCalibrator
   final touchCalibrator = TouchCalibrator();
   await touchCalibrator.loadCalibration();
@@ -46,7 +47,8 @@ Future<String?> _getMacAddress() async {
 }
 
 Future<String?> getMacAddressLinux([String interface = "eth0"]) async {
-  final result = await Process.run("cat", ["/sys/class/net/$interface/address"]);
+  final result =
+      await Process.run("cat", ["/sys/class/net/$interface/address"]);
   if (result.exitCode == 0) {
     return result.stdout.toString().trim();
   }

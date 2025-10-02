@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/sudo_process.dart';
 
 class ReloadServiceButton extends StatefulWidget {
   final String serviceName;
@@ -24,7 +25,7 @@ class _ReloadServiceButtonState extends State<ReloadServiceButton> {
     });
 
     try {
-      final result = await Process.run('sudo', ['systemctl', 'reload-or-restart', widget.serviceName]);
+      final result = await SudoProcess.run('systemctl', ['reload-or-restart', widget.serviceName]);
 
       if (result.exitCode == 0) {
         if (mounted) {

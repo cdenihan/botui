@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/settings/presentation/widgets/toggle_service_button.dart';
 import 'package:stpvelox/features/settings/presentation/widgets/reload_service_button.dart';
@@ -41,9 +42,9 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
     }
 
     try {
-      final result = await Process.run(
-        'sudo',
-        ['systemctl', 'show', serviceName, '--no-pager'],
+      final result = await SudoProcess.run(
+        'systemctl',
+        ['show', serviceName, '--no-pager'],
       );
 
       if (result.exitCode == 0) {

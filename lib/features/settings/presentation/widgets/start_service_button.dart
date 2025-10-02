@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/sudo_process.dart';
 
 class StartServiceButton extends StatefulWidget {
   final String serviceName;
@@ -24,7 +25,7 @@ class _StartServiceButtonState extends State<StartServiceButton> {
     });
 
     try {
-      final result = await Process.run('sudo', ['systemctl', 'start', widget.serviceName]);
+      final result = await SudoProcess.run('systemctl', ['start', widget.serviceName]);
 
       if (result.exitCode == 0) {
         if (mounted) {

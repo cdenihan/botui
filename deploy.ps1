@@ -20,4 +20,5 @@ $destination = "$user@${hostAddr}:/home/$user/stp-velox"
 wsl rsync -a --info=progress2 "$source" "$destination"
 
 # Restart the service on Raspberry Pi
-ssh $user@$hostAddr "sudo systemctl restart flutter-ui.service"
+ssh $user@$hostAddr "sudo systemctl stop flutter-ui"
+ssh $user@$hostAddr "sudo flutter-pi --videomode 800x480 --release /home/pi/stp-velox/"

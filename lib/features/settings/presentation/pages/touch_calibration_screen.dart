@@ -143,8 +143,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
 
     try {
       
-      final result = await Process.run('sudo', [
-        'sh',
+      final result = await SudoProcess.run('sh', [
         '-c',
         'echo "$pointercal" > /etc/pointercal',
       ]);

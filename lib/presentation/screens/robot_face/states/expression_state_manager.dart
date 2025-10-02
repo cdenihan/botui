@@ -10,6 +10,7 @@ class ExpressionStateManager extends ChangeNotifier {
   BaseExpressionState? _previousState;
   StatePhase _phase = StatePhase.holding;
   double _phaseProgress = 1.0; // 0.0 to 1.0
+  bool _isDisposed = false;
 
   // Animation controllers for state transitions
   AnimationController? _transitionController;
@@ -26,6 +27,8 @@ class ExpressionStateManager extends ChangeNotifier {
 
   // State transition methods
   Future<void> transitionToState(BaseExpressionState newState, TickerProvider vsync) async {
+    if (_isDisposed) return;
+
     if (!_currentState.canTransitionTo(newState) || _currentState.type == newState.type) {
       return;
     }
@@ -46,23 +49,29 @@ class ExpressionStateManager extends ChangeNotifier {
 
     // Clear previous state reference after successful transition
     Future.delayed(const Duration(milliseconds: 100), () {
-      _previousState = null;
+      if (!_isDisposed) {
+        _previousState = null;
+      }
     });
   }
 
   Future<void> transitionToExpression(RobotExpression expression, TickerProvider vsync) async {
+    if (_isDisposed) return;
     final seed = math.Random().nextInt(1000000);
     final newState = BaseExpressionState.create(expression, seed);
     await transitionToState(newState, vsync);
   }
 
   Future<void> returnToNeutral(TickerProvider vsync) async {
+    if (_isDisposed) return;
     final neutralState = NeutralState(seed: math.Random().nextInt(1000000));
     await transitionToState(neutralState, vsync);
   }
 
   // Random expression selection
   Future<void> transitionToRandomExpression(TickerProvider vsync) async {
+    if (_isDisposed) return;
+
     final availableExpressions = RobotExpression.values
         .where((e) => e != _currentState.type)
         .toList();
@@ -162,24 +171,51 @@ class ExpressionStateManager extends ChangeNotifier {
 
   // State timing and scheduling
   void scheduleRandomTransition(TickerProvider vsync) {
+    if (_isDisposed) return;
+
     final random = math.Random();
     final delaySeconds = 3 + random.nextInt(7);
 
     Future.delayed(Duration(seconds: delaySeconds), () {
+      if (_isDisposed) return;
+
+      // Check if the TickerProvider is still valid (for StatefulWidget)
+      if (vsync is TickerProviderStateMixin) {
+        final state = vsync as State;
+        if (!state.mounted) return;
+      }
+
       transitionToRandomExpression(vsync).then((_) {
+        if (_isDisposed) return;
+
         // Schedule hold duration
         final holdDuration = _currentState.holdDuration;
         Future.delayed(holdDuration, () {
+          if (_isDisposed) return;
+
           // Don't explicitly return to neutral - just schedule next transition
           // This allows for direct state-to-state morphing
           scheduleRandomTransition(vsync);
         });
+      }).catchError((error) {
+        // Silently handle errors when the widget is disposed
+        if (!_isDisposed) {
+          print('Error in random transition: $error');
+        }
       });
     });
   }
 
   // Internal methods
   Future<void> _animatePhase(StatePhase phase, Duration duration, Curve curve, TickerProvider vsync) async {
+    if (_isDisposed) return;
+
+    // Check if the TickerProvider is still valid before creating AnimationController
+    if (vsync is TickerProviderStateMixin) {
+      final state = vsync as State;
+      if (!state.mounted) return;
+    }
+
     _transitionController?.dispose();
     _transitionController = AnimationController(duration: duration, vsync: vsync);
 
@@ -189,13 +225,23 @@ class ExpressionStateManager extends ChangeNotifier {
     _setPhase(phase, 0.0);
 
     _transitionAnimation.addListener(() {
-      _setPhase(phase, _transitionAnimation.value);
+      if (!_isDisposed) {
+        _setPhase(phase, _transitionAnimation.value);
+      }
     });
 
-    await _transitionController!.forward();
+    try {
+      await _transitionController!.forward();
+    } catch (e) {
+      // Handle animation errors gracefully
+      if (!_isDisposed) {
+        print('Animation error: $e');
+      }
+    }
   }
 
   void _setPhase(StatePhase phase, double progress) {
+    if (_isDisposed) return;
     _phase = phase;
     _phaseProgress = progress;
     notifyListeners();
@@ -224,6 +270,7 @@ class ExpressionStateManager extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _transitionController?.dispose();
     super.dispose();
   }

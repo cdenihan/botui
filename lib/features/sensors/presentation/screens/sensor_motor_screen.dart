@@ -25,7 +25,7 @@ class SensorMotorScreen extends HookConsumerWidget {
     final backEmfValue = useBackEmfValue(ref, port);
 
     void onSliderChange(double value) {
-      lcmService.publish("motors_${port}_power_cmd", ScalarI32T(value: value.toInt()));
+      lcmService.publish("libstp/motor/$port/power_cmd", ScalarI32T(value: value.toInt()));
     }
 
     void onSliderChangeEnd(double value) {
@@ -34,7 +34,7 @@ class SensorMotorScreen extends HookConsumerWidget {
 
     void stopMotor() {
       lcmService.publish(
-          "motors_${port}_power_cmd", ScalarI32T(value: 0));
+          "libstp/motor/$port/power_cmd", ScalarI32T(value: 0));
     }
 
     const double minValue = -100;

@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/features/settings/presentation/widgets/service_tile.dart';
@@ -29,9 +30,9 @@ class _ServiceStatusScreenState extends State<ServiceStatusScreen> {
 
     try {
       // Run systemctl command
-      final result = await Process.run(
-        'sudo',
-        ['systemctl', 'list-units', '--type=service', '--all', '--no-pager'],
+      final result = await SudoProcess.run(
+        'systemctl',
+        ['list-units', '--type=service', '--all', '--no-pager'],
       );
 
       if (result.exitCode == 0) {

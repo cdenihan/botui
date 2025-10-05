@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/sudo_process.dart';
 
 class ToggleServiceButton extends StatefulWidget {
   final String serviceName;
@@ -28,7 +29,7 @@ class _ToggleServiceButtonState extends State<ToggleServiceButton> {
     final action = widget.isServiceRunning ? 'stop' : 'start';
 
     try {
-      final result = await Process.run('sudo', ['systemctl', action, widget.serviceName]);
+      final result = await SudoProcess.run('systemctl', [action, widget.serviceName]);
 
       if (result.exitCode == 0) {
         if (mounted) {

@@ -76,7 +76,7 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         color: Colors.blue,
         type: SettingType.button,
         onTap: (_) async {
-          await SudoProcess.run('systemctl', ['stop', 'flutter-ui.services']);
+          await SudoProcess.run('systemctl', ['stop', 'flutter-ui']);
         },
       ),
       Setting(

@@ -57,11 +57,12 @@ class _DeviceInfoScreenState extends ConsumerState<DeviceInfoScreen> {
                 else
                   const Text('Not connected to any network.',
                       style: TextStyle(fontSize: 16)),
-                Text("Mac Address: ${ref.watch(macAddressProvider)}")
+                Text("Mac Address: ${ref.watch(macAddressProvider)}",
+                    style: TextStyle(fontSize: 16))
               ],
             ),
           );
-        } else if (state.errorMessage !=  null) {
+        } else if (state.errorMessage != null) {
           return Center(
               child: Text('Error: ${state.errorMessage}',
                   style: const TextStyle(color: Colors.red)));

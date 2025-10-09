@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stpvelox/core/di/injection.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/application/wifi_client_state.dart';
@@ -56,6 +57,7 @@ class _DeviceInfoScreenState extends ConsumerState<DeviceInfoScreen> {
                 else
                   const Text('Not connected to any network.',
                       style: TextStyle(fontSize: 16)),
+                Text("Mac Address: ${ref.watch(macAddressProvider)}")
               ],
             ),
           );

@@ -25,7 +25,6 @@ class _DeviceInfoScreenState extends ConsumerState<DeviceInfoScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(wifiClientProvider);
-    final mac = ref.watch(macAddressProvider).value;
 
     return Scaffold(
       appBar: createTopBar(context, 'Device Information'),
@@ -58,7 +57,7 @@ class _DeviceInfoScreenState extends ConsumerState<DeviceInfoScreen> {
                 else
                   const Text('Not connected to any network.',
                       style: TextStyle(fontSize: 16)),
-                Text("Mac Address: $mac",
+                Text("Mac Address: ${ref.watch(macAddressProvider)}",
                     style: TextStyle(fontSize: 16))
               ],
             ),

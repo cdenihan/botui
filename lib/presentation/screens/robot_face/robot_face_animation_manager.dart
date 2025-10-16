@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:stpvelox/presentation/screens/robot_face/states/base_expression_state.dart';
 import 'robot_expressions.dart';
 import 'states/expression_state_manager.dart';
 
@@ -17,7 +18,7 @@ class RobotFaceAnimationManager {
   RobotFaceAnimationManager({required this.vsync}) {
     _initializeControllers();
     _initializeAnimations();
-    _expressionStateManager = ExpressionStateManager();
+    _expressionStateManager = ExpressionStateManager(NeutralState(seed: 1));
   }
 
   void _initializeControllers() {

@@ -5,6 +5,8 @@ $user = "pi"
 $hostAddr = $env:RPI_HOST
 if (-not $hostAddr) { $hostAddr = "10.101.156.134" }
 
+ssh $user@$hostAddr "sudo systemctl stop flutter-ui"
+
 # Build the Flutter project for Raspberry Pi
 flutterpi_tool build --arch=arm64 --cpu=pi3 --release
 
@@ -20,5 +22,4 @@ $destination = "$user@${hostAddr}:/home/$user/stp-velox"
 wsl rsync -a --info=progress2 "$source" "$destination"
 
 # Restart the service on Raspberry Pi
-ssh $user@$hostAddr "sudo systemctl stop flutter-ui"
 ssh $user@$hostAddr "sudo flutter-pi --videomode 800x480 --release /home/pi/stp-velox/"

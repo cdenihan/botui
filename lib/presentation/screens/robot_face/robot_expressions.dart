@@ -16,6 +16,8 @@ enum RobotExpression {
   love,
   annoyed,
   skeptical,
+  irritated,
+  dead,
 }
 
 class RobotFaceConstants {

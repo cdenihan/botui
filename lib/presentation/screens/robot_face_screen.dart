@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
-import 'package:stpvelox/core/di/injection.dart';
+import 'package:stpvelox/core/service/sensors/digital_sensor.dart';
 import 'package:stpvelox/core/utils/colors/device_color_generator.dart';
-import 'package:stpvelox/core/utils/colors/robot_color_scheme.dart';
-import 'robot_face/robot_face_animation_manager.dart';
-import 'robot_face/robot_face_painter.dart';
+import 'package:stpvelox/presentation/screens/robot_face/robot_face_animation_manager.dart';
+import 'package:stpvelox/presentation/screens/robot_face/robot_face_painter.dart';
+import 'package:stpvelox/presentation/screens/robot_face/states/expression_state_manager.dart';
 
 class RobotFaceScreen extends ConsumerStatefulWidget {
   const RobotFaceScreen({super.key});
@@ -17,6 +17,11 @@ class RobotFaceScreen extends ConsumerStatefulWidget {
 class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
     with TickerProviderStateMixin {
   late RobotFaceAnimationManager _animationManager;
+
+  // Button 10 irritation tracking
+  int _button10PressCount = 0;
+  DateTime? _lastButton10Press;
+  bool? _previousButton10State;
 
   @override
   void initState() {
@@ -31,6 +36,31 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
     super.dispose();
   }
 
+  void _handleButton10Press() {
+    final now = DateTime.now();
+
+    // Reset counter if too much time has passed (10 seconds)
+    if (_lastButton10Press != null &&
+        now.difference(_lastButton10Press!).inSeconds > 10) {
+      _button10PressCount = 0;
+    }
+
+    _button10PressCount++;
+    _lastButton10Press = now;
+
+    // Trigger robot face irritation based on press count
+    _animationManager.expressionStateManager.handleButton10Press();
+
+    // Schedule reset after 15 seconds of inactivity
+    Future.delayed(const Duration(seconds: 15), () {
+      if (_lastButton10Press != null &&
+          DateTime.now().difference(_lastButton10Press!).inSeconds >= 15) {
+        _button10PressCount = 0;
+        _lastButton10Press = null;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     ref.listen<bool>(inactivityProvider, (previous, next) {
@@ -39,7 +69,19 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
       }
     });
 
+    // Watch button 10 directly using useDigitalValue
+    final button10State = useDigitalValue(ref, 10);
+
+    // Detect button 10 press (rising edge)
+    if (button10State == true && _previousButton10State != true) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleButton10Press();
+      });
+    }
+    _previousButton10State = button10State;
+
     final colorSchemeAsync = ref.watch(robotColorSchemeProvider);
+    final expressionStateManager = ref.watch(expressionStateManagerProvider);
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -48,7 +90,6 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
           animation: Listenable.merge([
             _animationManager.blinkAnimation,
             _animationManager.gazeAnimation,
-            _animationManager.expressionStateManager,
           ]),
           builder: (context, child) {
             return CustomPaint(

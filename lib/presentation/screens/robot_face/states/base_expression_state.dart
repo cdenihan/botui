@@ -79,6 +79,10 @@ abstract class BaseExpressionState {
         return AnnoyedState(seed: seed);
       case RobotExpression.skeptical:
         return SkepticalState(seed: seed);
+      case RobotExpression.irritated:
+        return IrritatedState(seed: seed);
+      case RobotExpression.dead:
+        return DeadState(seed: seed);
     }
   }
 }
@@ -538,5 +542,60 @@ class SkepticalState extends BaseExpressionState {
       width: 140.0 * scaleFactor,
       yOffset: (-115.0 - (intensity * 8)) * scaleFactor,
     );
+  }
+}
+
+class IrritatedState extends BaseExpressionState {
+  const IrritatedState({required int seed}) : super(type: RobotExpression.irritated, seed: seed);
+
+  @override
+  EyeDimensions transformEyes(EyeDimensions baseDimensions, double intensity) {
+    return EyeDimensions(
+      leftWidth: baseDimensions.leftWidth + intensity * 5,
+      leftHeight: baseDimensions.leftHeight * (1.0 - intensity * 0.2),
+      rightWidth: baseDimensions.rightWidth + intensity * 5,
+      rightHeight: baseDimensions.rightHeight * (1.0 - intensity * 0.2),
+    );
+  }
+
+  @override
+  EyebrowConfiguration getEyebrowConfiguration(double intensity, double scaleFactor) {
+    return EyebrowConfiguration(
+      leftAngle: 0.3 * intensity,
+      rightAngle: -0.3 * intensity,
+      thickness: (28.0 + (intensity * 8)) * scaleFactor,
+      width: 140.0 * scaleFactor,
+      yOffset: (-105.0 - (intensity * 10)) * scaleFactor,
+    );
+  }
+}
+
+class DeadState extends BaseExpressionState {
+  const DeadState({required int seed}) : super(type: RobotExpression.dead, seed: seed);
+
+  @override
+  EyeDimensions transformEyes(EyeDimensions baseDimensions, double intensity) {
+    return EyeDimensions(
+      leftWidth: baseDimensions.leftWidth * (1.0 - intensity * 0.5),
+      leftHeight: baseDimensions.leftHeight * (1.0 - intensity * 0.5),
+      rightWidth: baseDimensions.rightWidth * (1.0 - intensity * 0.5),
+      rightHeight: baseDimensions.rightHeight * (1.0 - intensity * 0.5),
+    );
+  }
+
+  @override
+  EyebrowConfiguration getEyebrowConfiguration(double intensity, double scaleFactor) {
+    return EyebrowConfiguration(
+      leftAngle: 0.0,
+      rightAngle: 0.0,
+      thickness: 25.0 * scaleFactor,
+      width: 140.0 * scaleFactor,
+      yOffset: (-120.0 - (intensity * 10)) * scaleFactor,
+    );
+  }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    // No effects for dead state
   }
 }

@@ -18,7 +18,7 @@ class RobotFaceAnimationManager {
   RobotFaceAnimationManager({required this.vsync}) {
     _initializeControllers();
     _initializeAnimations();
-    _expressionStateManager = ExpressionStateManager();
+    _expressionStateManager = ExpressionStateManager(NeutralState(seed: 1));
   }
 
   void _initializeControllers() {

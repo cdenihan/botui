@@ -1,6 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/legacy.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/presentation/screens/robot_face/states/base_expression_state.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_expressions.dart';

@@ -1,30 +1,17 @@
-// dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/features/wifi/application/saved_networks_notifier.dart';
-import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_encryption_type.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_detail_screen.dart';
-import 'package:stpvelox/core/logging/has_logging.dart';
 
-class WifiScanListItem extends ConsumerStatefulWidget {
+class WifiScanListItem extends ConsumerWidget {
   final WifiNetwork network;
 
   const WifiScanListItem({super.key, required this.network});
 
   @override
-  ConsumerState<WifiScanListItem> createState() => _WifiScanListItemState();
-}
-
-class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
-    with HasLogger {
-  bool _isConnecting = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final network = widget.network;
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
@@ -34,7 +21,7 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
           style: TextStyle(
             fontSize: 16,
             fontWeight:
-            network.isConnected ? FontWeight.bold : FontWeight.normal,
+                network.isConnected ? FontWeight.bold : FontWeight.normal,
           ),
         ),
         subtitle: Column(
@@ -44,14 +31,14 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
               network.isConnected
                   ? 'Connected'
                   : network.isKnown
-                  ? 'Saved Network - Tap to connect'
-                  : 'Tap to configure',
+                      ? 'Saved Network - Tap to connect'
+                      : 'Tap to configure',
               style: TextStyle(
                 color: network.isConnected
                     ? Colors.green
                     : network.isKnown
-                    ? Colors.blue
-                    : Colors.grey,
+                        ? Colors.blue
+                        : Colors.grey,
               ),
             ),
             if (network.encryptionType != WifiEncryptionType.open)
@@ -72,8 +59,8 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
               color: network.isConnected
                   ? Colors.green
                   : network.isKnown
-                  ? Colors.blue
-                  : Colors.grey,
+                      ? Colors.blue
+                      : Colors.grey,
             ),
             if (network.encryptionType != WifiEncryptionType.open)
               const Icon(
@@ -84,50 +71,16 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
           ],
         ),
         trailing: network.isKnown && !network.isConnected
-            ? (_isConnecting
-            ? const SizedBox(
-          width: 24,
-          height: 24,
-          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.green),
-        )
-            : IconButton(
-          onPressed: () async {
-            setState(() {
-              _isConnecting = true;
-            });
-            try {
-              await ref
-                  .read(savedNetworksProvider.notifier)
-                  .connectToSavedNetwork(network.ssid);
-
-              await ref
-                  .read(wifiClientProvider.notifier)
-                  .loadNetworks();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Connected — list refreshed')),
-              );
-            } catch (e) {
-              log.severe('Quick connect failed for ${network.ssid}: $e');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Quick connect failed: $e')),
-              );
-            } finally {
-              if (mounted) {
-                setState(() {
-                  _isConnecting = false;
-                });
-              }
-            }
-          },
-          icon: const Icon(Icons.play_arrow, color: Colors.green),
-          tooltip: 'Quick Connect',
-        ))
+            ? IconButton(
+                onPressed: () => ref.read(savedNetworksProvider.notifier).connectToSavedNetwork(network.ssid),
+                icon: const Icon(Icons.play_arrow, color: Colors.green),
+                tooltip: 'Quick Connect',
+              )
             : Icon(
-          Icons.arrow_forward_ios,
-          size: 16,
-          color: Colors.grey.shade400,
-        ),
+                Icons.arrow_forward_ios,
+                size: 16,
+                color: Colors.grey.shade400,
+              ),
         onTap: () {
           Navigator.push(
             context,

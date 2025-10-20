@@ -6,6 +6,17 @@ class WifiNetwork {
   final bool isConnected;
   final WifiEncryptionType encryptionType;
 
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is WifiNetwork &&
+          runtimeType == other.runtimeType &&
+          ssid == other.ssid &&
+          encryptionType == other.encryptionType;
+
+  @override
+  int get hashCode => Object.hash(ssid, encryptionType);
+
   WifiNetwork({
     required this.ssid,
     required this.encryptionType,

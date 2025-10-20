@@ -54,8 +54,7 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(networkModeProvider);
-    final currentMode =
-    (state.isLoading) ? state.mode : NetworkMode.client;
+    final currentMode = (state.isLoading) ? NetworkMode.client : state.mode;
 
     return Scaffold(
       appBar: createTopBar(context, 'Network Control'),
@@ -158,7 +157,8 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             color: Colors.purple[600]!,
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const AccessPointConfigScreen()),
+              MaterialPageRoute(
+                  builder: (_) => const AccessPointConfigScreen()),
             ),
           ),
           ResponsiveGridTile(

@@ -1,6 +1,6 @@
 import 'wifi_encryption_type.dart';
 
-class WifiNetwork implements Comparable {
+class WifiNetwork {
   final String ssid;
   final bool isKnown;
   final bool isConnected;
@@ -16,22 +16,6 @@ class WifiNetwork implements Comparable {
 
   @override
   int get hashCode => Object.hash(ssid, encryptionType);
-
-  @override
-  int compareTo(other) {
-    {
-      // First priority: connected networks
-      if (isConnected && !other.isConnected) return -1;
-      if (!isConnected && other.isConnected) return 1;
-
-      // Second priority: known networks
-      if (isKnown && !other.isKnown) return -1;
-      if (!isKnown && other.isKnown) return 1;
-
-      // Third priority: alphabetical by SSID
-      return ssid.toLowerCase().compareTo(other.ssid.toLowerCase());
-    }
-  }
 
   WifiNetwork({
     required this.ssid,

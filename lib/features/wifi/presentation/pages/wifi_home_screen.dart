@@ -3,14 +3,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/network_mode_notifier.dart';
-import 'package:stpvelox/features/wifi/domain/application/network_mode_state.dart';
 import 'package:stpvelox/features/wifi/domain/enities/network_mode.dart';
 import 'package:stpvelox/features/wifi/domain/presentation/screens/access_point_config_screen.dart';
+import 'package:stpvelox/features/wifi/domain/presentation/screens/saved_networks_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/device_info_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_scan_list_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
-
-import '../../domain/presentation/screens/saved_networks_screen.dart';
 
 class WifiHomeScreen extends ConsumerStatefulWidget {
   const WifiHomeScreen({super.key});

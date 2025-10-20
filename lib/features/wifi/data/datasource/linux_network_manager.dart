@@ -60,12 +60,18 @@ class LinuxNetworkManager {
             : WifiEncryptionType.wpa2Personal;
       }
 
-      networks.add(WifiNetwork(
+      WifiNetwork wifiNetwork = WifiNetwork(
         ssid: ssid,
         encryptionType: encType,
         isConnected: inUse,
         isKnown: savedSSIDs.contains(ssid),
-      ));
+      );
+
+      if (networks.contains(wifiNetwork)) {
+        if (wifiNetwork.isConnected) networks.remove(wifiNetwork);
+      }
+
+      networks.add(wifiNetwork);
     }
     return networks.toList();
   }

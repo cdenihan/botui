@@ -36,7 +36,7 @@ class LinuxNetworkManager {
     
     
     final lines = (result.stdout as String).split('\n').skip(1);
-    final networks = <WifiNetwork>[];
+    final networks = <WifiNetwork>{};
     for (var line in lines) {
       if (line.trim().isEmpty) continue;
       final parts =
@@ -64,7 +64,7 @@ class LinuxNetworkManager {
         isKnown: savedSSIDs.contains(ssid),
       ));
     }
-    return networks;
+    return networks.toList();
   }
 
   Future<void> connect(String ssid, WifiEncryptionType encType,

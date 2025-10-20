@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stpvelox/features/wifi/application/saved_networks_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_encryption_type.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_detail_screen.dart';
 
-class WifiScanListItem extends StatelessWidget {
+class WifiScanListItem extends ConsumerWidget {
   final WifiNetwork network;
 
   const WifiScanListItem({super.key, required this.network});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: ListTile(
@@ -70,16 +72,7 @@ class WifiScanListItem extends StatelessWidget {
         ),
         trailing: network.isKnown && !network.isConnected
             ? IconButton(
-                onPressed: () {
-                  // When connecting to a saved network from the scan list, we don't have credentials here.
-                  // The WifiDetailScreen will handle collecting them if needed.
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => WifiDetailScreen(network: network),
-                    ),
-                  );
-                },
+                onPressed: () => ref.read(savedNetworksProvider.notifier).connectToSavedNetwork(network.ssid),
                 icon: const Icon(Icons.play_arrow, color: Colors.green),
                 tooltip: 'Quick Connect',
               )

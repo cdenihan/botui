@@ -92,11 +92,6 @@ class LinuxNetworkManager {
       case WifiEncryptionType.wpa3Enterprise:
         final entCred = credentials as EnterpriseCredentials;
 
-        final wifiInterface = await _getWifiInterface();
-        if (wifiInterface == null) {
-          throw Exception('No WiFi interface found');
-        }
-
         await SudoProcess.run('nmcli', [
           'connection',
           'add',
@@ -105,7 +100,7 @@ class LinuxNetworkManager {
           'con-name',
           ssid,
           'ifname',
-          wifiInterface,
+          'wlan0',
           'ssid',
           ssid,
           'wifi-sec.key-mgmt',
@@ -226,15 +221,9 @@ class LinuxNetworkManager {
     try {
       await stopAccessPoint();
 
-      // Get the actual WiFi interface name
-      final wifiInterface = await _getWifiInterface();
-      if (wifiInterface == null) {
-        throw Exception('No WiFi interface found');
-      }
-
       if (config.channel == 0) {
         final bestChannel = await findBestChannel(config.band);
-        config = config.copyWith(
+        config = AccessPointConfig(
           ssid: config.ssid,
           password: config.password,
           band: config.band,
@@ -245,46 +234,52 @@ class LinuxNetworkManager {
         );
       }
 
-      // Use the simpler 'nmcli device wifi hotspot' command
+      final connectionName = 'STP-Velox-AP';
       final args = [
-        'device',
+        'connection',
+        'add',
+        'type',
         'wifi',
-        'hotspot',
         'ifname',
-        wifiInterface,
+        'wlan0',
         'con-name',
-        'STP-Velox-AP',
+        connectionName,
+        'autoconnect',
+        'yes',
         'ssid',
         config.ssid,
+        'mode',
+        'ap',
+        'wifi.band',
+        config.band.nmcliValue,
+        'wifi-sec.key-mgmt',
+        _getKeyMgmt(config.encryptionType),
+        'wifi-sec.psk',
+        config.password,
+        'ipv4.method',
+        'shared',
+        'ipv4.addresses',
+        '192.168.4.1/24',
       ];
 
-      // Add password if provided
-      if (config.password.isNotEmpty) {
-        args.addAll(['password', config.password]);
+      if (config.channel > 0) {
+        args.addAll(['wifi.channel', config.channel.toString()]);
       }
 
-      // Add band and channel together (nmcli requires band when channel is specified)
-      if (config.channel > 0 && config.band != WifiBand.bandAuto) {
-        args.addAll([
-          'band',
-          config.band.nmcliValue,
-          'channel',
-          config.channel.toString()
-        ]);
-      } else if (config.band != WifiBand.bandAuto) {
-        // Band only, no specific channel
-        args.addAll(['band', config.band.nmcliValue]);
+      if (config.hidden) {
+        args.addAll(['wifi.hidden', 'yes']);
       }
-
-      print('Creating AP with command: nmcli ${args.join(' ')}');
 
       final result = await SudoProcess.run('nmcli', args);
       if (result.exitCode != 0) {
         throw Exception('Failed to create AP: ${result.stderr}');
       }
 
-      print('AP created successfully, stdout: ${result.stdout}');
-      print('AP created successfully, stderr: ${result.stderr}');
+      final activateResult =
+          await SudoProcess.run('nmcli', ['connection', 'up', connectionName]);
+      if (activateResult.exitCode != 0) {
+        throw Exception('Failed to activate AP: ${activateResult.stderr}');
+      }
 
       await _saveAccessPointConfig(config);
       await setNetworkMode(NetworkMode.accessPoint);
@@ -383,11 +378,6 @@ class LinuxNetworkManager {
 
   Future<int> findBestChannel(WifiBand band) async {
     try {
-      final wifiInterface = await _getWifiInterface();
-      if (wifiInterface == null) {
-        return band.channels.first;
-      }
-
       final channels = band.channels;
       final interference = <int, int>{};
 
@@ -395,7 +385,7 @@ class LinuxNetworkManager {
         interference[channel] = 0;
       }
 
-      final scanResult = await SudoProcess.run('iwlist', [wifiInterface, 'scan']);
+      final scanResult = await SudoProcess.run('iwlist', ['wlan0', 'scan']);
       if (scanResult.exitCode == 0) {
         final output = scanResult.stdout as String;
         final lines = output.split('\n');
@@ -597,11 +587,8 @@ class LinuxNetworkManager {
         }
       }
 
-      final wifiInterface = await _getWifiInterface();
-      if (wifiInterface != null) {
-        await SudoProcess.run(
-            'nmcli', ['device', 'set', wifiInterface, 'managed', 'yes']);
-      }
+      await SudoProcess.run(
+          'nmcli', ['device', 'set', 'wlan0', 'managed', 'yes']);
     } catch (e) {
       print('Warning: Could not ensure WiFi enabled: $e');
     }
@@ -609,45 +596,17 @@ class LinuxNetworkManager {
 
   Future<void> _resetWifiInterface() async {
     try {
-      final wifiInterface = await _getWifiInterface();
-      if (wifiInterface == null) {
-        print('Warning: No WiFi interface found');
-        return;
-      }
-
-      await SudoProcess.run('ip', ['link', 'set', wifiInterface, 'down']);
+      await SudoProcess.run('ip', ['link', 'set', 'wlan0', 'down']);
       await Future.delayed(const Duration(milliseconds: 500));
-      await SudoProcess.run('ip', ['link', 'set', wifiInterface, 'up']);
+      await SudoProcess.run('ip', ['link', 'set', 'wlan0', 'up']);
       await Future.delayed(const Duration(milliseconds: 500));
 
       await SudoProcess.run(
-          'nmcli', ['device', 'set', wifiInterface, 'managed', 'yes']);
+          'nmcli', ['device', 'set', 'wlan0', 'managed', 'yes']);
 
       await SudoProcess.run('nmcli', ['device', 'wifi', 'rescan']);
     } catch (e) {
       print('Warning: Could not reset WiFi interface: $e');
-    }
-  }
-
-  Future<String?> _getWifiInterface() async {
-    try {
-      final result = await SudoProcess.run(
-          'nmcli', ['-t', '-f', 'DEVICE,TYPE', 'device', 'status']);
-      if (result.exitCode != 0) return null;
-
-      final lines = (result.stdout as String).split('\n');
-      for (var line in lines) {
-        final parts = line.split(':');
-        if (parts.length >= 2 && parts[1] == 'wifi') {
-          final device = parts[0];
-          // Skip p2p-dev interfaces, they can't be used for connections
-          if (device.startsWith('p2p-dev-')) continue;
-          return device;
-        }
-      }
-      return null;
-    } catch (e) {
-      return null;
     }
   }
 }

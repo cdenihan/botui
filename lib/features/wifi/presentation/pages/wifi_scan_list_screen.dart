@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
@@ -89,20 +90,23 @@ class _WifiScanListScreenState extends ConsumerState<WifiScanListScreen> {
           const Divider(height: 1),
           Expanded(
             child: () {
+
               if (state.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               } else if (!state.isLoading) {
                 if (state.networks.isEmpty) {
                   return const Center(child: Text('No networks found.'));
                 }
+                final sortedNetworks = state.networks.sorted((a, b) => a.compareTo(b));
+
                 return RefreshIndicator(
                   onRefresh: () async {
                     ref.read(wifiClientProvider.notifier).loadNetworks();
                   },
                   child: ListView.builder(
-                    itemCount: state.networks.length,
+                    itemCount: sortedNetworks.length,
                     itemBuilder: (context, index) {
-                      final network = state.networks[index];
+                      final network = sortedNetworks[index];
                       return WifiScanListItem(network: network);
                     },
                   ),

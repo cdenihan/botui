@@ -73,6 +73,7 @@ class LinuxNetworkManager {
 
       networks.add(wifiNetwork);
     }
+    networks.removeWhere((n) => n.ssid == "--");
     return networks.toList();
   }
 

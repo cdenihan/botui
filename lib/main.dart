@@ -80,6 +80,7 @@ class StpVeloxApp extends HookConsumerWidget {
       child: InactivityListener(
         child: MaterialApp(
           title: 'stpvelox',
+          // debugShowCheckedModeBanner: false,
           theme: ThemeData(
             brightness: Brightness.dark,
             primaryColor: AppColors.programs,

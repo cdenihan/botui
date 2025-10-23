@@ -103,15 +103,9 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
               await ref
                   .read(wifiClientProvider.notifier)
                   .loadNetworks();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Connected — list refreshed')),
-              );
+              log.info('Quick connect initiated for ${network.ssid}');
             } catch (e) {
               log.severe('Quick connect failed for ${network.ssid}: $e');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Quick connect failed: $e')),
-              );
             } finally {
               if (mounted) {
                 setState(() {

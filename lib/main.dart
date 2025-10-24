@@ -111,7 +111,7 @@ class StpVeloxApp extends HookConsumerWidget {
               ),
             ),
           ),
-          home: const DashboardScreen(),
+          home: DashboardScreen(),
         ),
       ),
     );

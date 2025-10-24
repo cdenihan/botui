@@ -2,16 +2,10 @@ import 'package:flutter/material.dart';
 
 class SensorMetricsPanel extends StatelessWidget {
   final double avg;
-  final double minVal;
-  final double maxVal;
-  final double stdDev;
 
   const SensorMetricsPanel({
     super.key,
     required this.avg,
-    required this.minVal,
-    required this.maxVal,
-    required this.stdDev,
   });
 
   @override
@@ -26,9 +20,6 @@ class SensorMetricsPanel extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildMetricItem('Avg', avg.toStringAsFixed(2)),
-          _buildMetricItem('Min', minVal.toStringAsFixed(2)),
-          _buildMetricItem('Max', maxVal.toStringAsFixed(2)),
-          _buildMetricItem('Std', stdDev.toStringAsFixed(2)),
         ],
       ),
     );

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
+import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/dashboard_tile.dart';
 import 'package:stpvelox/features/program/presentation/screens/program_selection_screen.dart';
@@ -8,20 +9,38 @@ import 'package:stpvelox/features/sensors/presentation/screens/sensor_selection_
 import 'package:stpvelox/features/settings/presentation/pages/settings_screen.dart';
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 
-class DashboardScreen extends ConsumerWidget {
-  const DashboardScreen({super.key});
+import '../../../screen_renderer/application/screen_renderer_provider.dart';
+
+class DashboardScreen extends ConsumerWidget with HasLogger{
+  DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // Listen for state changes
     ref.listen<bool>(inactivityProvider, (previous, next) {
       if (next == true) {
-        // Navigate to the inactive screens
         Navigator.of(context).push(
           MaterialPageRoute(builder: (_) => const RobotFaceScreen()),
         );
       }
     });
+
+
+    ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
+      if (next == null) return;
+
+      if (previous?.runtimeType == next.runtimeType) return;
+
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => next,
+          settings: RouteSettings(name: next.runtimeType.toString()),
+        ),
+      );
+    });
+
+
+
+
 
     return Scaffold(
       backgroundColor: AppColors.background,

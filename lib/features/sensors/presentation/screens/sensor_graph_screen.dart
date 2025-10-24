@@ -108,9 +108,6 @@ class SensorGraphScreen extends HookConsumerWidget {
               const SizedBox(height: 16),
               SensorMetricsPanel(
                 avg: statistics.average,
-                minVal: statistics.minimum,
-                maxVal: statistics.maximum,
-                stdDev: statistics.standardDeviation,
               ),
             ],
           ),

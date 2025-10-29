@@ -126,13 +126,68 @@ class LinuxNetworkManager {
     }
   }
 
+// dart
   Future<void> forget(String ssid) async {
+    // Try deleting by given name first (fast path)
     final result =
-        await SudoProcess.run('nmcli', ['connection', 'delete', ssid]);
-    if (result.exitCode != 0) {
-      throw Exception('Failed to forget network: ${result.stderr}');
+    await SudoProcess.run('nmcli', ['connection', 'delete', ssid]);
+    if (result.exitCode == 0) {
+      try {
+        await removeSavedNetwork(ssid);
+      } catch (_) {}
+      return;
+    }
+
+    // Fallback: enumerate connections and match 802-11-wireless.ssid
+    try {
+      final listResult =
+      await SudoProcess.run('nmcli', ['-t', '-f', 'UUID', 'connection', 'show']);
+      if (listResult.exitCode != 0) {
+        // Couldn't list connections; still try to remove from prefs
+        try {
+          await removeSavedNetwork(ssid);
+        } catch (_) {}
+        throw Exception('Failed to list connections: ${listResult.stderr}');
+      }
+
+      final uuids = (listResult.stdout as String)
+          .split('\n')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty);
+
+      String? foundUuid;
+      for (final uuid in uuids) {
+        final showResult = await SudoProcess.run(
+          'nmcli',
+          ['-t', '-f', '802-11-wireless.ssid', 'connection', 'show', uuid],
+        );
+        if (showResult.exitCode != 0) continue;
+        final connSsid = (showResult.stdout as String).trim();
+        if (connSsid == ssid) {
+          foundUuid = uuid;
+          break;
+        }
+      }
+
+      if (foundUuid != null) {
+        final delResult = await SudoProcess.run(
+            'nmcli', ['connection', 'delete', 'uuid', foundUuid]);
+        if (delResult.exitCode != 0) {
+          throw Exception('Failed to forget network by UUID: ${delResult.stderr}');
+        }
+      } else {
+        // No matching connection found — treat as already-removed
+      }
+
+      try {
+        await removeSavedNetwork(ssid);
+      } catch (_) {}
+    } catch (e) {
+      // propagate a useful error
+      throw Exception('Failed to forget network: $e');
     }
   }
+
 
   Future<DeviceInfo> getDeviceInfo() async {
     try {

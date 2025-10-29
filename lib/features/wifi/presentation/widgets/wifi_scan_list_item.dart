@@ -92,6 +92,9 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
         )
             : IconButton(
           onPressed: () async {
+            // Save ScaffoldMessenger reference before async operations
+            final scaffoldMessenger = ScaffoldMessenger.of(context);
+
             setState(() {
               _isConnecting = true;
             });
@@ -104,19 +107,24 @@ class _WifiScanListItemState extends ConsumerState<WifiScanListItem>
                   .read(wifiClientProvider.notifier)
                   .loadNetworks();
 
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Connected — list refreshed')),
-              );
+              if (mounted) {
+                scaffoldMessenger.showSnackBar(
+                  const SnackBar(content: Text('Connected — list refreshed')),
+                );
+              }
             } catch (e) {
               log.severe('Quick connect failed for ${network.ssid}: $e');
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Quick connect failed: $e')),
-              );
+              if (mounted) {
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(content: Text('Quick connect failed: $e')),
+                );
+              }
             } finally {
               if (mounted) {
                 setState(() {
                   _isConnecting = false;
                 });
+                log.info("Quick connected to ${network.ssid}");
               }
             }
           },

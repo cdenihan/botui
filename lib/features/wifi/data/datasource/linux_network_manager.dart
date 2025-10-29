@@ -29,7 +29,8 @@ class LinuxNetworkManager {
     final savedSSIDs = savedNetworks.map((n) => n.ssid).toSet();
 
     final lines = (result.stdout as String).split('\n').skip(1);
-    final networks = <WifiNetwork>{};
+    final networksMap = <String, WifiNetwork>{}; // Use map to handle duplicates
+
     for (var line in lines) {
       if (line.trim().isEmpty) continue;
 
@@ -60,14 +61,32 @@ class LinuxNetworkManager {
             : WifiEncryptionType.wpa2Personal;
       }
 
-      networks.add(WifiNetwork(
+      WifiNetwork network = WifiNetwork(
         ssid: ssid,
         encryptionType: encType,
         isConnected: inUse,
         isKnown: savedSSIDs.contains(ssid),
-      ));
+      );
+
+      // Handle duplicates: prefer connected, then known, then first occurrence
+      if (networksMap.containsKey(ssid)) {
+        final existing = networksMap[ssid]!;
+        // Only replace if new one has higher priority
+        if (network.isConnected && !existing.isConnected) {
+          networksMap[ssid] = network;
+        } else if (!existing.isConnected && !existing.isKnown && network.isKnown) {
+          networksMap[ssid] = network;
+        }
+      } else {
+        networksMap[ssid] = network;
+      }
     }
-    return networks.toList();
+
+    // Convert map to list and sort by priority
+    final networksList = networksMap.values.toList();
+    networksList.sort((a, b) => a.compareTo(b));
+
+    return networksList;
   }
 
   Future<void> connect(String ssid, WifiEncryptionType encType,
@@ -119,11 +138,68 @@ class LinuxNetworkManager {
     }
   }
 
+  String _normalizeSsid(String ssid) {
+    return ssid.split(':').first.trim();
+  }
+
   Future<void> forget(String ssid) async {
+    final normalizedSsid = _normalizeSsid(ssid);
+
+    // Try deleting by given name first (fast path)
     final result =
         await SudoProcess.run('nmcli', ['connection', 'delete', ssid]);
-    if (result.exitCode != 0) {
-      throw Exception('Failed to forget network: ${result.stderr}');
+    if (result.exitCode == 0) {
+      try {
+        await removeSavedNetwork(normalizedSsid);
+      } catch (_) {}
+      return;
+    }
+
+    // Fallback: enumerate connections and match 802-11-wireless.ssid
+    try {
+      final listResult =
+          await SudoProcess.run('nmcli', ['-t', '-f', 'UUID', 'connection', 'show']);
+      if (listResult.exitCode != 0) {
+        try {
+          await removeSavedNetwork(normalizedSsid);
+        } catch (_) {}
+        throw Exception('Failed to list connections: ${listResult.stderr}');
+      }
+
+      final uuids = (listResult.stdout as String)
+          .split('\n')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty);
+
+      String? foundUuid;
+      for (final uuid in uuids) {
+        final showResult = await SudoProcess.run(
+          'nmcli',
+          ['-t', '-f', '802-11-wireless.ssid', 'connection', 'show', uuid],
+        );
+        if (showResult.exitCode != 0) continue;
+        final connSsid = (showResult.stdout as String).trim();
+        if (connSsid == normalizedSsid) {
+          foundUuid = uuid;
+          break;
+        }
+      }
+
+      if (foundUuid != null) {
+        final delResult = await SudoProcess.run(
+            'nmcli', ['connection', 'delete', 'uuid', foundUuid]);
+        if (delResult.exitCode != 0) {
+          throw Exception('Failed to forget network by UUID: ${delResult.stderr}');
+        }
+      } else {
+        // No matching connection found — treat as already-removed
+      }
+
+      try {
+        await removeSavedNetwork(normalizedSsid);
+      } catch (_) {}
+    } catch (e) {
+      throw Exception('Failed to forget network: $e');
     }
   }
 
@@ -484,7 +560,12 @@ class LinuxNetworkManager {
     final prefs = await SharedPreferences.getInstance();
     final savedNetworks = await getSavedNetworks();
 
-    savedNetworks.removeWhere((n) => n.ssid == ssid);
+    final target = _normalizeSsid(ssid);
+
+    savedNetworks.removeWhere((n) {
+      final nNorm = _normalizeSsid(n.ssid);
+      return nNorm == target || n.ssid.trim() == ssid.trim();
+    });
 
     final networksJson = savedNetworks.map((n) {
       final Map<String, dynamic> networkMap = {

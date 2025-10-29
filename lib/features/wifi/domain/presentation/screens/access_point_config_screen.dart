@@ -76,6 +76,7 @@ class _AccessPointConfigScreenState
             AccessPointForm(
               initialConfig: _config,
               isStarted: _isStarted,
+              isLoading: state.isLoading,
               onStart: (config) {
                 ref.read(accessPointProvider.notifier).startAccessPoint(config);
               },
@@ -83,11 +84,6 @@ class _AccessPointConfigScreenState
                 ref.read(accessPointProvider.notifier).stopAccessPoint();
               },
             ),
-            if (state.isLoading)
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Center(child: CircularProgressIndicator()),
-              ),
           ],
         ),
       ),

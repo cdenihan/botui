@@ -6,6 +6,7 @@ import 'package:stpvelox/features/wifi/application/network_mode_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/enities/network_mode.dart';
 import 'package:stpvelox/features/wifi/domain/presentation/screens/access_point_config_screen.dart';
 import 'package:stpvelox/features/wifi/domain/presentation/screens/saved_networks_screen.dart';
+import 'package:stpvelox/features/wifi/presentation/pages/access_point_status_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/device_info_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_scan_list_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
@@ -163,10 +164,14 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             label: "Network Status",
             icon: Icons.network_check,
             color: Colors.orange[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
-            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const AccessPointStatusScreen(),
+                ),
+              );
+            },
           ),
         ],
         ResponsiveGridTile(

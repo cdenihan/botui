@@ -57,7 +57,7 @@ class _DeviceInfoScreenState extends ConsumerState<DeviceInfoScreen> {
                 else
                   const Text('Not connected to any network.',
                       style: TextStyle(fontSize: 16)),
-                Text("Mac Address: ${ref.watch(macAddressProvider)}",
+                Text("Mac Address: ${ref.watch(macAddressProvider).value}",
                     style: TextStyle(fontSize: 16))
               ],
             ),

@@ -24,7 +24,6 @@ class DashboardScreen extends ConsumerWidget with HasLogger{
       }
     });
 
-
     ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
       if (next == null) return;
 
@@ -37,10 +36,6 @@ class DashboardScreen extends ConsumerWidget with HasLogger{
         ),
       );
     });
-
-
-
-
 
     return Scaffold(
       backgroundColor: AppColors.background,

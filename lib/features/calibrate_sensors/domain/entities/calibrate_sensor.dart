@@ -4,13 +4,11 @@ import 'package:stpvelox/features/calibrate_sensors/domain/entities/calibration_
 
 class CalibrateSensor{
   final String name;
-  final String state;
   final CalibrationSensorType sensorType;
   final Widget Function(CalibrateSensor) getWidgetScreen;
 
   CalibrateSensor({
     required this.name,
-    required this.state,
     required this.sensorType,
     required this.getWidgetScreen
   });

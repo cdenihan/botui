@@ -648,6 +648,44 @@ class LinuxNetworkManager {
     }
   }
 
+  /// Check if an ethernet cable is physically connected
+  Future<bool> isEthernetCableConnected() async {
+    try {
+      // Get all ethernet devices and their carrier status
+      final result = await SudoProcess.run(
+          'nmcli', ['-t', '-f', 'DEVICE,TYPE,STATE', 'device', 'status']);
+      if (result.exitCode != 0) return false;
+
+      final lines = (result.stdout as String).split('\n');
+      for (var line in lines) {
+        final parts = line.split(':');
+        if (parts.length >= 3 && parts[1] == 'ethernet') {
+          // Check if device state is connected or connecting
+          final state = parts[2].toLowerCase();
+          if (state.contains('connected') || state.contains('connecting')) {
+            return true;
+          }
+
+          // Also check carrier status via sysfs (more reliable for cable detection)
+          final device = parts[0];
+          try {
+            final carrierResult = await SudoProcess.run(
+                'cat', ['/sys/class/net/$device/carrier']);
+            if (carrierResult.exitCode == 0) {
+              final carrier = (carrierResult.stdout as String).trim();
+              if (carrier == '1') return true;
+            }
+          } catch (_) {
+            // Continue checking other methods
+          }
+        }
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
   Future<void> _ensureWifiEnabled() async {
     try {
       final radioResult = await SudoProcess.run('nmcli', ['radio', 'wifi']);

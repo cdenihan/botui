@@ -2,7 +2,7 @@ import 'package:stpvelox/features/wifi/domain/enities/network_mode.dart';
 
 class NetworkModeState {
   bool isLoading;
-  late String? errorMessage;
+  String? errorMessage;
   NetworkMode mode;
 
   NetworkModeState({
@@ -13,12 +13,12 @@ class NetworkModeState {
 
   NetworkModeState copyWith({
     bool? isLoading,
-    String? errorMessage,
+    String? Function()? errorMessage,
     NetworkMode? mode,
   }) {
     return NetworkModeState(
       isLoading: isLoading ?? this.isLoading,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage != null ? errorMessage() : this.errorMessage,
       mode: mode ?? this.mode,
     );
   }

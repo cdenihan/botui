@@ -157,4 +157,9 @@ class WifiRepositoryImpl implements IWifiRepository {
   Future<bool> isLanOnlyModeActive() async {
     return await networkManager.isLanOnlyModeActive();
   }
+
+  @override
+  Future<bool> isEthernetCableConnected() async {
+    return await networkManager.isEthernetCableConnected();
+  }
 }

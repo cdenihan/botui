@@ -43,4 +43,5 @@ abstract class IWifiRepository {
   Future<void> enableLanOnlyMode();
   Future<void> disableLanOnlyMode();
   Future<bool> isLanOnlyModeActive();
+  Future<bool> isEthernetCableConnected();
 }

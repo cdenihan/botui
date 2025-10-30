@@ -1,5 +1,6 @@
 enum CalibrationSensorType{
-  blackWhite('Black and White');
+  blackWhite('Black and White'),
+  waitForLight('Wait for Light');
 
   final String name;
 

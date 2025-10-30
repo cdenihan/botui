@@ -85,6 +85,7 @@ class LinuxNetworkManager {
     // Convert map to list and sort by priority
     final networksList = networksMap.values.toList();
     networksList.sort((a, b) => a.compareTo(b));
+    networksList.removeWhere((n) => n.ssid == "--" || n.ssid.isEmpty);
 
     return networksList;
   }
@@ -644,19 +645,6 @@ class LinuxNetworkManager {
       return output.contains('disabled');
     } catch (e) {
       return false;
-    }
-  }
-
-  String _getKeyMgmt(WifiEncryptionType encryptionType) {
-    switch (encryptionType) {
-      case WifiEncryptionType.open:
-        return 'none';
-      case WifiEncryptionType.wpa2Personal:
-      case WifiEncryptionType.wpa3Personal:
-        return 'wpa-psk';
-      case WifiEncryptionType.wpa2Enterprise:
-      case WifiEncryptionType.wpa3Enterprise:
-        return 'wpa-eap';
     }
   }
 

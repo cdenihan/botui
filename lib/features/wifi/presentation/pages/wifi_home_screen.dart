@@ -174,15 +174,6 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             },
           ),
         ],
-        ResponsiveGridTile(
-          label: "Device Info",
-          icon: Icons.info,
-          color: Colors.teal[600]!,
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
-          ),
-        ),
         if (currentMode == NetworkMode.lanOnly)
           ResponsiveGridTile(
             label: "LAN Status",
@@ -193,6 +184,15 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
               MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
             ),
           ),
+        ResponsiveGridTile(
+          label: "Device Info",
+          icon: Icons.info,
+          color: Colors.teal[600]!,
+          onPressed: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
+          ),
+        ),
       ],
     );
   }

@@ -31,25 +31,38 @@ class _AccessPointConfigScreenState
   @override
   Widget build(BuildContext context) {
     ref.listen<AccessPointState>(accessPointProvider, (previous, state) {
-      if (state.isLoading && state.config != null) {
+      // Update config if loaded
+      if (state.config != null && state.config != _config) {
         setState(() {
           _config = state.config!;
         });
-      } else if (state.isStarted) {
+      }
+
+      // Only show snackbar if isStarted actually changed
+      if (previous != null && previous.isStarted != state.isStarted) {
         setState(() {
-          _isStarted = true;
+          _isStarted = state.isStarted;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hotspot started successfully')),
-        );
-      } else if (!state.isStarted) {
+
+        if (state.isStarted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Hotspot started successfully')),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Hotspot stopped')),
+          );
+        }
+      } else if (previous == null) {
+        // First time - just update the state without snackbar
         setState(() {
-          _isStarted = false;
+          _isStarted = state.isStarted;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Hotspot stopped')),
-        );
-      } else if (state.errorMessage != null) {
+      }
+
+      // Show error message only if it's new
+      if (state.errorMessage != null &&
+          state.errorMessage != previous?.errorMessage) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error: ${state.errorMessage}'),

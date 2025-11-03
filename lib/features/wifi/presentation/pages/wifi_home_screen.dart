@@ -3,14 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/network_mode_notifier.dart';
-import 'package:stpvelox/features/wifi/domain/application/network_mode_state.dart';
 import 'package:stpvelox/features/wifi/domain/enities/network_mode.dart';
 import 'package:stpvelox/features/wifi/domain/presentation/screens/access_point_config_screen.dart';
+import 'package:stpvelox/features/wifi/domain/presentation/screens/saved_networks_screen.dart';
+import 'package:stpvelox/features/wifi/presentation/pages/access_point_status_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/device_info_screen.dart';
+import 'package:stpvelox/features/wifi/presentation/pages/lan_only_status_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_scan_list_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
-
-import '../../domain/presentation/screens/saved_networks_screen.dart';
 
 class WifiHomeScreen extends ConsumerStatefulWidget {
   const WifiHomeScreen({super.key});
@@ -31,13 +31,32 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
   void _handleModeChange(NetworkMode selectedMode) {
     ref.read(networkModeProvider.notifier).updateNetworkMode(selectedMode);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Switching to ${_getModeDisplayName(selectedMode)}...'),
-        duration: const Duration(seconds: 2),
-        backgroundColor: Colors.blue[600],
-      ),
-    );
+    // Check if mode change was successful after a short delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      final state = ref.read(networkModeProvider);
+      if (state.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(state.errorMessage!),
+            duration: const Duration(seconds: 4),
+            backgroundColor: Colors.red[600],
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Switched to ${_getModeDisplayName(selectedMode)}'),
+            duration: const Duration(seconds: 2),
+            backgroundColor: Colors.green[600],
+          ),
+        );
+      }
+    });
   }
 
   String _getModeDisplayName(NetworkMode mode) {
@@ -54,8 +73,7 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(networkModeProvider);
-    final currentMode =
-    (state.isLoading) ? state.mode : NetworkMode.client;
+    final currentMode = (state.isLoading) ? NetworkMode.client : state.mode;
 
     return Scaffold(
       appBar: createTopBar(context, 'Network Control'),
@@ -158,7 +176,8 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             color: Colors.purple[600]!,
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const AccessPointConfigScreen()),
+              MaterialPageRoute(
+                  builder: (_) => const AccessPointConfigScreen()),
             ),
           ),
           ResponsiveGridTile(
@@ -167,10 +186,20 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             color: Colors.orange[600]!,
             onPressed: () => Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
+              MaterialPageRoute(builder: (_) => const AccessPointStatusScreen()),
             ),
           ),
         ],
+        if (currentMode == NetworkMode.lanOnly)
+          ResponsiveGridTile(
+            label: "LAN Status",
+            icon: Icons.cable,
+            color: Colors.grey[600]!,
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const LanOnlyStatusScreen()),
+            ),
+          ),
         ResponsiveGridTile(
           label: "Device Info",
           icon: Icons.info,
@@ -180,16 +209,6 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
           ),
         ),
-        if (currentMode == NetworkMode.lanOnly)
-          ResponsiveGridTile(
-            label: "LAN Status",
-            icon: Icons.cable,
-            color: Colors.grey[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
-            ),
-          ),
       ],
     );
   }

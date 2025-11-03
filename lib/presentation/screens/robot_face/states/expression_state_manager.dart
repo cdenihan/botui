@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_riverpod/legacy.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/presentation/screens/robot_face/states/base_expression_state.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_expressions.dart';
 
 enum StatePhase { entering, holding, exiting }
 
-class ExpressionStateManager extends ChangeNotifier {
+@riverpod
+class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
   BaseExpressionState _currentState = const NeutralState(seed: 0);
   BaseExpressionState? _previousState;
   StatePhase _phase = StatePhase.holding;
@@ -22,7 +24,7 @@ class ExpressionStateManager extends ChangeNotifier {
   AnimationController? _transitionController;
   late Animation<double> _transitionAnimation;
 
-  ExpressionStateManager();
+  ExpressionStateManager(super._state);
 
   // Public getters
   BaseExpressionState get currentState => _currentState;
@@ -116,7 +118,6 @@ class ExpressionStateManager extends ChangeNotifier {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (!_isDisposed) {
         _previousState = null;
-        notifyListeners();
       }
     });
   }
@@ -146,7 +147,6 @@ class ExpressionStateManager extends ChangeNotifier {
     Future.delayed(const Duration(milliseconds: 100), () {
       if (!_isDisposed) {
         _previousState = null;
-        notifyListeners();
       }
     });
   }
@@ -355,7 +355,6 @@ class ExpressionStateManager extends ChangeNotifier {
     if (_isDisposed) return;
     _phase = phase;
     _phaseProgress = progress;
-    notifyListeners();
   }
 
   double _getEffectiveIntensity() {
@@ -443,10 +442,7 @@ class DebugStateObserver implements ExpressionStateObserver {
   }
 }
 
-final expressionStateManagerProvider = Provider<ExpressionStateManager>((ref) {
-  final manager = ExpressionStateManager();
-  ref.onDispose(() {
-    manager.dispose();
-  });
-  return manager;
+final expressionStateManagerProvider =
+    StateNotifierProvider<ExpressionStateManager, BaseExpressionState>((ref) {
+  return ExpressionStateManager(const NeutralState(seed: 0));
 });

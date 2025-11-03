@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
+import 'package:stpvelox/features/wifi/application/saved_networks_notifier.dart';
 import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/application/wifi_client_state.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_encryption_type.dart';
@@ -18,8 +20,9 @@ class WifiDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<WifiDetailScreen> createState() => _WifiDetailScreenState();
 }
 
-class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> {
+class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> with HasLogger {
   final TextEditingController _passwordController = TextEditingController();
+  bool _isConnecting = false;
 
   @override
   void dispose() {
@@ -65,48 +68,143 @@ class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> {
   }
 
   Widget _buildBottomButton(WifiNetwork network, bool busy) {
-    if (network.isKnown || network.isConnected) {
-      return _centerButton(
+    if (network.isConnected) {
+      return _styledButton(
         label: 'Forget Network',
+        icon: Icons.delete,
+        backgroundColor: Colors.red[700]!,
+        onPressed: () async {
+          await ref.read(wifiClientProvider.notifier).forgetNetwork(network.ssid);
+        },
         busy: busy,
-        onPressed: () =>
-            ref.read(wifiClientProvider.notifier).forgetNetwork(network.ssid),
+      );
+    }
+
+    if (network.isKnown) {
+      return Row(
+        children: [
+          Expanded(
+            child: _styledButton(
+              label: 'Connect',
+              icon: Icons.wifi,
+              backgroundColor: Colors.green[700]!,
+              onPressed: () async {
+                setState(() {
+                  _isConnecting = true;
+                });
+                try {
+                  await ref
+                      .read(savedNetworksProvider.notifier)
+                      .connectToSavedNetwork(network.ssid);
+
+                  await ref
+                      .read(wifiClientProvider.notifier)
+                      .loadNetworks();
+
+                  log.info('Connected to ${network.ssid}!');
+
+                  if (mounted) {
+                    Navigator.pop(context);
+                  }
+                } catch (e) {
+                  log.severe('Failed to connect: $e');
+                } finally {
+                  if (mounted) {
+                    setState(() {
+                      _isConnecting = false;
+                    });
+                  }
+                }
+              },
+              busy: _isConnecting,
+              busyLabel: 'Connecting...',
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: _styledButton(
+              label: 'Forget',
+              icon: Icons.delete,
+              backgroundColor: Colors.red[700]!,
+              onPressed: () async {
+                await ref.read(wifiClientProvider.notifier).forgetNetwork(network.ssid);
+              },
+              busy: busy,
+            ),
+          ),
+        ],
       );
     }
 
     final enc = network.encryptionType;
     if (enc == WifiEncryptionType.wpa2Enterprise ||
         enc == WifiEncryptionType.wpa3Enterprise) {
-      return _centerButton(
+      return _styledButton(
         label: 'Enter Enterprise Credentials',
-        busy: busy,
+        icon: Icons.business,
+        backgroundColor: Colors.blue[700]!,
         onPressed: () => _navigateToEnterpriseCredentials(network),
+        busy: busy,
       );
     }
 
     if (enc == WifiEncryptionType.open) {
-      return _centerButton(
+      return _styledButton(
         label: 'Connect (No Password)',
+        icon: Icons.wifi_outlined,
+        backgroundColor: Colors.green[700]!,
+        onPressed: () async {
+          await ref
+              .read(wifiClientProvider.notifier)
+              .connectToNetwork(network.ssid, enc, PersonalCredentials(''));
+        },
         busy: busy,
-        onPressed: () => ref
-            .read(wifiClientProvider.notifier)
-            .connectToNetwork(network.ssid, enc, PersonalCredentials('')),
+        busyLabel: 'Connecting...',
       );
     }
 
-    return _centerButton(
+    return _styledButton(
       label: 'Connect',
-      busy: busy,
-      onPressed: () {
+      icon: Icons.lock_open,
+      backgroundColor: Colors.blue[700]!,
+      onPressed: () async {
         final pwd = _passwordController.text.trim();
         if (pwd.isEmpty) {
           _showSnack(context, 'Password cannot be empty', Colors.red);
           return;
         }
-        ref
+        await ref
             .read(wifiClientProvider.notifier)
             .connectToNetwork(network.ssid, enc, PersonalCredentials(pwd));
       },
+      busy: busy,
+      busyLabel: 'Connecting...',
+    );
+  }
+
+  Widget _styledButton({
+    required String label,
+    required IconData icon,
+    required Color backgroundColor,
+    required VoidCallback onPressed,
+    required bool busy,
+    String? busyLabel,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        onPressed: busy ? null : onPressed,
+        icon: busy ? _spinner() : Icon(icon, size: 20),
+        label: Text(busy ? (busyLabel ?? 'Processing...') : label),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: backgroundColor,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      ),
     );
   }
 
@@ -122,20 +220,6 @@ class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> {
           .read(wifiClientProvider.notifier)
           .connectToNetwork(network.ssid, network.encryptionType, creds);
     }
-  }
-
-  Widget _centerButton({
-    required String label,
-    required bool busy,
-    required VoidCallback onPressed,
-  }) {
-    return Align(
-      alignment: Alignment.center,
-      child: ElevatedButton(
-        onPressed: busy ? null : onPressed,
-        child: busy ? _spinner() : Text(label),
-      ),
-    );
   }
 
   void _showSnack(BuildContext context, String msg, Color color) {

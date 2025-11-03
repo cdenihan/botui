@@ -11,6 +11,7 @@ class AccessPointForm extends ConsumerStatefulWidget {
   final Function(AccessPointConfig) onStart;
   final VoidCallback onStop;
   final bool isStarted;
+  final bool isLoading;
 
   const AccessPointForm({
     super.key,
@@ -18,6 +19,7 @@ class AccessPointForm extends ConsumerStatefulWidget {
     required this.onStart,
     required this.onStop,
     required this.isStarted,
+    this.isLoading = false,
   });
 
   @override
@@ -180,48 +182,88 @@ class _AccessPointFormState extends ConsumerState<AccessPointForm> {
               if (apState.isStarted) ...[
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.stop),
+                    icon: widget.isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.stop),
                     label: const Text('Stop Hotspot'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.red[600]),
-                    onPressed: apNotifier.stopHotspot,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[600],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: widget.isLoading ? null : apNotifier.stopHotspot,
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.refresh),
+                    icon: widget.isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.refresh),
                     label: const Text('Restart'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue[600]),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        final cfg = AccessPointConfig(
-                            ssid: _ssidController.text,
-                            password: _passwordController.text,
-                            band: _selectedBand,
-                            encryptionType: _encryptionType,
-                            hidden: _isHidden);
-                        apNotifier.startHotspot(cfg);
-                      }
-                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue[600],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: widget.isLoading
+                        ? null
+                        : () {
+                            if (_formKey.currentState!.validate()) {
+                              final cfg = AccessPointConfig(
+                                  ssid: _ssidController.text,
+                                  password: _passwordController.text,
+                                  band: _selectedBand,
+                                  encryptionType: _encryptionType,
+                                  hidden: _isHidden);
+                              apNotifier.startHotspot(cfg);
+                            }
+                          },
                   ),
                 )
               ] else ...[
                 Expanded(
                   child: ElevatedButton.icon(
-                    icon: const Icon(Icons.router),
-                    label: const Text('Start Hotspot'),
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green[600]),
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        final cfg = AccessPointConfig(
-                            ssid: _ssidController.text,
-                            password: _passwordController.text,
-                            band: _selectedBand,
-                            encryptionType: _encryptionType,
-                            hidden: _isHidden);
-                        apNotifier.startHotspot(cfg);
-                      }
-                    },
+                    icon: widget.isLoading
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.router),
+                    label: Text(widget.isLoading ? 'Starting...' : 'Start Hotspot'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green[600],
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: widget.isLoading
+                        ? null
+                        : () {
+                            if (_formKey.currentState!.validate()) {
+                              final cfg = AccessPointConfig(
+                                  ssid: _ssidController.text,
+                                  password: _passwordController.text,
+                                  band: _selectedBand,
+                                  encryptionType: _encryptionType,
+                                  hidden: _isHidden);
+                              apNotifier.startHotspot(cfg);
+                            }
+                          },
                   ),
                 )
               ]

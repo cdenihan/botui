@@ -1,8 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/features/wifi/application/access_point_notifier.dart';
+import 'package:stpvelox/features/wifi/application/lan_only_notifier.dart';
 import 'package:stpvelox/features/wifi/data/datasource/linux_network_manager.dart';
 import 'package:stpvelox/features/wifi/data/repositories/wifi_repository_impl.dart';
 import 'package:stpvelox/features/wifi/domain/application/access_point_state.dart';
+import 'package:stpvelox/features/wifi/domain/application/lan_only_state.dart';
 import 'package:stpvelox/features/wifi/domain/repositories/i_wifi_repository.dart';
 import 'package:stpvelox/features/wifi/domain/usecases/forget_wifi.dart';
 import 'package:stpvelox/features/wifi/domain/usecases/manage_access_point.dart';
@@ -47,3 +49,9 @@ final manageSavedNetworksProvider = Provider<ManageSavedNetworks>(
 
 final setNetworkModeProvider = Provider<SetNetworkMode>(
     (ref) => SetNetworkMode(ref.watch(wifiRepositoryProvider)));
+
+final lanOnlyProvider =
+    NotifierProvider<LanOnlyNotifier, LanOnlyState>(
+  LanOnlyNotifier.new,
+);
+

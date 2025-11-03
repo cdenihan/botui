@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/core/di/injection.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
-import 'package:stpvelox/features/wifi/domain/application/wifi_client_state.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_encryption_type.dart';
 
 class DeviceInfoScreen extends ConsumerStatefulWidget {
@@ -57,11 +56,12 @@ class _DeviceInfoScreenState extends ConsumerState<DeviceInfoScreen> {
                 else
                   const Text('Not connected to any network.',
                       style: TextStyle(fontSize: 16)),
-                Text("Mac Address: ${ref.watch(macAddressProvider)}")
+                Text("Mac Address: ${ref.watch(macAddressProvider).value}",
+                    style: TextStyle(fontSize: 16))
               ],
             ),
           );
-        } else if (state.errorMessage !=  null) {
+        } else if (state.errorMessage != null) {
           return Center(
               child: Text('Error: ${state.errorMessage}',
                   style: const TextStyle(color: Colors.red)));

@@ -18,7 +18,7 @@ class LanOnlyNotifier extends Notifier<LanOnlyState> with HasLogger {
     ref.onDispose(() {
       _stopCableMonitoring();
     });
-    return const LanOnlyState();
+    return LanOnlyState();
   }
 
   /// Start monitoring the cable connection status

@@ -1,16 +1,36 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
+class LanOnlyState {
+  bool isActive;
+  bool isLoading;
+  bool isCableConnected;
+  String? ipAddress;
+  String? macAddress;
+  String? errorMessage;
 
-part 'lan_only_state.freezed.dart';
+  LanOnlyState({
+    this.isActive = false,
+    this.isLoading = false,
+    this.isCableConnected = false,
+    this.ipAddress,
+    this.macAddress,
+    this.errorMessage,
+  });
 
-@freezed
-class LanOnlyState with _$LanOnlyState {
-  const factory LanOnlyState({
-    @Default(false) bool isActive,
-    @Default(false) bool isLoading,
-    @Default(false) bool isCableConnected,
+  LanOnlyState copyWith({
+    bool? isActive,
+    bool? isLoading,
+    bool? isCableConnected,
     String? ipAddress,
     String? macAddress,
     String? errorMessage,
-  }) = _LanOnlyState;
+  }) {
+    return LanOnlyState(
+      isActive: isActive ?? this.isActive,
+      isLoading: isLoading ?? this.isLoading,
+      isCableConnected: isCableConnected ?? this.isCableConnected,
+      ipAddress: ipAddress ?? this.ipAddress,
+      macAddress: macAddress ?? this.macAddress,
+      errorMessage: errorMessage ?? this.errorMessage,
+    );
+  }
 }
 

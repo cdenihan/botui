@@ -20,10 +20,16 @@ class ProgramLifecycleService extends _$ProgramLifecycleService {
     return null;
   }
 
-  ProgramSession startProgram(Program program, Map<String, String> args) {
-    _session = ProgramSession(program, args);
+  Future<ProgramSession> startProgram(Program program, Map<String, String> args) async {
+    _session = await ProgramSession.create(program, args);
+    state = _session;
     return _session!;
   }
 
-  Future<int> stopProgram() => _session?.kill() ?? Future.value(-1);
+  Future<int> stopProgram() async {
+    final result = await _session?.kill() ?? -1;
+    _session = null;
+    state = null;
+    return result;
+  }
 }

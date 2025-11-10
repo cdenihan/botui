@@ -22,8 +22,12 @@ class ProgramScreen extends HookConsumerWidget {
     useEffect(() {
       return () {
         removeOverlay(overlayEntry);
+        // Stop the program when exiting the screen
+        if (state != null && state.isRunning) {
+          ref.read(programLifecycleServiceProvider.notifier).stopProgram();
+        }
       };
-    }, []);
+    }, [state]);
 
     void onLongPress(ProgramSession? session) {
       createControlOverlay(context, overlayEntry, session, program, ref);

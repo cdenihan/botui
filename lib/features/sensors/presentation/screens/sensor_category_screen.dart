@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/lcm/domain/services/lcm_service.dart';
+import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/imu_temperature_display.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
@@ -9,7 +11,16 @@ import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 
-class SensorCategoryScreen extends StatefulWidget {
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
+
+import '../../../../core/lcm/domain/providers.dart';
+import '../../../../lcm/types/scalar_i32_t.g.dart';
+
+class SensorCategoryScreen extends HookConsumerWidget {
   final SensorCategory category;
   final List<Sensor> sensor;
 
@@ -19,50 +30,10 @@ class SensorCategoryScreen extends StatefulWidget {
     required this.sensor,
   });
 
-  @override
-  State<SensorCategoryScreen> createState() => _SensorCategoryScreenState();
-}
+  static const _holdDuration = Duration(seconds: 5);
 
-class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
-    Future<void> _stopAllMotors() async {
-    // TODO: Implement motor control via LCM
-    for (int i = 0; i < 4; i++) {
-      // await KiprPlugin.stopMotor(i);
-    }
-  }
 
-  Future<void> _disableAllServos() async {
-    // TODO: Implement servo control via LCM
-    // await KiprPlugin.fullyDisableServos();
-  }
-
-    static const _holdDuration = Duration(seconds: 5);
-  DateTime? _heldStart;
-  Timer? _digital10Timer;
-  int _prevDigital10 = 0;
-
-  void _startListeningForDigital10Hold() {
-    _digital10Timer =
-        Timer.periodic(const Duration(milliseconds: 100), (_) async {
-      // TODO: Use digital sensor hooks
-      final current = 0; // await KiprPlugin.getDigital(10);
-
-      if (current == 1) {
-        _heldStart ??= DateTime.now(); 
-        final heldTime = DateTime.now().difference(_heldStart!);
-        if (heldTime >= _holdDuration) {
-          _heldStart = null; 
-          if (mounted) _openFlappyBirdGame();
-        }
-      } else {
-        _heldStart = null; 
-      }
-
-      _prevDigital10 = current;
-    });
-  }
-
-  void _openFlappyBirdGame() {
+  void _openFlappyBirdGame(BuildContext context) {
     Navigator.of(context).push(
       // TODO: Fix flappy bird game reference
       MaterialPageRoute(builder: (_) => Container()),
@@ -70,27 +41,57 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.category.name == 'Digital') {
-      _startListeningForDigital10Hold();
+  Widget build(BuildContext context, WidgetRef ref) {
+    final lcmService = ref.watch(lcmServiceProvider);
+    final isMotorCategory = category.name == 'Motor';
+    final isServoCategory = category.name == 'Servo';
+    final isDigitalCategory = category.name == 'Digital';
+    final isIMUCategory = category.name == 'Gyro' ||
+        category.name == 'Accel' ||
+        category.name == 'Magneto';
+
+    final heldStart = useState<DateTime?>(null);
+    final prevDigital10 = useState<int>(0);
+    final mounted = useIsMounted();
+
+    Future<void> disableAllServos() async {
+      for (int i = 0; i <4; i++){
+        //todo test this
+        lcmService.publish('libstp/servo/$i/mode', ScalarI8T(dir: ServoMode.fullyDisabled.value));
+      }
     }
-  }
 
-  @override
-  void dispose() {
-    _digital10Timer?.cancel();
-    super.dispose();
-  }
+    Future<void> stopAllMotors() async {
 
-  @override
-  Widget build(BuildContext context) {
-    final bool isMotorCategory = widget.category.name == 'Motor';
-    final bool isServoCategory = widget.category.name == 'Servo';
-    final bool isDigitalCategory = widget.category.name == 'Digital';
-    final bool isIMUCategory = widget.category.name == 'Gyro' ||
-        widget.category.name == 'Accel' ||
-        widget.category.name == 'Magneto';
+      for (int i = 0; i < 4; i++) {
+        lcmService.publish("libstp/motor/$i/power_cmd", ScalarI32T(value: 0));
+        // await KiprPlugin.stopMotor(i);
+      }
+    }
+
+    useEffect(() {
+      if (!isDigitalCategory) return null;
+
+      final timer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
+        // TODO: Replace with real digital sensor reading
+        final current = 0; // await KiprPlugin.getDigital(10);
+
+        if (current == 1) {
+          heldStart.value ??= DateTime.now();
+          final heldTime = DateTime.now().difference(heldStart.value!);
+          if (heldTime >= _holdDuration) {
+            heldStart.value = null;
+            if (mounted()) _openFlappyBirdGame(context);
+          }
+        } else {
+          heldStart.value = null;
+        }
+
+        prevDigital10.value = current;
+      });
+
+      return timer.cancel;
+    }, [isDigitalCategory]);
 
     final actions = <Widget>[];
     if (isIMUCategory) {
@@ -98,14 +99,14 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
     }
 
     return Scaffold(
-      appBar: createTopBar(context, widget.category.name, actions: actions),
+      appBar: createTopBar(context, category.name, actions: actions),
       body: Column(
         children: [
           Expanded(
             child: ResponsiveGrid(
               crossAxisCount: isDigitalCategory ? 5 : null,
               isScrollable: true,
-              children: widget.sensor.asMap().entries.map((entry) {
+              children: sensor.asMap().entries.map((entry) {
                 if (isDigitalCategory) {
                   return _DigitalSensorTile(
                     sensor: entry.value,
@@ -120,7 +121,7 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
                       MaterialPageRoute(builder: (_) => entry.value.screen),
                     );
                   },
-                  color: AppColors.getTileColor(widget.category.index),
+                  color: AppColors.getTileColor(category.index),
                 );
               }).toList(),
             ),
@@ -128,12 +129,12 @@ class _SensorCategoryScreenState extends State<SensorCategoryScreen> {
           if (isMotorCategory)
             _CategoryActionButton(
               label: 'Stop All Motors',
-              onPressed: _stopAllMotors,
+              onPressed: stopAllMotors,
             ),
           if (isServoCategory)
             _CategoryActionButton(
               label: 'Disable All Servos',
-              onPressed: _disableAllServos,
+              onPressed: disableAllServos,
             ),
         ],
       ),
@@ -162,7 +163,8 @@ class _DigitalSensorTileState extends State<_DigitalSensorTile> {
     _future = Future.value(0); // KiprPlugin.getDigital(widget.index);
     _timer = Timer.periodic(const Duration(milliseconds: 200), (_) {
       if (mounted) {
-        setState(() => _future = Future.value(0)); // KiprPlugin.getDigital(widget.index));
+        setState(() =>
+            _future = Future.value(0)); // KiprPlugin.getDigital(widget.index));
       }
     });
   }

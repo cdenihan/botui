@@ -64,7 +64,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget with HasLogger
 
     void onRestart(){
       final lcm = ref.read(lcmServiceProvider);
-      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "retry", reason: "Manual restart invoke"));
+      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "retry"));
       Navigator.of(ref.context).pop();
     }
 
@@ -80,7 +80,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget with HasLogger
           SnackBar(content: Text('Confirmed with Black=$blackVal, White=$whiteVal')),
         );
       }
-      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "confirmed", reason:"Values confirmed! Calibration Done"));
+      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "confirmed"));
       Navigator.of(ref.context).pop();
     }
 

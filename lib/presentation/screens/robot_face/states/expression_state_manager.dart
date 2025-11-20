@@ -1,13 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
-import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/presentation/screens/robot_face/states/base_expression_state.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_expressions.dart';
 
 enum StatePhase { entering, holding, exiting }
 
-@riverpod
 class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
   BaseExpressionState _currentState = const NeutralState(seed: 0);
   BaseExpressionState? _previousState;

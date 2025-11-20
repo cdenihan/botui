@@ -1,6 +1,7 @@
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_type.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/dual_temperature_graph_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_graph_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_motor_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_servo_screen.dart';
@@ -160,11 +161,10 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
       Sensor(
         category: SensorCategory.temperature,
         name: 'Temperature',
-        getSensorScreen: (sensor) => SensorGraphScreen(
+        getSensorScreen: (sensor) => DualTemperatureGraphScreen(
           sensor: sensor,
           graphMin: -10,
-          graphMax: 60,
-          sensorType: SensorType.temperature,
+          graphMax: 100,
         ),
       ),
       Sensor(

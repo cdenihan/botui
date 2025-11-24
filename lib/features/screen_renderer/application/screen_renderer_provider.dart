@@ -63,7 +63,7 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
   
   void sendCancelRequest(String reason){
     final lcm = ref.read(lcmServiceProvider);
-    lcm.publish("libstp/screen_render/cancel", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "cancel", reason: reason));
+    lcm.publish("libstp/screen_render/cancel", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "cancel"));
   }
       
   Future<void> handleWaitForLight(Map<String, dynamic> parsed) async {

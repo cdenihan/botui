@@ -1,6 +1,7 @@
 import 'package:stpvelox/core/service/sensors/accelerometer_sensor.dart';
 import 'package:stpvelox/core/service/sensors/analog_sensor.dart';
 import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
+import 'package:stpvelox/core/service/sensors/cpu_temperature_sensor.dart';
 import 'package:stpvelox/core/service/sensors/digital_sensor.dart';
 import 'package:stpvelox/core/service/sensors/gyro_sensor.dart';
 import 'package:stpvelox/core/service/sensors/magnetometer_sensor.dart';
@@ -37,6 +38,8 @@ class SensorStrategyFactory {
         return MagZSensorReadingStrategy();
       case SensorType.temperature:
         return TemperatureSensorReadingStrategy();
+      case SensorType.cpuTemperature:
+        return CpuTemperatureSensorReadingStrategy();
       case SensorType.batteryVoltage:
         return BatteryVoltageSensorReadingStrategy();
       default:

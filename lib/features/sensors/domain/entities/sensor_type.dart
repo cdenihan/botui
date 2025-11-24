@@ -13,5 +13,6 @@ enum SensorType {
   magY,
   magZ,
   temperature,
+  cpuTemperature,
   batteryVoltage,
 }

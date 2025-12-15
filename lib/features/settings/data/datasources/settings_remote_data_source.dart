@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/features/settings/domain/entities/setting.dart';
 import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
+import 'package:stpvelox/features/settings/presentation/pages/screen_rotation_screen.dart';
 import 'package:stpvelox/features/settings/presentation/pages/service_status_screen.dart';
 import 'package:stpvelox/features/settings/presentation/pages/touch_calibration_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_home_screen.dart';
@@ -66,6 +67,19 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
                   Navigator.of(context).pop();
                 },
               ),
+            ),
+          );
+        },
+      ),
+      Setting(
+        icon: Icons.screen_rotation,
+        label: "Rotate",
+        color: Colors.teal,
+        type: SettingType.button,
+        onTap: (context) async {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const ScreenRotationScreen(),
             ),
           );
         },

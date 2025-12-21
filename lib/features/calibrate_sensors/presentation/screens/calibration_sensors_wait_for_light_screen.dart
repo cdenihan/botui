@@ -12,7 +12,6 @@ import '../../../../core/widgets/top_bar.dart';
 import '../../../../lcm/types/screen_render_answer_t.g.dart';
 import '../../../sensors/domain/entities/sensor_type.dart';
 import '../../../sensors/presentation/utils/sensor_strategy_factory.dart';
-import '../../../sensors/presentation/widgets/sensor_metrics_panel.dart';
 
 class CalibrationsSensorsWaitForLightScreen extends HookConsumerWidget with HasLogger {
   final int port;
@@ -141,7 +140,7 @@ class CalibrationsSensorsWaitForLightScreen extends HookConsumerWidget with HasL
 
     void onRestart(){
       final lcm = ref.read(lcmServiceProvider);
-      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "retry"));
+      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "retry", reason: "Manually restarted"));
       Navigator.of(ref.context).pop();
     }
 
@@ -157,7 +156,7 @@ class CalibrationsSensorsWaitForLightScreen extends HookConsumerWidget with HasL
           SnackBar(content: Text('Confirmed with Off=$lightOff, on=$lightOn')),
         );
       }
-      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "confirmed"));
+      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "confirmed", reason: "Manually confirmed"));
       Navigator.of(ref.context).pop();
     }
 

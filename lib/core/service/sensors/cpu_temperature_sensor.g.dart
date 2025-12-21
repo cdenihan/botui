@@ -42,7 +42,7 @@ final class CpuTemperatureSensorProvider
 }
 
 String _$cpuTemperatureSensorHash() =>
-    r'73813bf825d15017b50857fa130117759666a0b5';
+    r'5bc578b5acbd214ef2990cebdbeb3008c817930d';
 
 abstract class _$CpuTemperatureSensor extends $Notifier<double?> {
   double? build();

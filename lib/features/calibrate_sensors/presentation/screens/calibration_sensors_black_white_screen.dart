@@ -1,45 +1,33 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/features/sensors/presentation/widgets/sensor_metrics_panel.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
 import '../../../../core/lcm/domain/providers.dart';
 import '../../../screen_renderer/controller/black_white_calibrate_controller.dart';
-import '../../../sensors/domain/entities/sensor_type.dart';
-import '../../../sensors/presentation/utils/sensor_strategy_factory.dart';
 import '../../domain/entities/calibrate_sensor.dart';
+import 'package:fl_chart/fl_chart.dart';
 
-class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget with HasLogger {
-  final int port;
+class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
+    with HasLogger {
   final CalibrateSensor sensor;
 
   BlackWhiteCalibrateScreenUnified({
     super.key,
-    required this.port,
     required this.sensor,
   });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-
     final state = ref.watch(blackWhiteCalibrateControllerProvider);
-    final blackController = useTextEditingController(text: state.black?.toString());
-    final whiteController = useTextEditingController(text: state.white?.toString());
+    final blackController = state.blackThresh?.toString();
+    final whiteController = state.whiteThresh?.toString();
+    final List<dynamic> collectedValues = state.collectedValues ?? [];
 
-    final strategy = useMemoized(
-          () => SensorStrategyFactory.createStrategy(SensorType.analog),
-      [sensor.sensorType],
-    );
-
-    final reading = strategy.readValue(ref, port) ?? 0.0;
-    useEffect(() {
-      blackController.text = state.black?.toString() ?? '';
-      whiteController.text = state.white?.toString() ?? '';
-      return null;
-    }, [state.black, state.white]);
     final topBarTitle = state.topBarTitle.replaceAll("_", " ");
     return Scaffold(
       appBar: createTopBar(context, topBarTitle),
@@ -47,84 +35,364 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget with HasLogger
         padding: const EdgeInsets.all(16),
         child: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
-          child: state.state == 'confirm'
-              ? _buildConfirmUI(ref, blackController, whiteController)
-              : _buildReadingUI(reading),
+          child: () {
+            switch (state.state) {
+              case 'readData':
+                return _buildLoadingUI();
+
+              case 'confirm':
+                return _buildConfirmUI(
+                    ref, blackController, whiteController, collectedValues);
+              case 'retrying':
+                return _buildRetryUI();
+              case 'tooManyAttempts':
+                return _buildTooManyAttemptsUI();
+
+              default:
+                return _buildReadingUI();
+            }
+          }(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRetryUI() {
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: Colors.redAccent,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Something went wrong while calibrating!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Press the button to retry calibration.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildConfirmUI(
-      WidgetRef ref,
-      TextEditingController blackController,
-      TextEditingController whiteController,
-      ) {
+    WidgetRef ref,
+    String? blackController,
+    String? whiteController,
+    List<dynamic> collectedValues,
+  ) {
     final controller = ref.read(blackWhiteCalibrateControllerProvider.notifier);
 
-    void onRestart(){
+    void onRestart() {
       final lcm = ref.read(lcmServiceProvider);
-      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "retry"));
-      Navigator.of(ref.context).pop();
+      lcm.publish(
+        "libstp/screen_render/answer",
+        ScreenRenderAnswerT(
+          screen_name: "calibrate_sensors",
+          value: "retry",
+          reason: "Manually restarted",
+        ),
+      );
     }
 
     void onConfirm() {
       final lcm = ref.read(lcmServiceProvider);
-      final blackVal = double.tryParse(blackController.text);
-      final whiteVal = double.tryParse(whiteController.text);
 
-      if (blackVal != null && whiteVal != null) {
-        controller.setBlack(blackVal);
-        controller.setWhite(whiteVal);
-        ScaffoldMessenger.of(ref.context).showSnackBar(
-          SnackBar(content: Text('Confirmed with Black=$blackVal, White=$whiteVal')),
-        );
-      }
-      lcm.publish("libstp/screen_render/answer", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "confirmed"));
+      ScaffoldMessenger.of(ref.context).showSnackBar(
+        SnackBar(
+          content: Text(
+              'Confirmed with Black=$blackController, White=$whiteController'),
+        ),
+      );
+
+      lcm.publish(
+        "libstp/screen_render/answer",
+        ScreenRenderAnswerT(
+          screen_name: "calibrate_sensors",
+          value: "confirmed",
+          reason: "Manually confirmed",
+        ),
+      );
       Navigator.of(ref.context).pop();
     }
 
-    return Column(
+    log.info(blackController);
+    return Scaffold(
       key: const ValueKey('confirmUI'),
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Calibrate Sensor (Port $port)",
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "Calibrate Sensor",
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Container(
+                    width: 240,
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white),
+                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.black26,
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'Black',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          blackController ?? "No Value",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    width: 240,
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                    decoration: BoxDecoration(
+                      border: Border.all(color: Colors.white),
+                      borderRadius: BorderRadius.circular(6),
+                      color: Colors.black26,
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'White',
+                          style: TextStyle(color: Colors.white70),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          whiteController ?? "No Value",
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              if (collectedValues.isNotEmpty)
+                SizedBox(
+                  height: 150,
+                  child: LineChart(
+                    LineChartData(
+                      gridData: FlGridData(show: true),
+                      titlesData: FlTitlesData(
+                        bottomTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: false),
+                        ),
+                        leftTitles: AxisTitles(
+                          sideTitles: SideTitles(showTitles: true),
+                        ),
+                      ),
+                      borderData: FlBorderData(
+                        show: true,
+                        border: const Border(
+                          left: BorderSide(color: Colors.white),
+                          bottom: BorderSide(color: Colors.white),
+                          top: BorderSide(color: Colors.transparent),
+                          right: BorderSide(color: Colors.transparent),
+                        ),
+                      ),
+                      lineBarsData: [
+                        LineChartBarData(
+                          spots: List.generate(
+                            collectedValues.length,
+                            (index) => FlSpot(
+                                index.toDouble(),
+                                double.tryParse(
+                                        collectedValues[index].toString()) ??
+                                    0),
+                          ),
+                          isCurved: true,
+                          barWidth: 2,
+                          dotData: FlDotData(show: false),
+                          color: Colors.orangeAccent,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: onRestart,
+                    icon: const Icon(Icons.restart_alt_rounded),
+                    label: const Text("Calibrate Again"),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: onConfirm,
+                    icon: const Icon(Icons.check),
+                    label: const Text("Confirm"),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8, horizontal: 12),
+                      textStyle: const TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 20),
-        TextField(
-          controller: blackController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'Black Value', border: OutlineInputBorder()),
-          onChanged: (v) => controller.setBlack(double.tryParse(v)),
-        ),
-        const SizedBox(height: 20),
-        TextField(
-          controller: whiteController,
-          keyboardType: TextInputType.number,
-          decoration: const InputDecoration(labelText: 'White Value', border: OutlineInputBorder()),
-          onChanged: (v) => controller.setWhite(double.tryParse(v)),
-        ),
-        const Spacer(),
-        ElevatedButton.icon(onPressed: onRestart, label: const Text("Calibrate again"), icon: const Icon(Icons.restart_alt_rounded),),
-        const Spacer(),
-        ElevatedButton.icon(icon: const Icon(Icons.check), label: const Text('Confirm'), onPressed: onConfirm),
-      ],
+      ),
     );
   }
 
-  Widget _buildReadingUI(double reading) {
+  Widget _buildLoadingUI() {
     return Column(
-      key: const ValueKey('readingUI'),
+      key: const ValueKey('loadingUI'),
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: const [
+        Center(
+          child: CircularProgressIndicator(
+            strokeWidth: 3,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        ),
+        SizedBox(height: 16),
+        Center(
+          child: Text(
+            "Read ing sensor data…",
+            style: TextStyle(fontSize: 16),
+          ),
+        ),
+      ],
+    );
+  }
+  Widget _buildTooManyAttemptsUI() {
+    return SafeArea(
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: const [
+              Icon(
+                Icons.block,
+                size: 48,
+                color: Colors.redAccent,
+              ),
+              SizedBox(height: 16),
+              Text(
+                "Too many attempts!",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.redAccent,
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 8),
+              Text(
+                "Calibration aborted.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildReadingUI() {
+    return Column(
+      key: const ValueKey('calibrationStartUI'),
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SensorMetricsPanel(avg: reading),
         const SizedBox(height: 32),
-        const Text('Press button to confirm', textAlign: TextAlign.center, style: TextStyle(color: Colors.white, fontSize: 18)),
+        const Center(
+          child: Text(
+            "You are about to begin calibrating the sensors",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: Text(
+            "Make sure to place the robot in an position, where it can scan black and white values.",
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: Colors.white70,
+              fontSize: 16,
+            ),
+          ),
+        ),
+        const SizedBox(height: 32),
+        const Center(
+          child: Text(
+            "Click the button to start",
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.amberAccent,
+              fontSize: 18,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
       ],
     );
   }
 }
-

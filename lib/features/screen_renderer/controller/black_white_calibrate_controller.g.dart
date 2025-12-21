@@ -43,7 +43,7 @@ final class BlackWhiteCalibrateControllerProvider extends $NotifierProvider<
 }
 
 String _$blackWhiteCalibrateControllerHash() =>
-    r'f7a610de59eff7b10f2981c91287270b949511b9';
+    r'c9ffa664941baf066d51ac36ebdb678236a600a8';
 
 abstract class _$BlackWhiteCalibrateController
     extends $Notifier<BlackWhiteCalibrateState> {

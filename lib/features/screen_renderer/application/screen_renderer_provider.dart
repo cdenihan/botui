@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
@@ -49,7 +50,7 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
       }
 
       if (screenName == 'calibrate_sensors') {
-        if (parsed['type'] == 'blackWhite'){
+        if (parsed['type'] == 'IR'){
           await handleBlackWhite(parsed);
 
         } else if (parsed['type'] == "waitForLight"){
@@ -63,7 +64,7 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
   
   void sendCancelRequest(String reason){
     final lcm = ref.read(lcmServiceProvider);
-    lcm.publish("libstp/screen_render/cancel", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "cancel"));
+    lcm.publish("libstp/screen_render/cancel", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "cancel", reason: "Got Canceled"));
   }
       
   Future<void> handleWaitForLight(Map<String, dynamic> parsed) async {
@@ -89,19 +90,19 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
     final controller = ref.read(blackWhiteCalibrateControllerProvider.notifier);
 
     final stateVal = parsed['state'];
-    final port = parsed['port'] as int? ?? 0;
 
     controller.setTopBarTitle(stateVal);
     if (stateVal == 'confirm') {
-      final black = (parsed['black_value'] as num?)?.toDouble();
-      final white = (parsed['white_value'] as num?)?.toDouble();
-
+      final black = (parsed['black_thresh'] as num?)?.toDouble();
+      final white = (parsed['white_thresh'] as num?)?.toDouble();
+      final values = (parsed['collected_values']as List<dynamic>?)?.toList();
       controller.setBlack(black);
       controller.setWhite(white);
+      controller.setValues(values);
     }
     controller.setState(stateVal);
 
-    final calibrateSensor = dataSource.getBlackWhite(port);
+    final calibrateSensor = dataSource.getBlackWhite();
     state = calibrateSensor.getWidgetScreen(calibrateSensor);
   }
 

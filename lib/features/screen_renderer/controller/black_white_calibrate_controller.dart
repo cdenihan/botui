@@ -1,17 +1,21 @@
+import 'dart:ffi';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 part 'black_white_calibrate_controller.g.dart';
 
 class BlackWhiteCalibrateState {
-  final double? black;
-  final double? white;
+  final double? blackThresh;
+  final double? whiteThresh;
   final String state;
   final String topBarTitle;
+  final List<dynamic>? collectedValues;
 
   const BlackWhiteCalibrateState({
-    this.black,
-    this.white,
+    this.blackThresh,
+    this.whiteThresh,
+    this.collectedValues,
     this.state = 'setup',
     this.topBarTitle = 'Calibrate Sensor',
   });
@@ -19,12 +23,14 @@ class BlackWhiteCalibrateState {
   BlackWhiteCalibrateState copyWith({
     double? black,
     double? white,
+    List<dynamic>? values,
     String? state,
     String? topBarTitle,
   }) {
     return BlackWhiteCalibrateState(
-      black: black ?? this.black,
-      white: white ?? this.white,
+      blackThresh: black ?? blackThresh,
+      whiteThresh: white ?? whiteThresh,
+      collectedValues: values ?? collectedValues,
       state: state ?? this.state,
       topBarTitle: topBarTitle ?? this.topBarTitle,
     );
@@ -43,4 +49,5 @@ class BlackWhiteCalibrateController extends _$BlackWhiteCalibrateController {
   void setWhite(double? value) => state = state.copyWith(white: value);
   void setState(String value) => state = state.copyWith(state: value);
   void setTopBarTitle(String value) => state = state.copyWith(topBarTitle: value);
+  void setValues(List<dynamic>? values) => state = state.copyWith(values: values);
 }

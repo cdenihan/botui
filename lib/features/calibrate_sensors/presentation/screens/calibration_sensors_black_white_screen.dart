@@ -1,11 +1,9 @@
-import 'dart:ffi';
-
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
+import 'package:stpvelox/features/screen_renderer/application/screen_renderer_provider.dart';
 import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
 import '../../../../core/lcm/domain/providers.dart';
 import '../../../screen_renderer/controller/black_white_calibrate_controller.dart';
@@ -29,32 +27,42 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     final List<dynamic> collectedValues = state.collectedValues ?? [];
 
     final topBarTitle = state.topBarTitle.replaceAll("_", " ");
-    return Scaffold(
-      appBar: createTopBar(context, topBarTitle),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: () {
-            switch (state.state) {
-              case 'readData':
-                return _buildLoadingUI();
+    return PopScope(
+        canPop: true,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop) return;
 
-              case 'confirm':
-                return _buildConfirmUI(
-                    ref, blackController, whiteController, collectedValues);
-              case 'retrying':
-                return _buildRetryUI();
-              case 'tooManyAttempts':
-                return _buildTooManyAttemptsUI();
+          ref
+              .read(blackWhiteCalibrateControllerProvider.notifier)
+              .setState(null);
+          ref.read(screenRenderProviderProvider.notifier).clear();
+        },
+        child: Scaffold(
+          appBar: createTopBar(context, topBarTitle),
+          body: Padding(
+            padding: const EdgeInsets.all(16),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: () {
+                switch (state.state) {
+                  case 'readData':
+                    return _buildLoadingUI();
 
-              default:
-                return _buildReadingUI();
-            }
-          }(),
-        ),
-      ),
-    );
+                  case 'confirm':
+                    return _buildConfirmUI(
+                        ref, blackController, whiteController, collectedValues);
+                  case 'retrying':
+                    return _buildRetryUI();
+                  case 'tooManyAttempts':
+                    return _buildTooManyAttemptsUI();
+
+                  default:
+                    return _buildReadingUI();
+                }
+              }(),
+            ),
+          ),
+        ));
   }
 
   Widget _buildRetryUI() {
@@ -102,8 +110,6 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     String? whiteController,
     List<dynamic> collectedValues,
   ) {
-    final controller = ref.read(blackWhiteCalibrateControllerProvider.notifier);
-
     void onRestart() {
       final lcm = ref.read(lcmServiceProvider);
       lcm.publish(
@@ -134,157 +140,155 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           reason: "Manually confirmed",
         ),
       );
+      ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
       Navigator.of(ref.context).pop();
     }
 
-    log.info(blackController);
-    return Scaffold(
+    return SafeArea(
       key: const ValueKey('confirmUI'),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                "Calibrate Sensor",
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              "Calibrate Sensor",
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Container(
-                    width: 240,
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(6),
-                      color: Colors.black26,
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'Black',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          blackController ?? "No Value",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Container(
+                  width: 240,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.black26,
                   ),
-                  Container(
-                    width: 240,
-                    padding:
-                        const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(6),
-                      color: Colors.black26,
-                    ),
-                    child: Column(
-                      children: [
-                        const Text(
-                          'White',
-                          style: TextStyle(color: Colors.white70),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          whiteController ?? "No Value",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              if (collectedValues.isNotEmpty)
-                SizedBox(
-                  height: 150,
-                  child: LineChart(
-                    LineChartData(
-                      gridData: FlGridData(show: true),
-                      titlesData: FlTitlesData(
-                        bottomTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: false),
-                        ),
-                        leftTitles: AxisTitles(
-                          sideTitles: SideTitles(showTitles: true),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Black',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        blackController ?? "No Value",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
                       ),
-                      borderData: FlBorderData(
-                        show: true,
-                        border: const Border(
-                          left: BorderSide(color: Colors.white),
-                          bottom: BorderSide(color: Colors.white),
-                          top: BorderSide(color: Colors.transparent),
-                          right: BorderSide(color: Colors.transparent),
-                        ),
-                      ),
-                      lineBarsData: [
-                        LineChartBarData(
-                          spots: List.generate(
-                            collectedValues.length,
-                            (index) => FlSpot(
-                                index.toDouble(),
-                                double.tryParse(
-                                        collectedValues[index].toString()) ??
-                                    0),
-                          ),
-                          isCurved: true,
-                          barWidth: 2,
-                          dotData: FlDotData(show: false),
-                          color: Colors.orangeAccent,
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 ),
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  ElevatedButton.icon(
-                    onPressed: onRestart,
-                    icon: const Icon(Icons.restart_alt_rounded),
-                    label: const Text("Calibrate Again"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
+                Container(
+                  width: 240,
+                  padding:
+                      const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(6),
+                    color: Colors.black26,
                   ),
-                  ElevatedButton.icon(
-                    onPressed: onConfirm,
-                    icon: const Icon(Icons.check),
-                    label: const Text("Confirm"),
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
-                      textStyle: const TextStyle(fontSize: 16),
-                    ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'White',
+                        style: TextStyle(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        whiteController ?? "No Value",
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (collectedValues.isNotEmpty)
+              SizedBox(
+                height: 150,
+                child: LineChart(
+                  LineChartData(
+                    gridData: FlGridData(show: true),
+                    titlesData: FlTitlesData(
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: false),
+                      ),
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(showTitles: true),
+                      ),
+                    ),
+                    borderData: FlBorderData(
+                      show: true,
+                      border: const Border(
+                        left: BorderSide(color: Colors.white),
+                        bottom: BorderSide(color: Colors.white),
+                        top: BorderSide(color: Colors.transparent),
+                        right: BorderSide(color: Colors.transparent),
+                      ),
+                    ),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: List.generate(
+                          collectedValues.length,
+                          (index) => FlSpot(
+                              index.toDouble(),
+                              double.tryParse(
+                                      collectedValues[index].toString()) ??
+                                  0),
+                        ),
+                        isCurved: true,
+                        barWidth: 2,
+                        dotData: FlDotData(show: false),
+                        color: Colors.orangeAccent,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            ],
-          ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: onRestart,
+                  icon: const Icon(Icons.restart_alt_rounded),
+                  label: const Text("Calibrate Again"),
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                ),
+                ElevatedButton.icon(
+                  onPressed: onConfirm,
+                  icon: const Icon(Icons.check),
+                  label: const Text("Confirm"),
+                  style: ElevatedButton.styleFrom(
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                    textStyle: const TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
@@ -305,13 +309,14 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         SizedBox(height: 16),
         Center(
           child: Text(
-            "Read ing sensor data…",
+            "Reading sensor data…",
             style: TextStyle(fontSize: 16),
           ),
         ),
       ],
     );
   }
+
   Widget _buildTooManyAttemptsUI() {
     return SafeArea(
       child: Center(

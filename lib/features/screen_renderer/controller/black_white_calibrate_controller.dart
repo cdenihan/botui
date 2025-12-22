@@ -47,7 +47,7 @@ class BlackWhiteCalibrateController extends _$BlackWhiteCalibrateController {
 
   void setBlack(double? value) => state = state.copyWith(black: value);
   void setWhite(double? value) => state = state.copyWith(white: value);
-  void setState(String value) => state = state.copyWith(state: value);
+  void setState(String? value) => state = state.copyWith(state: value);
   void setTopBarTitle(String value) => state = state.copyWith(topBarTitle: value);
   void setValues(List<dynamic>? values) => state = state.copyWith(values: values);
 }

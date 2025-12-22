@@ -30,6 +30,10 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
   final dataSource = CalibrationSensorsRemoteDataSourceImpl();
   StreamSubscription? _subscription;
 
+  void clear() {
+    state = null;
+  }
+
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
 

@@ -26,13 +26,14 @@ class DashboardScreen extends ConsumerWidget with HasLogger{
 
     ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
       if (next == null) return;
-
-      if (previous?.runtimeType == next.runtimeType) return;
+      log.warning(previous.runtimeType.toString());
+      if (previous == next || previous.runtimeType.toString() == next.runtimeType.toString()) return;
+      final routeName = next.runtimeType.toString();
 
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => next,
-          settings: RouteSettings(name: next.runtimeType.toString()),
+          settings: RouteSettings(name: routeName),
         ),
       );
     });

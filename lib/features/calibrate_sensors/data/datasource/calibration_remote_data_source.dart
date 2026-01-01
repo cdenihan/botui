@@ -10,12 +10,12 @@ abstract class CalibrationSensorsRemoteDataSource {
 
 class CalibrationSensorsRemoteDataSourceImpl
     extends CalibrationSensorsRemoteDataSource {
-  CalibrateSensor getBlackWhite(int port) {
+  CalibrateSensor getBlackWhite() {
     return CalibrateSensor(
-        name: 'Analog $port',
+        name: 'Analog',
         sensorType: CalibrationSensorType.blackWhite,
         getWidgetScreen: (sensor) =>
-            BlackWhiteCalibrateScreenUnified(port: port, sensor: sensor));
+            BlackWhiteCalibrateScreenUnified(sensor: sensor));
   }
 
   CalibrateSensor getWaitForLight(int port){
@@ -29,8 +29,7 @@ class CalibrationSensorsRemoteDataSourceImpl
   @override
   Future<List<CalibrateSensor>> fetchCalibration() async {
     return [
-      for (int port = 0; port < 6; port++)
-        getBlackWhite(port)
+        getBlackWhite()
     ];
   }
 }

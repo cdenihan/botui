@@ -459,7 +459,7 @@ packages:
   lcm_dart:
     dependency: "direct main"
     description:
-      path: lcm-dart
+      path: "packages/lcm-dart"
       relative: true
     source: path
     version: "1.5.1"

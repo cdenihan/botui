@@ -194,7 +194,7 @@ class _TouchCalibrationScreenState extends State<TouchCalibrationScreen> {
     widget.onFinished?.call();
 
     
-    await SudoProcess.run('systemctl', ['restart', 'flutter-ui.services']);
+    await SudoProcess.run('systemctl', ['restart', 'flutter-ui.service']);
   }
 
   void _accumulate(

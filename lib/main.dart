@@ -73,10 +73,13 @@ class StpVeloxApp extends HookConsumerWidget {
       return () => batteryService.stop();
     }, []);
 
+    final calibrator = ref.watch(touchCalibratorProvider);
+
     return RawGestureDetector(
-      //gestures: {
-      //  TapGestureRecognizer: CalibratedGestureRecognizerFactory(calibrator: calibrator),
-      //},
+      gestures: {
+        CalibratedTapGestureRecognizer:
+            CalibratedGestureRecognizerFactory(calibrator: calibrator),
+      },
       child: InactivityListener(
         child: MaterialApp(
           title: 'stpvelox',

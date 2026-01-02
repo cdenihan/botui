@@ -35,7 +35,7 @@ class SensorSelectionScreen extends ConsumerWidget {
             sensors.groupListsBy((sensor) => sensor.category);
 
             return ResponsiveGrid(
-              isScrollable: false,
+              isScrollable: true,
               children: sensoryByCategory.entries
                   .map((entry) => _buildSensorTile(context, entry.key, entry.value))
                   .toList(),

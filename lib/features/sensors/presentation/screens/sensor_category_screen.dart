@@ -1,24 +1,20 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:stpvelox/core/lcm/domain/services/lcm_service.dart';
+import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
+import 'package:stpvelox/core/widgets/imu_accuracy_display.dart';
 import 'package:stpvelox/core/widgets/imu_temperature_display.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
-
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
-
-import '../../../../core/lcm/domain/providers.dart';
-import '../../../../lcm/types/scalar_i32_t.g.dart';
 
 class SensorCategoryScreen extends HookConsumerWidget {
   final SensorCategory category;
@@ -48,7 +44,8 @@ class SensorCategoryScreen extends HookConsumerWidget {
     final isDigitalCategory = category.name == 'Digital';
     final isIMUCategory = category.name == 'Gyro' ||
         category.name == 'Accel' ||
-        category.name == 'Magneto';
+        category.name == 'Magneto' ||
+        category.name == 'Orientation';
 
     final heldStart = useState<DateTime?>(null);
     final prevDigital10 = useState<int>(0);
@@ -95,7 +92,19 @@ class SensorCategoryScreen extends HookConsumerWidget {
 
     final actions = <Widget>[];
     if (isIMUCategory) {
-      actions.add(ImuTemperatureDisplay());
+      // Show only the relevant accuracy for this category
+      final accuracyType = switch (category.name) {
+        'Gyro' => AccuracyType.gyro,
+        'Accel' => AccuracyType.accel,
+        'Magneto' => AccuracyType.mag,
+        'Orientation' => AccuracyType.quaternion,
+        _ => null,
+      };
+      if (accuracyType != null) {
+        actions.add(ImuAccuracyDisplay(type: accuracyType));
+        actions.add(const SizedBox(width: 16));
+      }
+      actions.add(const ImuTemperatureDisplay());
     }
 
     return Scaffold(

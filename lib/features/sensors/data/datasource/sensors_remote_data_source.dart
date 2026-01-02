@@ -2,6 +2,7 @@ import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_type.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/dual_temperature_graph_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/quaternion_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_graph_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_motor_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_servo_screen.dart';
@@ -156,6 +157,12 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           graphMax: 256,
           sensorType: SensorType.magZ,
         ),
+      ),
+      // Quaternion / Orientation sensor
+      Sensor(
+        category: SensorCategory.orientation,
+        name: 'Quaternion',
+        getSensorScreen: (sensor) => QuaternionScreen(sensor: sensor),
       ),
       // New sensors using LCM system
       Sensor(

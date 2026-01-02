@@ -5,6 +5,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/service/battery_check_service.dart';
+import 'package:stpvelox/core/service/sensors/imu_accuracy_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/features/dashboard/presentation/screens/dashboard_screen.dart';
 
@@ -65,6 +66,9 @@ class StpVeloxApp extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final batteryService = ref.watch(batteryCheckServiceProvider.notifier);
+
+    // Initialize IMU accuracy sensor early so data is always available
+    ref.watch(imuAccuracySensorProvider);
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {

@@ -1,6 +1,9 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
+import 'package:stpvelox/core/widgets/top_bar.dart';
 
 class ScreenRotationScreen extends StatefulWidget {
   const ScreenRotationScreen({super.key});
@@ -12,6 +15,13 @@ class ScreenRotationScreen extends StatefulWidget {
 class _ScreenRotationScreenState extends State<ScreenRotationScreen> {
   int _currentRotation = 0;
   bool _isLoading = false;
+
+  static const _rotationOptions = [
+    (rotation: 0, label: '0°'),
+    (rotation: 90, label: '90°'),
+    (rotation: 180, label: '180°'),
+    (rotation: 270, label: '270°'),
+  ];
 
   @override
   void initState() {
@@ -27,84 +37,69 @@ class _ScreenRotationScreenState extends State<ScreenRotationScreen> {
   }
 
   Future<void> _applyRotation(int rotation) async {
+    if (rotation == _currentRotation) return;
+
     setState(() {
       _isLoading = true;
     });
 
     try {
-      // Save rotation to SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt('screen_rotation', rotation);
-
-      // Update the flutter-pi service file with the new rotation
       await _updateFlutterPiService(rotation);
-
-      // Restart the flutter-ui service
       await SudoProcess.run('systemctl', ['restart', 'flutter-ui']);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Rotation applied! Restarting service...'),
+            content: Text('Rotation applied! Restarting...'),
             duration: Duration(seconds: 2),
           ),
         );
-
-        // Navigate back after a short delay
         Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) {
-            Navigator.of(context).pop();
-          }
+          if (mounted) Navigator.of(context).pop();
         });
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error applying rotation: $e'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
           ),
         );
       }
     } finally {
       if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
+        setState(() => _isLoading = false);
       }
     }
   }
 
   Future<void> _updateFlutterPiService(int rotation) async {
-    // Read the current service file
-    final readResult = await SudoProcess.run('cat', ['/etc/systemd/system/flutter-ui.service']);
+    final readResult =
+        await SudoProcess.run('cat', ['/etc/systemd/system/flutter-ui.service']);
 
     if (readResult.exitCode != 0) {
       throw Exception('Failed to read flutter-ui.service file');
     }
 
     String serviceContent = readResult.stdout.toString();
-
-    // Update or add the rotation argument to the ExecStart line
     final lines = serviceContent.split('\n');
     final updatedLines = <String>[];
 
     for (String line in lines) {
       if (line.trim().startsWith('ExecStart=')) {
-        // Remove existing -r argument if present
         String updatedLine = line.replaceAll(RegExp(r'-r\s+\d+'), '').trim();
-
-        // Find the position to insert the rotation argument (before the app path)
-        final match = RegExp(r'(flutter-pi[^\s]*)\s+(.*)').firstMatch(updatedLine);
+        final match =
+            RegExp(r'(flutter-pi[^\s]*)\s+(.*)').firstMatch(updatedLine);
         if (match != null) {
           final flutterPiCmd = match.group(1);
           final restOfLine = match.group(2) ?? '';
           updatedLine = 'ExecStart=$flutterPiCmd -r $rotation $restOfLine';
         } else {
-          // Fallback: just append the rotation argument
           updatedLine = '$updatedLine -r $rotation';
         }
-
         updatedLines.add(updatedLine);
       } else {
         updatedLines.add(line);
@@ -112,14 +107,10 @@ class _ScreenRotationScreenState extends State<ScreenRotationScreen> {
     }
 
     final newServiceContent = updatedLines.join('\n');
-
-    // Write the updated service file
     await SudoProcess.run('sh', [
       '-c',
       'echo "${newServiceContent.replaceAll('"', '\\"')}" > /etc/systemd/system/flutter-ui.service',
     ]);
-
-    // Reload systemd daemon
     await SudoProcess.run('systemctl', ['daemon-reload']);
   }
 
@@ -127,110 +118,169 @@ class _ScreenRotationScreenState extends State<ScreenRotationScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      appBar: AppBar(
-        title: const Text('Screen Rotation'),
-        backgroundColor: Colors.grey[900],
+      appBar: createTopBar(context, 'Screen Rotation'),
+      body: SafeArea(
+        child: _isLoading ? _buildLoadingState() : _buildContent(),
       ),
-      body: _isLoading
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text(
-                    'Applying rotation...',
-                    style: TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                ],
-              ),
-            )
-          : Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  const Text(
-                    'Select Screen Rotation',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'The screen will restart after applying the rotation',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 32),
-                  Expanded(
-                    child: GridView.count(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                      children: [
-                        _buildRotationCard(0, 'Normal', Icons.stay_current_portrait),
-                        _buildRotationCard(90, '90°', Icons.screen_rotation),
-                        _buildRotationCard(180, '180°', Icons.stay_current_portrait),
-                        _buildRotationCard(270, '270°', Icons.screen_rotation),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
     );
   }
 
-  Widget _buildRotationCard(int rotation, String label, IconData icon) {
+  Widget _buildLoadingState() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 16),
+          Text(
+            'Applying rotation...',
+            style: TextStyle(color: Colors.white, fontSize: 16),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Column(
+        children: [
+          Text(
+            'Screen will restart after selection',
+            style: TextStyle(fontSize: 14, color: Colors.grey[400]),
+          ),
+          const SizedBox(height: 16),
+          Expanded(
+            child: Row(
+              children: _rotationOptions.map((opt) {
+                return Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: _buildRotationTile(opt.rotation, opt.label),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRotationTile(int rotation, String label) {
     final isSelected = _currentRotation == rotation;
 
-    return Card(
-      color: isSelected ? Colors.blue[700] : Colors.grey[800],
-      elevation: isSelected ? 8 : 4,
-      child: InkWell(
-        onTap: () => _applyRotation(rotation),
-        borderRadius: BorderRadius.circular(8),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Transform.rotate(
-                angle: rotation * 3.14159 / 180,
-                child: Icon(
-                  icon,
-                  size: 64,
-                  color: isSelected ? Colors.white : Colors.grey[400],
-                ),
+    return GestureDetector(
+      onTap: () => _applyRotation(rotation),
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.blue[700] : Colors.grey[850],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? Colors.blue[400]! : Colors.grey[700]!,
+            width: isSelected ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _buildScreenPreview(rotation, isSelected),
+            const SizedBox(height: 12),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isSelected ? Colors.white : Colors.grey[400],
               ),
-              const SizedBox(height: 12),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: isSelected ? Colors.white : Colors.grey[400],
-                ),
+            ),
+            const SizedBox(height: 4),
+            if (isSelected)
+              Icon(Icons.check_circle, color: Colors.green[400], size: 22)
+            else
+              const SizedBox(height: 22),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildScreenPreview(int rotation, bool isSelected) {
+    final color = isSelected ? Colors.white : Colors.grey[500]!;
+    final screenColor = isSelected ? Colors.blue[300]! : Colors.grey[600]!;
+
+    // Fixed container size to accommodate both landscape and portrait orientations
+    // Device is 100x65 landscape, so max dimension when rotated is 100
+    return SizedBox(
+      width: 100,
+      height: 100,
+      child: Center(
+        child: Transform.rotate(
+          angle: rotation * math.pi / 180,
+          child: SizedBox(
+            width: 100,
+            height: 65,
+            child: CustomPaint(
+              painter: _ScreenPainter(
+                frameColor: color,
+                screenColor: screenColor,
               ),
-              if (isSelected) ...[
-                const SizedBox(height: 8),
-                const Icon(
-                  Icons.check_circle,
-                  color: Colors.white,
-                  size: 24,
-                ),
-              ],
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+}
+
+class _ScreenPainter extends CustomPainter {
+  final Color frameColor;
+  final Color screenColor;
+
+  _ScreenPainter({required this.frameColor, required this.screenColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final framePaint = Paint()
+      ..color = frameColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+
+    final screenPaint = Paint()
+      ..color = screenColor
+      ..style = PaintingStyle.fill;
+
+    final frameRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      const Radius.circular(8),
+    );
+
+    // Landscape screen area with padding
+    final screenRect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(8, 5, size.width - 16, size.height - 10),
+      const Radius.circular(3),
+    );
+
+    canvas.drawRRect(screenRect, screenPaint);
+    canvas.drawRRect(frameRect, framePaint);
+
+    // Home button on the right side (landscape)
+    final buttonPaint = Paint()
+      ..color = frameColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    canvas.drawCircle(
+      Offset(size.width - 6, size.height / 2),
+      3,
+      buttonPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScreenPainter oldDelegate) {
+    return oldDelegate.frameColor != frameColor ||
+        oldDelegate.screenColor != screenColor;
   }
 }

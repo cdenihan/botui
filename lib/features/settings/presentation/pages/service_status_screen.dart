@@ -1,9 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/core/widgets/responsive_grid.dart';
-import 'package:stpvelox/features/settings/presentation/widgets/service_tile.dart';
 import 'package:stpvelox/features/settings/presentation/pages/service_tile_page.dart';
 
 class ServiceStatusScreen extends StatefulWidget {
@@ -14,8 +11,16 @@ class ServiceStatusScreen extends StatefulWidget {
 }
 
 class _ServiceStatusScreenState extends State<ServiceStatusScreen> {
-  Map<String, Map<String, String>> services = {};
-  bool loading = true;
+  Map<String, Map<String, String>> _services = {};
+  bool _loading = true;
+
+  // Services we want to manage
+  static const _targetServices = [
+    ('flutter-ui.service', 'Flutter UI', Icons.phone_android),
+    ('stm32_data_reader.service', 'STM32 Reader', Icons.memory),
+    ('ssh.service', 'SSH', Icons.terminal),
+    ('raccoon.service', 'Raccoon', Icons.pets),
+  ];
 
   @override
   void initState() {
@@ -24,149 +29,214 @@ class _ServiceStatusScreenState extends State<ServiceStatusScreen> {
   }
 
   Future<void> _fetchServices() async {
-    setState(() {
-      loading = true;
-    });
+    setState(() => _loading = true);
 
-    try {
-      // Run systemctl command
-      final result = await SudoProcess.run(
-        'systemctl',
-        ['list-units', '--type=service', '--all', '--no-pager'],
-      );
+    final parsed = <String, Map<String, String>>{};
 
-      if (result.exitCode == 0) {
-        final lines = (result.stdout as String).split('\n');
-        final parsed = <String, Map<String, String>>{};
+    for (final (serviceName, displayName, icon) in _targetServices) {
+      try {
+        final result = await SudoProcess.run(
+          'systemctl',
+          ['show', serviceName, '--no-pager', '--property=ActiveState,SubState,LoadState'],
+        );
 
-        for (var line in lines.skip(1)) {
-          // Example line format:
-          // "cron.service                  loaded active running Regular background program processing daemon"
-          final parts =
-              line.split(RegExp(r'\s+')).where((e) => e.isNotEmpty).toList();
-          if (parts.length >= 4) {
-            final serviceName = parts[0];
-            // Only include Flutter UI and STM32 services
-            if (serviceName.toLowerCase().contains('flutter-ui') ||
-                serviceName.toLowerCase().contains('stm32_data_reader')) {
-              parsed[serviceName] = {
-                'unit': serviceName,
-                'load': parts[1],
-                'active': parts[2],
-                'sub': parts[3],
-                'description': parts.skip(4).join(' '),
-              };
+        if (result.exitCode == 0) {
+          final lines = (result.stdout as String).split('\n');
+          String active = 'unknown';
+          String sub = 'unknown';
+          String load = 'unknown';
+
+          for (var line in lines) {
+            if (line.startsWith('ActiveState=')) {
+              active = line.split('=')[1];
+            } else if (line.startsWith('SubState=')) {
+              sub = line.split('=')[1];
+            } else if (line.startsWith('LoadState=')) {
+              load = line.split('=')[1];
             }
           }
-        }
 
-        setState(() {
-          services = parsed;
-          loading = false;
-        });
-      } else {
-        setState(() {
-          services = {
-            'Error': {
-              'unit': 'Error',
-              'description': result.stderr.toString(),
-              'active': 'failed'
-            }
+          parsed[serviceName] = {
+            'unit': serviceName,
+            'displayName': displayName,
+            'icon': icon.codePoint.toString(),
+            'active': active,
+            'sub': sub,
+            'load': load,
           };
-          loading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        services = {
-          'Exception': {
-            'unit': 'Exception',
-            'description': e.toString(),
-            'active': 'failed'
-          }
+        } else {
+          parsed[serviceName] = {
+            'unit': serviceName,
+            'displayName': displayName,
+            'icon': icon.codePoint.toString(),
+            'active': 'not-found',
+            'sub': 'not-found',
+            'load': 'not-found',
+          };
+        }
+      } catch (e) {
+        parsed[serviceName] = {
+          'unit': serviceName,
+          'displayName': displayName,
+          'icon': icon.codePoint.toString(),
+          'active': 'error',
+          'sub': 'error',
+          'load': 'error',
         };
-        loading = false;
+      }
+    }
+
+    if (mounted) {
+      setState(() {
+        _services = parsed;
+        _loading = false;
       });
     }
   }
 
   void _navigateToServiceControl(Map<String, String> service) {
     Navigator.of(context)
-        .push(
-      MaterialPageRoute(
-        builder: (context) => ServiceTilePage(service: service),
-      ),
-    )
-        .then((_) {
-      // Refresh services when returning from service control page
-      _fetchServices();
-    });
+        .push(MaterialPageRoute(
+          builder: (context) => ServiceTilePage(service: service),
+        ))
+        .then((_) => _fetchServices());
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.black87,
-      appBar: createTopBar(context, "Service Status", actions: [
+      appBar: createTopBar(context, 'Services', actions: [
         IconButton(
-          onPressed: loading ? null : _fetchServices,
-          icon: loading
+          onPressed: _loading ? null : _fetchServices,
+          icon: _loading
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: Colors.white,
-                  ),
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                 )
               : const Icon(Icons.refresh, color: Colors.white),
-          iconSize: 40,
+          iconSize: 32,
         ),
       ]),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(8.0),
-          child: Column(
-            children: [
-              // Services grid
-              Expanded(
-                child: loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : services.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.search_off,
-                                  size: 64,
-                                  color: Colors.grey[600],
-                                ),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'No Flutter UI or STM32 services found',
-                                  style: TextStyle(
-                                    color: Colors.grey[600],
-                                    fontSize: 18,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ResponsiveGrid(
-                            maxTileWidth: 350,
-                            childAspectRatio: 1.3,
-                            children: services.values
-                                .map((service) => ServiceTile(
-                                      service: service,
-                                      onPressed: () =>
-                                          _navigateToServiceControl(service),
-                                    ))
-                                .toList(),
-                          ),
+        child: _loading
+            ? const Center(child: CircularProgressIndicator())
+            : Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  children: _targetServices.map((s) {
+                    final service = _services[s.$1];
+                    if (service == null) return const SizedBox.shrink();
+                    return Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: _ServiceCard(
+                          service: service,
+                          icon: s.$3,
+                          onTap: () => _navigateToServiceControl(service),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               ),
-            ],
-          ),
+      ),
+    );
+  }
+}
+
+class _ServiceCard extends StatelessWidget {
+  final Map<String, String> service;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _ServiceCard({
+    required this.service,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isActive = service['active'] == 'active';
+    final isRunning = service['sub'] == 'running';
+    final notFound = service['load'] == 'not-found';
+    final displayName = service['displayName'] ?? service['unit'] ?? '';
+
+    Color statusColor;
+    IconData statusIcon;
+
+    if (notFound) {
+      statusColor = Colors.grey;
+      statusIcon = Icons.help_outline;
+    } else if (isActive && isRunning) {
+      statusColor = Colors.green;
+      statusIcon = Icons.check_circle;
+    } else if (isActive && !isRunning) {
+      statusColor = Colors.orange;
+      statusIcon = Icons.warning;
+    } else {
+      statusColor = Colors.red;
+      statusIcon = Icons.cancel;
+    }
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[850],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[700]!, width: 1),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Stack(
+              alignment: Alignment.bottomRight,
+              children: [
+                Icon(icon, size: 48, color: Colors.grey[400]),
+                Container(
+                  padding: const EdgeInsets.all(2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[850],
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(statusIcon, size: 20, color: statusColor),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              displayName,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: statusColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: statusColor, width: 1),
+              ),
+              child: Text(
+                notFound ? 'Not Found' : (isRunning ? 'Running' : service['sub'] ?? 'Unknown'),
+                style: TextStyle(
+                  color: statusColor,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

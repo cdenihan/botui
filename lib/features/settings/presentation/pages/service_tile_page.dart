@@ -1,9 +1,7 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/settings/presentation/widgets/toggle_service_button.dart';
-import 'package:stpvelox/features/settings/presentation/widgets/reload_service_button.dart';
+import 'package:stpvelox/features/settings/presentation/pages/service_log_screen.dart';
 
 class ServiceTilePage extends StatefulWidget {
   final Map<String, String> service;
@@ -19,6 +17,7 @@ class ServiceTilePage extends StatefulWidget {
 
 class _ServiceTilePageState extends State<ServiceTilePage> {
   bool _loading = false;
+  bool _actionLoading = false;
   Map<String, String> _currentService = {};
 
   @override
@@ -29,22 +28,18 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
   }
 
   Future<void> _refreshServiceStatus() async {
-    setState(() {
-      _loading = true;
-    });
+    setState(() => _loading = true);
 
     final serviceName = _currentService['unit'] ?? '';
     if (serviceName.isEmpty) {
-      setState(() {
-        _loading = false;
-      });
+      setState(() => _loading = false);
       return;
     }
 
     try {
       final result = await SudoProcess.run(
         'systemctl',
-        ['show', serviceName, '--no-pager'],
+        ['show', serviceName, '--no-pager', '--property=ActiveState,SubState'],
       );
 
       if (result.exitCode == 0) {
@@ -61,11 +56,104 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
       // Handle error silently
     } finally {
       if (mounted) {
-        setState(() {
-          _loading = false;
-        });
+        setState(() => _loading = false);
       }
     }
+  }
+
+  Future<void> _toggleService() async {
+    final serviceName = _currentService['unit'] ?? '';
+    final isRunning = _currentService['active'] == 'active' && _currentService['sub'] == 'running';
+    final action = isRunning ? 'stop' : 'start';
+
+    setState(() => _actionLoading = true);
+
+    try {
+      final result = await SudoProcess.run('systemctl', [action, serviceName]);
+      if (result.exitCode == 0) {
+        _showSnackBar('Service ${action}ed successfully', Colors.green);
+        await _refreshServiceStatus();
+      } else {
+        _showSnackBar('Failed to $action service: ${result.stderr}', Colors.red);
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() => _actionLoading = false);
+      }
+    }
+  }
+
+  Future<void> _restartService() async {
+    final serviceName = _currentService['unit'] ?? '';
+
+    setState(() => _actionLoading = true);
+
+    try {
+      final result = await SudoProcess.run('systemctl', ['restart', serviceName]);
+      if (result.exitCode == 0) {
+        _showSnackBar('Service restarted successfully', Colors.green);
+        await _refreshServiceStatus();
+      } else {
+        _showSnackBar('Failed to restart service: ${result.stderr}', Colors.red);
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() => _actionLoading = false);
+      }
+    }
+  }
+
+  void _viewLogs() {
+    final serviceName = _currentService['unit'] ?? '';
+    final displayName = _currentService['displayName'] ?? serviceName;
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ServiceLogScreen(
+          serviceName: serviceName,
+          displayName: displayName,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _toggleEnabled() async {
+    final serviceName = _currentService['unit'] ?? '';
+    final isActive = _currentService['active'] == 'active';
+    final action = isActive ? 'disable' : 'enable';
+
+    setState(() => _actionLoading = true);
+
+    try {
+      final result = await SudoProcess.run('systemctl', [action, serviceName]);
+      if (result.exitCode == 0) {
+        _showSnackBar('Service ${action}d on boot', Colors.green);
+        await _refreshServiceStatus();
+      } else {
+        _showSnackBar('Failed to $action service: ${result.stderr}', Colors.red);
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) {
+        setState(() => _actionLoading = false);
+      }
+    }
+  }
+
+  void _showSnackBar(String message, Color color) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontWeight: FontWeight.w600)),
+        backgroundColor: color,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   @override
@@ -73,6 +161,7 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
     final isActive = _currentService['active'] == 'active';
     final isRunning = _currentService['sub'] == 'running';
     final serviceName = _currentService['unit'] ?? '';
+    final displayName = _currentService['displayName'] ?? serviceName;
 
     Color statusColor;
     IconData statusIcon;
@@ -85,14 +174,14 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
       statusIcon = Icons.warning;
     } else {
       statusColor = Colors.red;
-      statusIcon = Icons.error;
+      statusIcon = Icons.cancel;
     }
 
     return Scaffold(
       backgroundColor: Colors.black87,
       appBar: createTopBar(
         context,
-        "Service Control",
+        displayName,
         actions: [
           IconButton(
             onPressed: _loading ? null : _refreshServiceStatus,
@@ -100,74 +189,59 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
                 ? const SizedBox(
                     width: 20,
                     height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
+                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
                   )
                 : const Icon(Icons.refresh, color: Colors.white),
-            iconSize: 40,
+            iconSize: 32,
           )
         ],
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              // Left Half - Service Info
+              // Left side - Status
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: Container(
-                  height: double.infinity,
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(color: Colors.grey[600]!, width: 1),
+                    color: Colors.grey[850],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[700]!, width: 1),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(
-                        statusIcon,
-                        size: 120,
-                        color: statusColor,
-                      ),
-                      const SizedBox(height: 24),
+                      Icon(statusIcon, size: 80, color: statusColor),
+                      const SizedBox(height: 16),
                       Text(
                         serviceName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 12,
+                          fontFamily: 'monospace',
                         ),
                         textAlign: TextAlign.center,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         decoration: BoxDecoration(
                           color: statusColor.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                           border: Border.all(color: statusColor, width: 2),
                         ),
                         child: Text(
-                          '${_currentService['active']} / ${_currentService['sub']}',
+                          isRunning ? 'Running' : (_currentService['sub'] ?? 'Unknown'),
                           style: TextStyle(
                             color: statusColor,
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
-                        ),
-                      ),
-                      const SizedBox(height: 24),
-                      Text(
-                        'Service Status',
-                        style: TextStyle(
-                          color: Colors.grey[400],
-                          fontSize: 14,
-                          fontStyle: FontStyle.italic,
                         ),
                       ),
                     ],
@@ -175,59 +249,124 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
                 ),
               ),
 
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
 
-              // Right Half - Control Buttons
+              // Right side - Controls (2x2 grid)
               Expanded(
-                flex: 1,
-                child: Container(
-                  height: double.infinity,
-                  padding: const EdgeInsets.all(24.0),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[800],
-                    borderRadius: BorderRadius.circular(12.0),
-                    border: Border.all(color: Colors.grey[600]!, width: 1),
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Service Controls',
-                        style: TextStyle(
-                          color: Colors.grey[300],
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                flex: 3,
+                child: Column(
+                  children: [
+                    // Top row: Start/Stop and Restart
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _ActionButton(
+                              icon: isRunning ? Icons.stop : Icons.play_arrow,
+                              label: isRunning ? 'Stop' : 'Start',
+                              color: isRunning ? Colors.red : Colors.green,
+                              loading: _actionLoading,
+                              onPressed: _toggleService,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ActionButton(
+                              icon: Icons.restart_alt,
+                              label: 'Restart',
+                              color: Colors.blue,
+                              loading: _actionLoading,
+                              onPressed: _restartService,
+                            ),
+                          ),
+                        ],
                       ),
+                    ),
 
-                      const SizedBox(height: 40),
+                    const SizedBox(height: 12),
 
-                      // Toggle Start/Stop Button (made bigger)
-                      SizedBox(
-                        height: 80,
-                        child: ToggleServiceButton(
-                          serviceName: serviceName,
-                          isServiceRunning: isActive && isRunning,
-                          onServiceChanged: _refreshServiceStatus,
-                        ),
+                    // Bottom row: View Logs and Enable/Disable
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _ActionButton(
+                              icon: Icons.article,
+                              label: 'Logs',
+                              color: Colors.purple,
+                              onPressed: _viewLogs,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _ActionButton(
+                              icon: isActive ? Icons.toggle_on : Icons.toggle_off,
+                              label: isActive ? 'Disable' : 'Enable',
+                              color: isActive ? Colors.orange : Colors.teal,
+                              loading: _actionLoading,
+                              onPressed: _toggleEnabled,
+                            ),
+                          ),
+                        ],
                       ),
-
-                      const SizedBox(height: 30),
-
-                      // Reload Button (made bigger)
-                      SizedBox(
-                        height: 80,
-                        child: ReloadServiceButton(
-                          serviceName: serviceName,
-                          onServiceChanged: _refreshServiceStatus,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final bool loading;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.color,
+    this.loading = false,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: loading ? null : onPressed,
+      child: Container(
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color, width: 2),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (loading)
+              SizedBox(
+                width: 36,
+                height: 36,
+                child: CircularProgressIndicator(strokeWidth: 3, color: color),
+              )
+            else
+              Icon(icon, size: 36, color: color),
+            const SizedBox(height: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
         ),
       ),
     );

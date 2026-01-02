@@ -29,7 +29,7 @@ class CpuTemperatureSensor extends _$CpuTemperatureSensor with HasLogger {
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
     _subscription =
-        lcm.subscribeAs<ScalarFT>('libstp/cpu/temperature', ScalarFT.decode).listen(
+        lcm.subscribeAs<ScalarFT>('libstp/cpu/temp/value', ScalarFT.decode).listen(
               (decoded) {
             _currentValue = decoded.value.value;
             state = _currentValue;

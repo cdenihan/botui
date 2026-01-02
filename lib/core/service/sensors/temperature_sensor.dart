@@ -29,7 +29,7 @@ class TemperatureSensor extends _$TemperatureSensor with HasLogger {
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
     _subscription =
-        lcm.subscribeAs<ScalarFT>('libstp/temp/value', ScalarFT.decode).listen(
+        lcm.subscribeAs<ScalarFT>('libstp/imu/temp/value', ScalarFT.decode).listen(
               (decoded) {
             _currentValue = decoded.value.value;
             state = _currentValue;

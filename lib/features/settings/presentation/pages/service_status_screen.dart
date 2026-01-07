@@ -20,6 +20,7 @@ class _ServiceStatusScreenState extends State<ServiceStatusScreen> {
     ('stm32_data_reader.service', 'STM32 Reader', Icons.memory),
     ('ssh.service', 'SSH', Icons.terminal),
     ('raccoon.service', 'Raccoon', Icons.pets),
+    ('ide-backend.service', 'IDE Backend', Icons.code),
   ];
 
   @override

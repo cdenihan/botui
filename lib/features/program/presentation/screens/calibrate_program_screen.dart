@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -15,7 +16,7 @@ class CalibrateProgramScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final terminal = useMemoized(() => Terminal());
+    final terminal = useMemoized(() => Terminal(maxLines: 10000));
     final terminalController = useMemoized(() => TerminalController());
     final processRef = useState<Process?>(null);
     final isRunning = useState<bool>(false);
@@ -36,26 +37,32 @@ class CalibrateProgramScreen extends HookConsumerWidget {
       terminal.write('Starting calibration in ${aggressive ? 'aggressive' : 'standard'} mode...\r\n\r\n');
 
       try {
-        final command = aggressive ? 'raccoon calibrate --aggressive' : 'raccoon calibrate';
+        final command = aggressive ? 'raccoon calibrate -l --aggressive' : 'raccoon calibrate -l';
 
         final process = await Process.start(
           'bash',
           ['-c', command],
           workingDirectory: program.parentDir,
           runInShell: true,
+          environment: {
+            ...Platform.environment,
+            'TERM': 'xterm-256color',
+            'COLORTERM': 'truecolor',
+            'FORCE_COLOR': '1',
+            'LANG': 'en_US.UTF-8',
+            'LC_ALL': 'en_US.UTF-8',
+          },
         );
 
         processRef.value = process;
 
         // Handle stdout
-        process.stdout.listen((data) {
-          final text = String.fromCharCodes(data);
+        process.stdout.transform(utf8.decoder).listen((text) {
           terminal.write(text.replaceAll('\n', '\r\n'));
         });
 
         // Handle stderr
-        process.stderr.listen((data) {
-          final text = String.fromCharCodes(data);
+        process.stderr.transform(utf8.decoder).listen((text) {
           terminal.write(text.replaceAll('\n', '\r\n'));
         });
 
@@ -164,6 +171,10 @@ class CalibrateProgramScreen extends HookConsumerWidget {
       body: TerminalView(
         terminal,
         controller: terminalController,
+        textStyle: const TerminalStyle(
+          fontSize: 14,
+          fontFamily: 'DejaVu Sans Mono',
+        ),
       ),
     );
   }

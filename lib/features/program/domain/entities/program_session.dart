@@ -18,6 +18,7 @@ class ProgramSession {
     final session = ProgramSession._internal();
 
     session.terminal = Terminal(
+      maxLines: 10000,
       onOutput: (data) {
         session.pty.write(data);
       },
@@ -31,7 +32,12 @@ class ProgramSession {
       "setsid",
       ["bash"],
       environment: {
+        ...Platform.environment,
         "TERM": "xterm-256color",
+        "COLORTERM": "truecolor",
+        "FORCE_COLOR": "1",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "en_US.UTF-8",
       },
     );
     session.pty.resize(800, 480);

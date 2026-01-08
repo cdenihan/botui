@@ -1,3 +1,2 @@
-python3 -m http.server 8000
-sleep 60
-pkill -f "python3 -m http.server"
+#!/bin/bash
+bash ./test_terminal.sh

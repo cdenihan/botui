@@ -97,6 +97,10 @@ class ProgramScreen extends HookConsumerWidget {
                 controller: state.terminalController,
                 onTapUp: (_, a) => onLongPress(state),
                 onSecondaryTapDown: (_, a) => onLongPress(state),
+                textStyle: const TerminalStyle(
+                  fontSize: 14,
+                  fontFamily: 'DejaVu Sans Mono',
+                ),
               ),
             if (state == null)
               Container(

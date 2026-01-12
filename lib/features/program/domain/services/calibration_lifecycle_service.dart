@@ -30,9 +30,12 @@ class CalibrationLifecycleService extends _$CalibrationLifecycleService {
   }
 
   Future<int> stopCalibration() async {
-    final result = await _session?.kill() ?? -1;
+    final session = _session;
+    // Clear state immediately to update UI
     _session = null;
     state = null;
+    // Then kill the session
+    final result = await session?.kill() ?? -1;
     return result;
   }
 }

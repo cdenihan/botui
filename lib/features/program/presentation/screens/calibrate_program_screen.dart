@@ -21,12 +21,10 @@ class CalibrateProgramScreen extends HookConsumerWidget {
     useEffect(() {
       return () {
         _removeOverlay(overlayEntry);
-        // Stop the calibration when exiting the screen
-        if (state != null && state.isRunning) {
-          ref.read(calibrationLifecycleServiceProvider.notifier).stopCalibration();
-        }
+        // Stop any running calibration when exiting the screen
+        ref.read(calibrationLifecycleServiceProvider.notifier).stopCalibration();
       };
-    }, [state]);
+    }, const []);
 
     void onLongPress(CalibrationSession? session) {
       _createControlOverlay(context, overlayEntry, session, program, ref);

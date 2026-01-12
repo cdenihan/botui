@@ -11,6 +11,7 @@ class ProgramSession {
   late PseudoTerminal pty;
   bool _isRunning = false;
   int? _processGroupId;
+  StreamSubscription<String>? _outputSubscription;
 
   ProgramSession._internal();
 
@@ -32,6 +33,8 @@ class ProgramSession {
       ["bash"],
       environment: {
         "TERM": "xterm-256color",
+        "LANG": "en_US.UTF-8",
+        "LC_ALL": "en_US.UTF-8",
       },
     );
     session.pty.resize(800, 480);
@@ -43,9 +46,8 @@ class ProgramSession {
 
     // Capture output to get the PID
     final pidCompleter = Completer<int>();
-    late StreamSubscription<String> pidListener;
 
-    pidListener = session.pty.out.listen((event) {
+    session._outputSubscription = session.pty.out.listen((event) {
       session.terminal.write(event);
 
       // Look for the PID marker in output
@@ -80,6 +82,10 @@ class ProgramSession {
     if (!_isRunning) return -1;
 
     terminal.write("\r\n^C\r\nStopping program...\r\n");
+
+    // Cancel the output subscription first
+    await _outputSubscription?.cancel();
+    _outputSubscription = null;
 
     try {
       if (!force && _processGroupId != null) {

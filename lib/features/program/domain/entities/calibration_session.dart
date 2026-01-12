@@ -11,6 +11,7 @@ class CalibrationSession {
   late PseudoTerminal pty;
   bool _isRunning = false;
   int? _processGroupId;
+  StreamSubscription<String>? _outputSubscription;
 
   CalibrationSession._internal();
 
@@ -50,7 +51,7 @@ class CalibrationSession {
     // Capture output to get the PID
     final pidCompleter = Completer<int>();
 
-    session.pty.out.listen((event) {
+    session._outputSubscription = session.pty.out.listen((event) {
       session.terminal.write(event);
 
       // Look for the PID marker in output
@@ -89,6 +90,10 @@ class CalibrationSession {
     if (!_isRunning) return -1;
 
     terminal.write("\r\n^C\r\nStopping calibration...\r\n");
+
+    // Cancel the output subscription first
+    await _outputSubscription?.cancel();
+    _outputSubscription = null;
 
     try {
       if (!force && _processGroupId != null) {

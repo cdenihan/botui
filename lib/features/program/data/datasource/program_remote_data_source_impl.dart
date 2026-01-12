@@ -50,6 +50,7 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
       String name = folderName;
       String runScript = 'run.sh';
       List<Arg> args = [];
+      bool parsedRaccoonProject = false;
 
       // Prioritize raccoon.project.yml over project.json
       if (await raccoonProjectFile.exists()) {
@@ -68,6 +69,8 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
 
             // raccoon.project.yml doesn't define args in the same format
             // args remain empty for now
+
+            parsedRaccoonProject = true;
           }
         } catch (e) {
           developer.log(
@@ -77,7 +80,7 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
       }
 
       // Fall back to project.json if raccoon.project.yml doesn't exist or failed to parse
-      if (name == folderName && await projectJsonFile.exists()) {
+      if (!parsedRaccoonProject && await projectJsonFile.exists()) {
         try {
           final jsonContent = await projectJsonFile.readAsString();
           final Map<String, dynamic> jsonData = jsonDecode(jsonContent);
@@ -91,7 +94,7 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
               (jsonData['run_script'] as String).trim().isNotEmpty) {
             runScript = jsonData['run_script'];
           } else {
-            runScript = 'sh ./run.sh';
+            runScript = 'run.sh';
           }
 
           if (jsonData.containsKey('args') && jsonData['args'] is List) {

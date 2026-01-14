@@ -103,6 +103,12 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
       controller.setBlack(black);
       controller.setWhite(white);
       controller.setValues(values);
+    } else if (stateVal == "canceled"){
+      ref
+          .read(blackWhiteCalibrateControllerProvider.notifier)
+          .setState(null);
+      ref.read(screenRenderProviderProvider.notifier).clear();
+      return;
     }
     controller.setState(stateVal);
 

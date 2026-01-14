@@ -25,8 +25,12 @@ class DashboardScreen extends ConsumerWidget with HasLogger{
     });
 
     ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
-      if (next == null) return;
-      log.warning(previous.runtimeType.toString());
+      if (next == null){
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        }
+        return;
+      }
       if (previous == next || previous.runtimeType.toString() == next.runtimeType.toString()) return;
       final routeName = next.runtimeType.toString();
 

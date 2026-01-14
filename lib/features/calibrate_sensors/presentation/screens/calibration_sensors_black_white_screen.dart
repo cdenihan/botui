@@ -28,41 +28,58 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
 
     final topBarTitle = state.topBarTitle.replaceAll("_", " ");
     return PopScope(
-        canPop: true,
-        onPopInvokedWithResult: (didPop, result) {
-          if (!didPop) return;
-
-          ref
-              .read(blackWhiteCalibrateControllerProvider.notifier)
-              .setState(null);
-          ref.read(screenRenderProviderProvider.notifier).clear();
-        },
-        child: Scaffold(
-          appBar: createTopBar(context, topBarTitle),
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: () {
-                switch (state.state) {
-                  case 'readData':
-                    return _buildLoadingUI();
-
-                  case 'confirm':
-                    return _buildConfirmUI(
-                        ref, blackController, whiteController, collectedValues);
-                  case 'retrying':
-                    return _buildRetryUI();
-                  case 'tooManyAttempts':
-                    return _buildTooManyAttemptsUI();
-
-                  default:
-                    return _buildReadingUI();
-                }
-              }(),
+      canPop: true,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) return;
+        ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
+        ref.read(screenRenderProviderProvider.notifier).clear();
+        final lcm = ref.read(lcmServiceProvider);
+        lcm.publish(
+          "libstp/screen_render/cancel",
+          ScreenRenderAnswerT(
+            screen_name: "calibrate_sensors",
+            value: "cancel",
+            reason: "Got Canceled",
+          ),
+        );
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.grey[900],
+          automaticallyImplyLeading: false,
+          title: Text(
+            topBarTitle,
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
             ),
           ),
-        ));
+          toolbarHeight: 80,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            child: () {
+              switch (state.state) {
+                case 'readData':
+                  return _buildLoadingUI();
+                case 'confirm':
+                  return _buildConfirmUI(
+                      ref, blackController, whiteController, collectedValues);
+                case 'retrying':
+                  return _buildRetryUI();
+                case 'tooManyAttempts':
+                  return _buildTooManyAttemptsUI();
+                default:
+                  return _buildReadingUI();
+              }
+            }(),
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildRetryUI() {
@@ -72,14 +89,14 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
+            children: const [
+              Icon(
                 Icons.error_outline,
                 size: 48,
                 color: Colors.redAccent,
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 "Something went wrong while calibrating!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -88,8 +105,8 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
-              const Text(
+              SizedBox(height: 16),
+              Text(
                 "Press the button to retry calibration.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -220,48 +237,75 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
               ],
             ),
             const SizedBox(height: 16),
-            if (collectedValues.isNotEmpty)
-              SizedBox(
-                height: 150,
-                child: LineChart(
-                  LineChartData(
-                    gridData: FlGridData(show: true),
-                    titlesData: FlTitlesData(
-                      bottomTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: false),
-                      ),
-                      leftTitles: AxisTitles(
-                        sideTitles: SideTitles(showTitles: true),
-                      ),
-                    ),
-                    borderData: FlBorderData(
-                      show: true,
-                      border: const Border(
-                        left: BorderSide(color: Colors.white),
-                        bottom: BorderSide(color: Colors.white),
-                        top: BorderSide(color: Colors.transparent),
-                        right: BorderSide(color: Colors.transparent),
-                      ),
-                    ),
-                    lineBarsData: [
-                      LineChartBarData(
-                        spots: List.generate(
-                          collectedValues.length,
-                          (index) => FlSpot(
-                              index.toDouble(),
-                              double.tryParse(
-                                      collectedValues[index].toString()) ??
-                                  0),
-                        ),
-                        isCurved: true,
-                        barWidth: 2,
-                        dotData: FlDotData(show: false),
-                        color: Colors.orangeAccent,
-                      ),
-                    ],
+            SizedBox(
+              height: 160,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(show: true),
+                  titlesData: FlTitlesData(
+                    bottomTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                    leftTitles:
+                        AxisTitles(sideTitles: SideTitles(showTitles: false)),
                   ),
+                  borderData: FlBorderData(
+                    show: true,
+                    border: const Border(
+                      left: BorderSide(color: Colors.white),
+                      bottom: BorderSide(color: Colors.white),
+                      top: BorderSide(color: Colors.transparent),
+                      right: BorderSide(color: Colors.transparent),
+                    ),
+                  ),
+                  lineBarsData: [
+                    LineChartBarData(
+                      spots: List.generate(
+                        collectedValues.length,
+                        (index) => FlSpot(
+                          index.toDouble(),
+                          double.tryParse(collectedValues[index].toString()) ??
+                              0,
+                        ),
+                      ),
+                      isCurved: true,
+                      barWidth: 2,
+                      dotData: FlDotData(show: false),
+                      color: Colors.orangeAccent,
+                    ),
+                  ],
+                  extraLinesData: ExtraLinesData(horizontalLines: [
+                    if (blackController != null)
+                      HorizontalLine(
+                        y: double.tryParse(blackController) ?? 0,
+                        color: Colors.white,
+                        strokeWidth: 2,
+                        dashArray: [6, 4],
+                        label: HorizontalLineLabel(
+                          show: true,
+                          alignment: Alignment.topRight,
+                          style: const TextStyle(
+                              color: Colors.white, fontSize: 12),
+                          labelResolver: (_) => 'Black Threshold',
+                        ),
+                      ),
+                    if (whiteController != null)
+                      HorizontalLine(
+                        y: double.tryParse(whiteController) ?? 0,
+                        color: Colors.yellow,
+                        strokeWidth: 2,
+                        dashArray: [6, 4],
+                        label: HorizontalLineLabel(
+                          show: true,
+                          alignment: Alignment.bottomRight,
+                          style: const TextStyle(
+                              color: Colors.yellow, fontSize: 12),
+                          labelResolver: (_) => 'White Threshold',
+                        ),
+                      ),
+                  ]),
                 ),
               ),
+            ),
             const SizedBox(height: 16),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -361,9 +405,9 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
       key: const ValueKey('calibrationStartUI'),
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 32),
-        const Center(
+      children: const [
+        SizedBox(height: 32),
+        Center(
           child: Text(
             "You are about to begin calibrating the sensors",
             textAlign: TextAlign.center,
@@ -374,19 +418,19 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
             ),
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         Center(
           child: Text(
             "Make sure to place the robot in an position, where it can scan black and white values.",
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               color: Colors.white70,
               fontSize: 16,
             ),
           ),
         ),
-        const SizedBox(height: 32),
-        const Center(
+        SizedBox(height: 32),
+        Center(
           child: Text(
             "Click the button to start",
             textAlign: TextAlign.center,

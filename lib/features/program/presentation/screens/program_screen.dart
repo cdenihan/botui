@@ -5,6 +5,7 @@ import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:stpvelox/features/program/domain/entities/program_session.dart';
 import 'package:stpvelox/features/program/domain/services/program_lifecycle_service.dart';
+import 'package:stpvelox/features/program/presentation/screens/calibrate_program_screen.dart';
 import 'package:stpvelox/features/sensors/domain/entities/args/arg.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 import 'package:xterm/xterm.dart';
@@ -68,6 +69,18 @@ class ProgramScreen extends HookConsumerWidget {
     return Scaffold(
       appBar: createTopBar(context, program.name, actions: [
         IconButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => CalibrateProgramScreen(program: program),
+              ),
+            );
+          },
+          icon: const Icon(Icons.tune),
+          tooltip: 'Calibrate',
+        ),
+        IconButton(
           onPressed: () => onLongPress(state),
           icon: const Icon(Icons.layers),
         )
@@ -84,6 +97,10 @@ class ProgramScreen extends HookConsumerWidget {
                 controller: state.terminalController,
                 onTapUp: (_, a) => onLongPress(state),
                 onSecondaryTapDown: (_, a) => onLongPress(state),
+                textStyle: const TerminalStyle(
+                  fontSize: 14,
+                  fontFamily: 'DejaVu Sans Mono',
+                ),
               ),
             if (state == null)
               Container(

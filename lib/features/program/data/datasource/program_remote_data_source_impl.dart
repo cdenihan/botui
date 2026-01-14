@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'dart:io';
 
 import 'package:path/path.dart' as path;
+import 'package:yaml/yaml.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:stpvelox/features/program/domain/repositories/program_remote_data_source.dart';
 import 'package:stpvelox/features/sensors/domain/entities/args/arg.dart';
@@ -43,13 +44,43 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
 
     for (var dir in projectDirs) {
       final folderName = path.basename(dir.path);
+      final raccoonProjectFile = File(path.join(dir.path, 'raccoon.project.yml'));
       final projectJsonFile = File(path.join(dir.path, 'project.json'));
 
       String name = folderName;
       String runScript = 'run.sh';
       List<Arg> args = [];
+      bool parsedRaccoonProject = false;
 
-      if (await projectJsonFile.exists()) {
+      // Prioritize raccoon.project.yml over project.json
+      if (await raccoonProjectFile.exists()) {
+        try {
+          final yamlContent = await raccoonProjectFile.readAsString();
+          final dynamic yamlData = loadYaml(yamlContent);
+
+          if (yamlData is Map) {
+            // Use 'name' field from raccoon.project.yml
+            if (yamlData.containsKey('name') && yamlData['name'] is String) {
+              name = yamlData['name'];
+            }
+
+            // raccoon.project.yml doesn't have run_script, it's always run.sh
+            runScript = 'run.sh';
+
+            // raccoon.project.yml doesn't define args in the same format
+            // args remain empty for now
+
+            parsedRaccoonProject = true;
+          }
+        } catch (e) {
+          developer.log(
+              'Error reading or parsing raccoon.project.yml in ${dir.path}: $e. Trying project.json fallback.',
+              name: 'ProgramRemoteDataSourceImpl');
+        }
+      }
+
+      // Fall back to project.json if raccoon.project.yml doesn't exist or failed to parse
+      if (!parsedRaccoonProject && await projectJsonFile.exists()) {
         try {
           final jsonContent = await projectJsonFile.readAsString();
           final Map<String, dynamic> jsonData = jsonDecode(jsonContent);
@@ -63,7 +94,7 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
               (jsonData['run_script'] as String).trim().isNotEmpty) {
             runScript = jsonData['run_script'];
           } else {
-            runScript = 'sh ./run.sh';
+            runScript = 'run.sh';
           }
 
           if (jsonData.containsKey('args') && jsonData['args'] is List) {

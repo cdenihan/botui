@@ -5,7 +5,7 @@ import 'package:pty/pty.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:xterm/xterm.dart';
 
-class ProgramSession {
+class CalibrationSession {
   late Terminal terminal;
   late TerminalController terminalController;
   late PseudoTerminal pty;
@@ -13,10 +13,13 @@ class ProgramSession {
   int? _processGroupId;
   StreamSubscription<String>? _outputSubscription;
 
-  ProgramSession._internal();
+  CalibrationSession._internal();
 
-  static Future<ProgramSession> create(Program program, Map<String, String> args) async {
-    final session = ProgramSession._internal();
+  static Future<CalibrationSession> create(
+    Program program, {
+    bool aggressive = false,
+  }) async {
+    final session = CalibrationSession._internal();
 
     session.terminal = Terminal(
       onOutput: (data) {
@@ -27,6 +30,7 @@ class ProgramSession {
       },
     );
     session.terminalController = TerminalController();
+
     // Start bash in a new process group using setsid
     session.pty = PseudoTerminal.start(
       "setsid",
@@ -40,7 +44,7 @@ class ProgramSession {
     session.pty.resize(800, 480);
 
     session.pty.exitCode.then((exitCode) {
-      session.terminal.write("Process finished with exit code $exitCode");
+      session.terminal.write("Calibration finished with exit code $exitCode");
       session._isRunning = false;
     });
 
@@ -63,8 +67,12 @@ class ProgramSession {
     // Wait for PTY to be ready before sending command
     await Future.delayed(const Duration(milliseconds: 100));
 
-    // Get and store the process group ID, then set up trap and run the program
-    session.pty.write("echo PGID:\$\$; set -m; trap 'pkill -P \$\$; kill 0' EXIT SIGINT SIGTERM; cd ${program.parentDir} && bash ${program.runScript} ${args.entries.map((e) => session.pairToString(e.key, e.value)).join(' ')}\n");
+    // Build the calibration command
+    final aggressiveFlag = aggressive ? '--aggressive' : '';
+    final command =
+        "echo PGID:\$\$; set -m; trap 'pkill -P \$\$; kill 0' EXIT SIGINT SIGTERM; cd ${program.parentDir} && raccoon calibrate -l $aggressiveFlag\n";
+
+    session.pty.write(command);
 
     // Wait for PID with timeout
     try {
@@ -81,7 +89,7 @@ class ProgramSession {
   Future<int> kill({bool force = false}) async {
     if (!_isRunning) return -1;
 
-    terminal.write("\r\n^C\r\nStopping program...\r\n");
+    terminal.write("\r\n^C\r\nStopping calibration...\r\n");
 
     // Cancel the output subscription first
     await _outputSubscription?.cancel();
@@ -101,8 +109,9 @@ class ProgramSession {
 
         // 3️⃣ Kill all child processes using pkill with SIGTERM
         try {
-          final result = await Process.run('pkill', ['-TERM', '-P', '$_processGroupId']);
-          if (result.exitCode == 0 || result.exitCode == 1) { // 1 means no processes found (already dead)
+          final result =
+              await Process.run('pkill', ['-TERM', '-P', '$_processGroupId']);
+          if (result.exitCode == 0 || result.exitCode == 1) {
             terminal.write("\r\nChild processes terminated.\r\n");
           }
         } catch (e) {
@@ -148,7 +157,7 @@ class ProgramSession {
       }
 
       _isRunning = false;
-      terminal.write("\r\nProcess terminated.\r\n");
+      terminal.write("\r\nCalibration terminated.\r\n");
 
       // 7️⃣ Wait for exit code (or timeout)
       return await pty.exitCode.timeout(
@@ -162,9 +171,6 @@ class ProgramSession {
     }
   }
 
-  String pairToString(String key, String value) {
-    return "--$key=$value";
-  }
-
   bool get isRunning => _isRunning;
 }
+

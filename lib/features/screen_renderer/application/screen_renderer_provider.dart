@@ -46,12 +46,7 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
       final rawEntries = decoded.value.entries;
       final screenName = decoded.value.screen_name;
 
-      Map<String, dynamic> parsed = {};
-      try {
-        parsed = jsonDecode(rawEntries) as Map<String, dynamic>;
-      } catch (_) {
-        return;
-      }
+      Map<String, dynamic> parsed = jsonDecode(rawEntries) as Map<String, dynamic>;
 
       if (screenName == 'calibrate_sensors') {
         if (parsed['type'] == 'IR'){

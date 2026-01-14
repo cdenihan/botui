@@ -118,9 +118,14 @@ class DartGenerator {
 
   void _generateEncodeScalar(String lcmType, String accessor) {
     if (lcmType == 'string') {
-      _writeln('final ${accessor}Bytes = utf8.encode($accessor);');
-      _writeln('buf.putInt32(${accessor}Bytes.length);');
-      _writeln('buf.putUint8List(${accessor}Bytes);');
+      _writeln('{');
+      _indent++;
+      _writeln('final bytes = utf8.encode($accessor);');
+      _writeln('buf.putUint32(bytes.length + 1);');
+      _writeln('buf.putUint8List(bytes);');
+      _writeln('buf.putUint8(0);');
+      _indent--;
+      _writeln('}');
     } else if (lcmType == 'boolean') {
       _writeln('buf.putUint8($accessor ? 1 : 0);');
     } else if (_typeMapper.isNumericPrimitive(lcmType)) {
@@ -205,8 +210,14 @@ class DartGenerator {
 
   void _generateDecodeScalar(String lcmType, String varName) {
     if (lcmType == 'string') {
-      _writeln('final ${varName}Length = buf.getInt32();');
-      _writeln('final $varName = utf8.decode(buf.getUint8List(${varName}Length));');
+      _writeln('final $varName = () {');
+      _indent++;
+      _writeln('final len = buf.getUint32();');
+      _writeln('final bytes = buf.getUint8List(len - 1);');
+      _writeln('buf.getUint8(); // null terminator');
+      _writeln('return utf8.decode(bytes);');
+      _indent--;
+      _writeln('}();');
     } else if (lcmType == 'boolean') {
       _writeln('final $varName = buf.getUint8() != 0;');
     } else if (_typeMapper.isNumericPrimitive(lcmType)) {

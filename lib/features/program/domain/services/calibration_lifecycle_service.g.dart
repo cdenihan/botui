@@ -43,7 +43,7 @@ final class CalibrationLifecycleServiceProvider extends $NotifierProvider<
 }
 
 String _$calibrationLifecycleServiceHash() =>
-    r'117e11ddc7ce1b0e68754b244ad5e65fae069b9e';
+    r'38e08f4591f1a43749125d86dee6f7b57d0b4fe6';
 
 abstract class _$CalibrationLifecycleService
     extends $Notifier<CalibrationSession?> {

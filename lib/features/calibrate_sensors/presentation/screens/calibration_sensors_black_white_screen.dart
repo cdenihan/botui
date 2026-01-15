@@ -19,6 +19,9 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     required this.sensor,
   });
 
+  bool _manualPop = false;
+
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(blackWhiteCalibrateControllerProvider);
@@ -34,6 +37,8 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
         ref.read(screenRenderProviderProvider.notifier).clear();
         final lcm = ref.read(lcmServiceProvider);
+        if (!_manualPop) return;
+
         lcm.publish(
           "libstp/screen_render/cancel",
           ScreenRenderAnswerT(
@@ -137,6 +142,8 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           reason: "Manually restarted",
         ),
       );
+      ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
+      Navigator.of(ref.context).pop();
     }
 
     void onConfirm() {
@@ -157,6 +164,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           reason: "Manually confirmed",
         ),
       );
+      _manualPop = true;
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
       Navigator.of(ref.context).pop();
     }
@@ -168,15 +176,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              "Calibrate Sensor",
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 5),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -195,13 +195,13 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                         'Black',
                         style: TextStyle(color: Colors.white70),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         blackController ?? "No Value",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -222,13 +222,13 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                         'White',
                         style: TextStyle(color: Colors.white70),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         whiteController ?? "No Value",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -306,7 +306,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -317,7 +317,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                   style: ElevatedButton.styleFrom(
                     padding:
                         const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    textStyle: const TextStyle(fontSize: 16),
+                    textStyle: const TextStyle(fontSize: 14),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -327,7 +327,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                   style: ElevatedButton.styleFrom(
                     padding:
                         const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    textStyle: const TextStyle(fontSize: 16),
+                    textStyle: const TextStyle(fontSize: 14),
                   ),
                 ),
               ],

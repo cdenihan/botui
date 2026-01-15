@@ -19,6 +19,9 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     required this.sensor,
   });
 
+  bool _manualPop = false;
+
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(blackWhiteCalibrateControllerProvider);
@@ -34,6 +37,8 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
         ref.read(screenRenderProviderProvider.notifier).clear();
         final lcm = ref.read(lcmServiceProvider);
+        if (!_manualPop) return;
+
         lcm.publish(
           "libstp/screen_render/cancel",
           ScreenRenderAnswerT(
@@ -137,6 +142,8 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           reason: "Manually restarted",
         ),
       );
+      ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
+      Navigator.of(ref.context).pop();
     }
 
     void onConfirm() {
@@ -157,6 +164,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           reason: "Manually confirmed",
         ),
       );
+      _manualPop = true;
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
       Navigator.of(ref.context).pop();
     }

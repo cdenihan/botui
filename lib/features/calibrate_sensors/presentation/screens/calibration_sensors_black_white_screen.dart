@@ -176,15 +176,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              "Calibrate Sensor",
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 5),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -203,13 +195,13 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                         'Black',
                         style: TextStyle(color: Colors.white70),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         blackController ?? "No Value",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -230,13 +222,13 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                         'White',
                         style: TextStyle(color: Colors.white70),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         whiteController ?? "No Value",
                         style: const TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
-                          fontSize: 16,
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -314,7 +306,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 15),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -325,7 +317,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                   style: ElevatedButton.styleFrom(
                     padding:
                         const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    textStyle: const TextStyle(fontSize: 16),
+                    textStyle: const TextStyle(fontSize: 14),
                   ),
                 ),
                 ElevatedButton.icon(
@@ -335,7 +327,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                   style: ElevatedButton.styleFrom(
                     padding:
                         const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                    textStyle: const TextStyle(fontSize: 16),
+                    textStyle: const TextStyle(fontSize: 14),
                   ),
                 ),
               ],

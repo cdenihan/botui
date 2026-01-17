@@ -42,7 +42,7 @@ final class ScreenRenderProviderProvider
 }
 
 String _$screenRenderProviderHash() =>
-    r'ba7160e86a2e46ff278f635062edecdc7b1fc760';
+    r'dede0b66ad58c1981274b12c78f7736d9788dd68';
 
 abstract class _$ScreenRenderProvider extends $Notifier<Widget?> {
   Widget? build();

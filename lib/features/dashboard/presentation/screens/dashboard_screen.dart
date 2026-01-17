@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
+import 'package:stpvelox/application/screensaver/screensaver_settings_provider.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/dashboard_tile.dart';
@@ -16,11 +17,16 @@ class DashboardScreen extends ConsumerWidget with HasLogger{
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final screensaverEnabled = ref.watch(screensaverEnabledProvider);
+
     ref.listen<bool>(inactivityProvider, (previous, next) {
       if (next == true) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const RobotFaceScreen()),
-        );
+        // Only show screensaver if enabled and DashboardScreen is in the whitelist
+        if (screensaverEnabled && ScreensaverConfig.isWhitelisted('DashboardScreen')) {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const RobotFaceScreen()),
+          );
+        }
       }
     });
 

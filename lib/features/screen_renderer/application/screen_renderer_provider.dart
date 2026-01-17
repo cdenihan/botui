@@ -9,6 +9,7 @@ import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/ScreenReadingStrategy.dart';
 import 'package:stpvelox/features/calibrate_sensors/data/datasource/calibration_remote_data_source.dart';
 import 'package:stpvelox/features/screen_renderer/controller/wait_for_light_calibrate_controller.dart';
+import 'package:stpvelox/features/screen_renderer/controller/distance_calibrate_controller.dart';
 import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
 import 'package:stpvelox/lcm/types/screen_render_t.g.dart';
 import '../controller/black_white_calibrate_controller.dart';
@@ -51,9 +52,10 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
       if (screenName == 'calibrate_sensors') {
         if (parsed['type'] == 'IR'){
           await handleBlackWhite(parsed);
-
         } else if (parsed['type'] == "waitForLight"){
           await handleWaitForLight(parsed);
+        } else if (parsed['type'] == "distanceCalibration"){
+          await handleDistanceCalibration(parsed);
         } else {
           sendCancelRequest("Type for the screen $screenName was not found");
         }
@@ -108,6 +110,27 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
     controller.setState(stateVal);
 
     final calibrateSensor = dataSource.getBlackWhite();
+    state = calibrateSensor.getWidgetScreen(calibrateSensor);
+  }
+
+  Future<void> handleDistanceCalibration(Map<String, dynamic> parsed) async {
+    final controller = ref.read(distanceCalibrateControllerProvider.notifier);
+
+    final stateVal = parsed["state"] as String? ?? "prepare";
+    final requestedDistance = (parsed["requested_distance_cm"] as num?)?.toDouble() ?? 30.0;
+
+    controller.setTopBarTitle("Distance Calibration");
+    controller.setState(stateVal);
+    controller.setRequestedDistance(requestedDistance);
+
+    if (stateVal == "confirm") {
+      final measured = (parsed["measured_distance_cm"] as num?)?.toDouble();
+      final scaleFactor = (parsed["scale_factor"] as num?)?.toDouble();
+      controller.setMeasuredDistance(measured);
+      controller.setScaleFactor(scaleFactor);
+    }
+
+    final calibrateSensor = dataSource.getDistanceCalibration();
     state = calibrateSensor.getWidgetScreen(calibrateSensor);
   }
 

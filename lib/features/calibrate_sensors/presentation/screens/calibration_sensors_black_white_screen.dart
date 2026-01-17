@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/screen_renderer/application/screen_renderer_provider.dart';
 import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
 import '../../../../core/lcm/domain/providers.dart';
@@ -28,21 +26,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
 
     final topBarTitle = state.topBarTitle.replaceAll("_", " ");
     return PopScope(
-      canPop: true,
-      onPopInvokedWithResult: (didPop, result) {
-        if (!didPop) return;
-        ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
-        ref.read(screenRenderProviderProvider.notifier).clear();
-        final lcm = ref.read(lcmServiceProvider);
-        lcm.publish(
-          "libstp/screen_render/cancel",
-          ScreenRenderAnswerT(
-            screen_name: "calibrate_sensors",
-            value: "cancel",
-            reason: "Got Canceled",
-          ),
-        );
-      },
+      canPop: false,
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.grey[900],
@@ -158,6 +142,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         ),
       );
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
+      ref.read(screenRenderProviderProvider.notifier).clear();
       Navigator.of(ref.context).pop();
     }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stpvelox/application/screensaver/screensaver_settings_provider.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/features/settings/domain/entities/setting.dart';
 import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
@@ -104,7 +105,20 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
             ),
           );
         },
-      )
+      ),
+      Setting(
+        icon: Icons.face,
+        label: "Screensaver",
+        color: Colors.cyan,
+        type: SettingType.toggle,
+        value: () => sharedPreferences.getBool(ScreensaverSettingsKeys.enabled) ??
+            ScreensaverConfig.defaultEnabled,
+        onTap: (_) async {
+          final currentValue = sharedPreferences.getBool(ScreensaverSettingsKeys.enabled) ??
+              ScreensaverConfig.defaultEnabled;
+          await sharedPreferences.setBool(ScreensaverSettingsKeys.enabled, !currentValue);
+        },
+      ),
     ];
   }
 

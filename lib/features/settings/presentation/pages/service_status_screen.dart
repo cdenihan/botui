@@ -21,6 +21,7 @@ class _ServiceStatusScreenState extends State<ServiceStatusScreen> {
     ('ssh.service', 'SSH', Icons.terminal),
     ('raccoon.service', 'Raccoon', Icons.pets),
     ('ide-backend.service', 'IDE Backend', Icons.code),
+    ('yolo-publisher.service', 'YOLO Publisher', Icons.visibility),
   ];
 
   @override

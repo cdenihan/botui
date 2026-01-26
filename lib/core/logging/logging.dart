@@ -17,6 +17,10 @@ String _color(Level level) {
   return _gray;
 }
 
+Logger getLogger(String name) {
+  return Logger(name);
+}
+
 void setupLogging() {
   Logger.root.level = Level.INFO;
   Logger.root.onRecord.listen((rec) {

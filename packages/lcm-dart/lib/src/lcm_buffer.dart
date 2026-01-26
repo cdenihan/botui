@@ -81,8 +81,12 @@ class LcmBuffer {
   }
 
   void putUint8List(List<int> bytes) {
-    for (var i = 0; i < bytes.length; i++) {
-      _data.setUint8(_position + i, bytes[i]);
+    // Use efficient bulk copy when possible
+    final target = _data.buffer.asUint8List(_data.offsetInBytes + _position, bytes.length);
+    if (bytes is Uint8List) {
+      target.setAll(0, bytes);
+    } else {
+      target.setRange(0, bytes.length, bytes);
     }
     _position += bytes.length;
   }
@@ -150,10 +154,9 @@ class LcmBuffer {
   }
 
   Uint8List getUint8List(int length) {
-    final result = Uint8List(length);
-    for (var i = 0; i < length; i++) {
-      result[i] = _data.getUint8(_position + i);
-    }
+    // Use efficient view/copy instead of byte-by-byte
+    final source = _data.buffer.asUint8List(_data.offsetInBytes + _position, length);
+    final result = Uint8List.fromList(source); // Creates a copy
     _position += length;
     return result;
   }

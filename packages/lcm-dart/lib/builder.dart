@@ -22,7 +22,7 @@ class LcmBuilder implements Builder {
     final inputId = buildStep.inputId;
     final inputPath = inputId.path;
 
-    // Generate output path - same directory, change extension
+    // Generate output path - same directory, change extension to .g.dart
     final outputPath = inputPath.replaceAll('.lcm', '.g.dart');
     final outputId = AssetId(inputId.package, outputPath);
 

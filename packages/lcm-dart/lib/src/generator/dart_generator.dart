@@ -14,6 +14,9 @@ class DartGenerator {
     _buffer.clear();
     _indent = 0;
 
+    // Register all structs for nested type fingerprint lookup
+    _fingerprinter.registerStructs(file);
+
     // Generate each struct
     for (int i = 0; i < file.structs.length; i++) {
       if (i > 0) _writeln();
@@ -21,6 +24,11 @@ class DartGenerator {
     }
 
     return _buffer.toString();
+  }
+
+  /// Register additional structs for fingerprint calculation (e.g., from other files)
+  void registerStructs(LcmFile file) {
+    _fingerprinter.registerStructs(file);
   }
 
   void _generateStruct(StructDecl struct) {

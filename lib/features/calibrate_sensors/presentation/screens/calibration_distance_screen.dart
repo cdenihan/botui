@@ -619,7 +619,7 @@ class _DrivingUI extends HookWidget {
 }
 
 
-/// Measure UI with animated tape and input
+/// Measure UI with numeric keypad for touch input
 class _MeasureUI extends StatelessWidget {
   final DistanceCalibrateState state;
   final WidgetRef ref;
@@ -655,91 +655,286 @@ class _MeasureUI extends StatelessWidget {
       }
     }
 
+    void onKeyPress(String key) {
+      if (key == 'back') {
+        if (controller.text.isNotEmpty) {
+          controller.text = controller.text.substring(0, controller.text.length - 1);
+        }
+      } else if (key == '.') {
+        if (!controller.text.contains('.')) {
+          controller.text = controller.text.isEmpty ? '0.' : '${controller.text}.';
+        }
+      } else {
+        controller.text = controller.text + key;
+      }
+    }
+
+    void adjustValue(double delta) {
+      final current = double.tryParse(controller.text) ?? 0.0;
+      final newValue = (current + delta).clamp(0.0, 9999.9);
+      // Format to remove unnecessary trailing zeros but keep one decimal place
+      controller.text = newValue.toStringAsFixed(1).replaceAll(RegExp(r'\.0$'), '');
+    }
+
     return Center(
       key: const ValueKey('measureUI'),
-      child: SingleChildScrollView(
-        child: Column(
+      child: Row(
+        children: [
+          // Left side: Info, input field, and submit button
+          Expanded(
+            flex: 5,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text(
+                  'Enter actual distance',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Robot attempted: ${state.requestedDistanceCm.toStringAsFixed(0)} cm',
+                  style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.6)),
+                ),
+                const SizedBox(height: 16),
+                // Input field with +/- buttons
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Minus button
+                    _AdjustButton(
+                      icon: Icons.remove,
+                      onTap: () => adjustValue(-0.5),
+                    ),
+                    const SizedBox(width: 8),
+                    // Input field display
+                    Container(
+                      width: 160,
+                      padding: const EdgeInsets.all(3),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.green.withOpacity(0.3), Colors.teal.withOpacity(0.3)],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade900,
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: ListenableBuilder(
+                          listenable: controller,
+                          builder: (context, _) => Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  controller.text.isEmpty ? '0.0' : controller.text,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    fontWeight: FontWeight.bold,
+                                    color: controller.text.isEmpty
+                                        ? Colors.white.withOpacity(0.3)
+                                        : Colors.white,
+                                  ),
+                                ),
+                              ),
+                              Text(
+                                'cm',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Plus button
+                    _AdjustButton(
+                      icon: Icons.add,
+                      onTap: () => adjustValue(0.5),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Submit button
+                SizedBox(
+                  width: 200,
+                  child: ElevatedButton(
+                    onPressed: onSubmit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.check, size: 22),
+                        SizedBox(width: 8),
+                        Text(
+                          'Submit',
+                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 16),
+          // Right side: Numeric keypad
+          Expanded(
+            flex: 6,
+            child: _NumericKeypad(onKeyPress: onKeyPress),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+
+/// Numeric keypad widget for touch input
+class _NumericKeypad extends StatelessWidget {
+  final void Function(String key) onKeyPress;
+
+  const _NumericKeypad({required this.onKeyPress});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        // Row 1: 1, 2, 3
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Animated measuring tape
-            _MeasuringTape(targetDistance: state.requestedDistanceCm),
-            const SizedBox(height: 32),
-            const Text(
-              'Measure the actual distance',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Robot attempted: ${state.requestedDistanceCm.toStringAsFixed(0)} cm',
-              style: TextStyle(fontSize: 16, color: Colors.white.withOpacity(0.6)),
-            ),
-            const SizedBox(height: 32),
-            // Input field with nice styling
-            Container(
-              width: 220,
-              padding: const EdgeInsets.all(4),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Colors.green.withOpacity(0.3), Colors.teal.withOpacity(0.3)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: TextField(
-                controller: controller,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-                decoration: InputDecoration(
-                  hintText: '0.0',
-                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.3)),
-                  suffixText: 'cm',
-                  suffixStyle: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white.withOpacity(0.7),
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade900,
-                ),
-                autofocus: true,
-                onSubmitted: (_) => onSubmit(),
-              ),
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: onSubmit,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: const [
-                  Icon(Icons.check, size: 24),
-                  SizedBox(width: 8),
-                  Text(
-                    'Submit',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ],
-              ),
+            _KeypadButton(label: '1', onTap: () => onKeyPress('1')),
+            _KeypadButton(label: '2', onTap: () => onKeyPress('2')),
+            _KeypadButton(label: '3', onTap: () => onKeyPress('3')),
+          ],
+        ),
+        // Row 2: 4, 5, 6
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _KeypadButton(label: '4', onTap: () => onKeyPress('4')),
+            _KeypadButton(label: '5', onTap: () => onKeyPress('5')),
+            _KeypadButton(label: '6', onTap: () => onKeyPress('6')),
+          ],
+        ),
+        // Row 3: 7, 8, 9
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _KeypadButton(label: '7', onTap: () => onKeyPress('7')),
+            _KeypadButton(label: '8', onTap: () => onKeyPress('8')),
+            _KeypadButton(label: '9', onTap: () => onKeyPress('9')),
+          ],
+        ),
+        // Row 4: ., 0, backspace
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _KeypadButton(label: '.', onTap: () => onKeyPress('.')),
+            _KeypadButton(label: '0', onTap: () => onKeyPress('0')),
+            _KeypadButton(
+              icon: Icons.backspace_outlined,
+              onTap: () => onKeyPress('back'),
+              color: Colors.orange,
             ),
           ],
+        ),
+      ],
+    );
+  }
+}
+
+
+/// Individual keypad button
+class _KeypadButton extends StatelessWidget {
+  final String? label;
+  final IconData? icon;
+  final VoidCallback onTap;
+  final Color? color;
+
+  const _KeypadButton({
+    this.label,
+    this.icon,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: Material(
+        color: Colors.grey.shade800,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(8),
+          splashColor: Colors.white24,
+          child: Container(
+            width: 72,
+            height: 56,
+            alignment: Alignment.center,
+            child: icon != null
+                ? Icon(icon, size: 26, color: color ?? Colors.white)
+                : Text(
+                    label ?? '',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: color ?? Colors.white,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Adjustment button for +/- controls
+class _AdjustButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _AdjustButton({
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.blueGrey.shade700,
+      borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        splashColor: Colors.white24,
+        child: Container(
+          width: 48,
+          height: 48,
+          alignment: Alignment.center,
+          child: Icon(icon, size: 28, color: Colors.white),
         ),
       ),
     );
@@ -776,7 +971,6 @@ class _ConfirmUI extends StatelessWidget {
       );
       ref.read(distanceCalibrateControllerProvider.notifier).setState('prepare');
       ref.read(screenRenderProviderProvider.notifier).clear();
-      Navigator.of(context).pop();
     }
 
     void onRetry() {
@@ -791,132 +985,148 @@ class _ConfirmUI extends StatelessWidget {
       );
       ref.read(distanceCalibrateControllerProvider.notifier).setState('prepare');
       ref.read(screenRenderProviderProvider.notifier).clear();
-      Navigator.of(context).pop();
     }
 
     return Center(
       key: const ValueKey('confirmUI'),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Row(
         children: [
-          // Animated success icon
-          TweenAnimationBuilder<double>(
-            tween: Tween(begin: 0, end: 1),
-            duration: const Duration(milliseconds: 500),
-            builder: (context, value, child) {
-              return Transform.scale(
-                scale: value,
-                child: Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: [
-                        isGoodCalibration ? Colors.green.shade400 : Colors.orange.shade400,
-                        isGoodCalibration ? Colors.green.shade800 : Colors.orange.shade800,
-                      ],
+          // Left side: Status icon, title, and results
+          Expanded(
+            flex: 5,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Status icon and title row
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TweenAnimationBuilder<double>(
+                      tween: Tween(begin: 0, end: 1),
+                      duration: const Duration(milliseconds: 500),
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value,
+                          child: Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: RadialGradient(
+                                colors: [
+                                  isGoodCalibration ? Colors.green.shade400 : Colors.orange.shade400,
+                                  isGoodCalibration ? Colors.green.shade800 : Colors.orange.shade800,
+                                ],
+                              ),
+                            ),
+                            child: Icon(
+                              isGoodCalibration ? Icons.check : Icons.warning,
+                              size: 28,
+                              color: Colors.white,
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (isGoodCalibration ? Colors.green : Colors.orange).withOpacity(0.5),
-                        blurRadius: 20,
-                        spreadRadius: 5,
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: Text(
+                        isGoodCalibration ? 'Calibration Complete!' : 'Large Adjustment',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: isGoodCalibration ? Colors.green.shade300 : Colors.orange.shade300,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // Compact results
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade900,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: (isGoodCalibration ? Colors.green : Colors.orange).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      _CompactResultRow(
+                        label: 'Requested',
+                        value: '${state.requestedDistanceCm.toStringAsFixed(1)} cm',
+                      ),
+                      const SizedBox(height: 8),
+                      _CompactResultRow(
+                        label: 'Measured',
+                        value: '${state.measuredDistanceCm?.toStringAsFixed(1) ?? "?"} cm',
+                      ),
+                      const SizedBox(height: 8),
+                      _CompactResultRow(
+                        label: 'Scale',
+                        value: scaleFactor.toStringAsFixed(4),
+                        valueColor: Colors.blue.shade300,
+                      ),
+                      const SizedBox(height: 8),
+                      _CompactResultRow(
+                        label: 'Adjust',
+                        value: '$sign${adjustment.toStringAsFixed(1)}%',
+                        valueColor: isGoodCalibration ? Colors.green : Colors.orange,
                       ),
                     ],
                   ),
-                  child: Icon(
-                    isGoodCalibration ? Icons.check : Icons.warning,
-                    size: 45,
-                    color: Colors.white,
-                  ),
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-          Text(
-            isGoodCalibration ? 'Calibration Complete!' : 'Large Adjustment Needed',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              color: isGoodCalibration ? Colors.green.shade300 : Colors.orange.shade300,
-            ),
-          ),
-          const SizedBox(height: 24),
-          // Results card
-          Container(
-            width: 300,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: Colors.grey.shade900,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: (isGoodCalibration ? Colors.green : Colors.orange).withOpacity(0.3),
-                width: 2,
-              ),
-            ),
-            child: Column(
-              children: [
-                _ResultRow(
-                  icon: Icons.flag_outlined,
-                  label: 'Requested',
-                  value: '${state.requestedDistanceCm.toStringAsFixed(1)} cm',
-                ),
-                const Divider(height: 24),
-                _ResultRow(
-                  icon: Icons.straighten,
-                  label: 'Measured',
-                  value: '${state.measuredDistanceCm?.toStringAsFixed(1) ?? "?"} cm',
-                ),
-                const Divider(height: 24),
-                _ResultRow(
-                  icon: Icons.tune,
-                  label: 'Scale Factor',
-                  value: scaleFactor.toStringAsFixed(4),
-                  valueColor: Colors.blue.shade300,
-                ),
-                const Divider(height: 24),
-                _ResultRow(
-                  icon: Icons.trending_up,
-                  label: 'Adjustment',
-                  value: '$sign${adjustment.toStringAsFixed(1)}%',
-                  valueColor: isGoodCalibration ? Colors.green : Colors.orange,
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              OutlinedButton.icon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.grey.shade300,
-                  side: BorderSide(color: Colors.grey.shade600),
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+          const SizedBox(width: 24),
+          // Right side: Action buttons (vertical stack)
+          Expanded(
+            flex: 4,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Apply/Confirm button
+                SizedBox(
+                  width: 180,
+                  height: 56,
+                  child: ElevatedButton.icon(
+                    onPressed: onConfirm,
+                    icon: const Icon(Icons.check, size: 24),
+                    label: const Text('Apply'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isGoodCalibration ? Colors.green : Colors.orange,
+                      foregroundColor: Colors.white,
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              ElevatedButton.icon(
-                onPressed: onConfirm,
-                icon: const Icon(Icons.check),
-                label: const Text('Apply'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: isGoodCalibration ? Colors.green : Colors.orange,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                const SizedBox(height: 16),
+                // Retry button
+                SizedBox(
+                  width: 180,
+                  height: 56,
+                  child: OutlinedButton.icon(
+                    onPressed: onRetry,
+                    icon: const Icon(Icons.refresh, size: 24),
+                    label: const Text('Retry'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey.shade300,
+                      side: BorderSide(color: Colors.grey.shade600, width: 2),
+                      textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -952,6 +1162,39 @@ class _ResultRow extends StatelessWidget {
           value,
           style: TextStyle(
             fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: valueColor ?? Colors.white,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CompactResultRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+
+  const _CompactResultRow({
+    required this.label,
+    required this.value,
+    this.valueColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(fontSize: 14, color: Colors.white.withOpacity(0.7)),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 15,
             fontWeight: FontWeight.bold,
             color: valueColor ?? Colors.white,
           ),

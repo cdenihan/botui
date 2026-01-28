@@ -17,9 +17,6 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     required this.sensor,
   });
 
-  bool _manualPop = false;
-
-
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(blackWhiteCalibrateControllerProvider);
@@ -50,15 +47,24 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
             duration: const Duration(milliseconds: 300),
             child: () {
               switch (state.state) {
+                case 'modeChoice':
+                  return _buildModeChoiceUI(
+                    ref,
+                    state.hasValues,
+                  );
                 case 'readData':
                   return _buildLoadingUI();
                 case 'confirm':
                   return _buildConfirmUI(
-                      ref, blackController, whiteController, collectedValues);
+                    ref,
+                    blackController,
+                    whiteController,
+                    collectedValues,
+                  );
                 case 'retrying':
                   return _buildRetryUI();
                 case 'tooManyAttempts':
-                  return _buildTooManyAttemptsUI();
+                  return _buildTooManyAttemptsUI(ref);
                 default:
                   return _buildReadingUI();
               }
@@ -125,7 +131,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         ),
       );
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
-      Navigator.of(ref.context).pop();
+      ref.read(screenRenderProviderProvider.notifier).clear();
     }
 
     void onConfirm() {
@@ -146,10 +152,8 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
           reason: "Manually confirmed",
         ),
       );
-      _manualPop = true;
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
       ref.read(screenRenderProviderProvider.notifier).clear();
-      Navigator.of(ref.context).pop();
     }
 
     return SafeArea(
@@ -321,6 +325,63 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     );
   }
 
+  Widget _buildModeChoiceUI(
+    WidgetRef ref,
+    bool hasValues,
+  ) {
+    void sendChoice(String value) {
+      final lcm = ref.read(lcmServiceProvider);
+      lcm.publish(
+        "libstp/screen_render/answer",
+        ScreenRenderAnswerT(
+          screen_name: "calibrate_sensors",
+          value: value,
+          reason: "Mode chosen",
+        ),
+      );
+    }
+
+    return SafeArea(
+      key: const ValueKey('modeChoiceUI'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Text(
+            "Calibration mode",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: hasValues ? () => sendChoice("useExisting") : null,
+              icon: const Icon(Icons.save_alt),
+              label: const Text("Use existing values"),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(300, 88),
+              ),
+            ),
+          ),
+          const SizedBox(height: 64),
+          Center(
+            child: ElevatedButton.icon(
+              onPressed: () => sendChoice("calibrateNew"),
+              icon: const Icon(Icons.tune),
+              label: const Text("Calibrate new"),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(300, 88),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
   Widget _buildLoadingUI() {
     return Column(
       key: const ValueKey('loadingUI'),
@@ -344,21 +405,27 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
     );
   }
 
-  Widget _buildTooManyAttemptsUI() {
+  Widget _buildTooManyAttemptsUI(WidgetRef ref) {
+    void onConfirm() {
+      ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
+      ref.read(screenRenderProviderProvider.notifier).clear();
+      return;
+    }
+
     return SafeArea(
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(
+            children: [
+              const Icon(
                 Icons.block,
                 size: 48,
                 color: Colors.redAccent,
               ),
-              SizedBox(height: 16),
-              Text(
+              const SizedBox(height: 16),
+              const Text(
                 "Too many attempts!",
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -367,14 +434,20 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 8),
-              Text(
+              const SizedBox(height: 8),
+              const Text(
                 "Calibration aborted.",
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 16,
                 ),
+              ),
+              const SizedBox(height: 24),
+              ElevatedButton.icon(
+                onPressed: onConfirm,
+                icon: const Icon(Icons.check),
+                label: const Text("Confirm"),
               ),
             ],
           ),

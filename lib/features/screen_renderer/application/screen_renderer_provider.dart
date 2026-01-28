@@ -91,7 +91,6 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
     final controller = ref.read(blackWhiteCalibrateControllerProvider.notifier);
 
     final stateVal = parsed['state'];
-
     controller.setTopBarTitle(stateVal);
     if (stateVal == 'confirm') {
       final black = (parsed['black_thresh'] as num?)?.toDouble();
@@ -107,7 +106,10 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
       ref.read(screenRenderProviderProvider.notifier).clear();
       return;
     }
+    final hasValues = (parsed['hasValues'] as bool?);
+
     controller.setState(stateVal);
+    controller.setHasValues(hasValues);
 
     final calibrateSensor = dataSource.getBlackWhite();
     state = calibrateSensor.getWidgetScreen(calibrateSensor);
@@ -146,3 +148,4 @@ class ScreenRenderProviderStrategy extends ScreenReadingStrategy {
     return useScreenRenderValue(ref);
   }
 }
+

@@ -11,6 +11,7 @@ class BlackWhiteCalibrateState {
   final String state;
   final String topBarTitle;
   final List<dynamic>? collectedValues;
+  final bool hasValues;
 
   const BlackWhiteCalibrateState({
     this.blackThresh,
@@ -18,6 +19,7 @@ class BlackWhiteCalibrateState {
     this.collectedValues,
     this.state = 'setup',
     this.topBarTitle = 'Calibrate Sensor',
+    this.hasValues = false
   });
 
   BlackWhiteCalibrateState copyWith({
@@ -26,6 +28,7 @@ class BlackWhiteCalibrateState {
     List<dynamic>? values,
     String? state,
     String? topBarTitle,
+    bool? hasValues,
   }) {
     return BlackWhiteCalibrateState(
       blackThresh: black ?? blackThresh,
@@ -33,6 +36,7 @@ class BlackWhiteCalibrateState {
       collectedValues: values ?? collectedValues,
       state: state ?? this.state,
       topBarTitle: topBarTitle ?? this.topBarTitle,
+      hasValues: hasValues ?? this.hasValues,
     );
   }
 }
@@ -50,4 +54,5 @@ class BlackWhiteCalibrateController extends _$BlackWhiteCalibrateController {
   void setState(String? value) => state = state.copyWith(state: value);
   void setTopBarTitle(String value) => state = state.copyWith(topBarTitle: value);
   void setValues(List<dynamic>? values) => state = state.copyWith(values: values);
+  void setHasValues(bool? value) => state = state.copyWith(hasValues: value);
 }

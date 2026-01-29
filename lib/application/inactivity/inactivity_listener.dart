@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
 import 'package:stpvelox/application/screensaver/screensaver_settings_provider.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
@@ -51,7 +50,7 @@ class _InactivityListenerState extends ConsumerState<InactivityListener> with Ha
 
     log.info('Showing screensaver');
     _screensaverShowing = true;
-    context.push(AppRoutes.robotFace);
+    router.push(AppRoutes.robotFace);
   }
 
   void _hideScreensaver() {
@@ -60,8 +59,9 @@ class _InactivityListenerState extends ConsumerState<InactivityListener> with Ha
     log.info('Hiding screensaver');
     _screensaverShowing = false;
 
-    if (context.canPop()) {
-      context.pop();
+    final router = ref.read(appRouterProvider);
+    if (router.canPop()) {
+      router.pop();
     }
   }
 

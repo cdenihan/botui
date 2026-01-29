@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
 import 'package:stpvelox/core/service/sensors/digital_sensor.dart';
 import 'package:stpvelox/core/utils/colors/device_color_generator.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_face_animation_manager.dart';
@@ -62,7 +63,7 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Screensaver dismissal is handled by InactivityListener
+    // Screensaver dismissal: tap anywhere to dismiss via InactivityListener
 
     // Watch button 10 directly using useDigitalValue
     final button10State = useDigitalValue(ref, 10);
@@ -78,9 +79,15 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
     final colorSchemeAsync = ref.watch(robotColorSchemeProvider);
     final expressionStateManager = ref.watch(expressionStateManagerProvider);
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: colorSchemeAsync.when(
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () {
+        // Signal user activity to dismiss the screensaver
+        ref.read(inactivityProvider.notifier).userActivityDetected();
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: colorSchemeAsync.when(
         data: (colorScheme) => AnimatedBuilder(
           animation: Listenable.merge([
             _animationManager.blinkAnimation,
@@ -106,6 +113,7 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
             style: const TextStyle(color: Colors.white),
           ),
         ),
+      ),
       ),
     );
   }

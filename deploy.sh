@@ -2,7 +2,7 @@
 set -e
 
 USER=pi
-HOST="${RPI_HOST:-10.101.156.14}"
+HOST="${RPI_HOST:-192.168.68.110}"
 NO_RESTART=false
 
 for arg in "$@"; do

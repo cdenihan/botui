@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/settings/presentation/pages/service_log_screen.dart';
 
 class ServiceTilePage extends StatefulWidget {
   final Map<String, String> service;
@@ -111,14 +112,10 @@ class _ServiceTilePageState extends State<ServiceTilePage> {
     final serviceName = _currentService['unit'] ?? '';
     final displayName = _currentService['displayName'] ?? serviceName;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (context) => ServiceLogScreen(
-          serviceName: serviceName,
-          displayName: displayName,
-        ),
-      ),
-    );
+    context.push(AppRoutes.serviceLog, extra: {
+      'serviceName': serviceName,
+      'displayName': displayName,
+    });
   }
 
   Future<void> _toggleEnabled() async {

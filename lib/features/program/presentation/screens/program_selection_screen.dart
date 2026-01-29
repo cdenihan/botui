@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/program/presentation/screens/program_action_screen.dart';
 import 'package:stpvelox/features/program/presentation/providers/program_providers.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
@@ -52,12 +53,7 @@ class ProgramSelectionScreen extends HookConsumerWidget {
     return ResponsiveGridTile(
       label: program.name,
       icon: Icons.code,
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ProgramActionScreen(program: program)),
-        );
-      },
+      onPressed: () => context.push(AppRoutes.programAction, extra: program),
       color: AppColors.getTileColor(index),
     );
   }

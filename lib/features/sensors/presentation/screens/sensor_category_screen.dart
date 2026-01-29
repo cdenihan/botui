@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/imu_accuracy_display.dart';
@@ -30,10 +32,8 @@ class SensorCategoryScreen extends HookConsumerWidget {
 
 
   void _openFlappyBirdGame(BuildContext context) {
-    Navigator.of(context).push(
-      // TODO: Fix flappy bird game reference
-      MaterialPageRoute(builder: (_) => Container()),
-    );
+    // TODO: Fix flappy bird game reference - use go_router when available
+    context.push(AppRoutes.sensorScreen, extra: Container());
   }
 
   @override
@@ -125,11 +125,7 @@ class SensorCategoryScreen extends HookConsumerWidget {
                 return ResponsiveGridTile(
                   label: entry.value.name,
                   icon: Icons.auto_graph,
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => entry.value.screen),
-                    );
-                  },
+                  onPressed: () => context.push(AppRoutes.sensorScreen, extra: entry.value.screen),
                   color: AppColors.getTileColor(category.index),
                 );
               }).toList(),
@@ -193,11 +189,7 @@ class _DigitalSensorTileState extends State<_DigitalSensorTile> {
         return ResponsiveGridTile(
           label: widget.sensor.name,
           icon: Icons.auto_graph,
-          onPressed: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => widget.sensor.screen),
-            );
-          },
+          onPressed: () => context.push(AppRoutes.sensorScreen, extra: widget.sensor.screen),
           color: isClicked == 1 ? Colors.red : Colors.green,
         );
       },

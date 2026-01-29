@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/saved_networks_notifier.dart';
 import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
@@ -8,7 +10,6 @@ import 'package:stpvelox/features/wifi/domain/application/wifi_client_state.dart
 import 'package:stpvelox/features/wifi/domain/enities/wifi_encryption_type.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_credentials.dart';
-import 'package:stpvelox/features/wifi/presentation/pages/wifi_enterprise_credential_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/wifi_detail_info_section.dart';
 
 class WifiDetailScreen extends ConsumerStatefulWidget {
@@ -38,10 +39,10 @@ class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> with HasLog
       } else if (state.connectedSsid != null) {
         _showSnack(
             context, 'Connected to ${state.connectedSsid} successfully!', Colors.green);
-        Navigator.pop(context);
+        context.pop();
       } else if (state.forgottenSsid != null) {
         _showSnack(context, 'Forgotten network ${state.forgottenSsid}', Colors.green);
-        Navigator.pop(context);
+        context.pop();
       }
     });
 
@@ -104,7 +105,7 @@ class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> with HasLog
                   log.info('Connected to ${network.ssid}!');
 
                   if (mounted) {
-                    Navigator.pop(context);
+                    context.pop();
                   }
                 } catch (e) {
                   log.severe('Failed to connect: $e');
@@ -209,11 +210,9 @@ class _WifiDetailScreenState extends ConsumerState<WifiDetailScreen> with HasLog
   }
 
   void _navigateToEnterpriseCredentials(WifiNetwork network) async {
-    final creds = await Navigator.push<WifiCredentials?>(
-      context,
-      MaterialPageRoute(
-        builder: (_) => WifiEnterpriseCredentialScreen(ssid: network.ssid),
-      ),
+    final creds = await context.push<WifiCredentials?>(
+      AppRoutes.wifiEnterprise,
+      extra: network.ssid,
     );
     if (creds != null) {
       ref

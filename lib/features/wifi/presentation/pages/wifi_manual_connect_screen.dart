@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/application/wifi_client_state.dart';
@@ -15,7 +16,7 @@ class WifiManualConnectScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Connected to ${state.connectedSsid} successfully!'),
             backgroundColor: Colors.green));
-        Navigator.pop(context);
+        context.pop();
       } else if (state.errorMessage != null) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Error: ${state.errorMessage}'),

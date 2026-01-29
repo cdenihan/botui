@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
@@ -57,7 +58,7 @@ class _ScreenRotationScreenState extends State<ScreenRotationScreen> {
           ),
         );
         Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) Navigator.of(context).pop();
+          if (mounted) context.pop();
         });
       }
     } catch (e) {

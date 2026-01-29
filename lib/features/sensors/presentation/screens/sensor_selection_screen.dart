@@ -1,12 +1,13 @@
 // presentation/screens/sensor_selection_screen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:collection/collection.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
-import 'package:stpvelox/features/sensors/presentation/screens/sensor_category_screen.dart';
 import 'package:stpvelox/features/sensors/application/sensor_providers.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
@@ -52,16 +53,13 @@ class SensorSelectionScreen extends ConsumerWidget {
       icon: Icons.auto_graph,
       onPressed: () {
         if (sensor.length == 1) {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => sensor.first.screen),
-          );
+          context.push(AppRoutes.sensorScreen, extra: sensor.first.screen);
           return;
         }
 
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => SensorCategoryScreen(category: category, sensor: sensor),
-          ),
+        context.push(
+          AppRoutes.sensorCategory,
+          extra: {'category': category, 'sensors': sensor},
         );
       },
       color: AppColors.getTileColor(category.index),

@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:sleek_circular_slider/sleek_circular_slider.dart';
+import 'package:stpvelox/core/lcm/domain/providers.dart';
+import 'package:stpvelox/core/service/sensors/servo_position_sensor.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
+import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 
 class ServoUtils {
   static const double minAngle = 0.0;
@@ -38,46 +41,56 @@ class SensorServoScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentPosition = useState<double>(0.0);
-    final angleMode = useState<bool>(true);
+    final lcmService = ref.watch(lcmServiceProvider);
+    final servoPosition = ref.watch(servoPositionSensorProvider(port));
+    final servoMode = ref.watch(servoModeSensorProvider(port));
 
-    // Get servo data using hooks
-    final servoMode = useServoMode(ref, port);
+    final angleMode = useState<bool>(true);
+    final isDragging = useState<bool>(false);
+    final localPosition = useState<int>(servoPosition ?? 0);
+    final mountedSlider = useState<bool>(false);
+
+    useEffect(() {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        mountedSlider.value = true;
+      });
+      return null;
+    }, []);
+
+    useEffect(() {
+      if (!isDragging.value && servoPosition != null) {
+        localPosition.value = servoPosition;
+      }
+      return null;
+    }, [servoPosition]);
 
     double getCurrentAngle() =>
-        ServoUtils.positionToAngle(currentPosition.value.toInt());
+        ServoUtils.positionToAngle(localPosition.value);
 
     void setServoPosition(int position) {
-      // TODO: Implement servo control via LCM when available
-      currentPosition.value = position.toDouble();
+      lcmService.publish(
+        'libstp/servo/$port/position_cmd',
+        ScalarI32T(value: position),
+      );
     }
 
     void disableServo() {
-      // TODO: Implement servo disable via LCM when available
+      localPosition.value = 0;
+      setServoPosition(0);
     }
 
     void onSliderChange(double value) {
+      isDragging.value = true;
       if (angleMode.value) {
-        currentPosition.value = ServoUtils.angleToPosition(value).toDouble();
+        localPosition.value = ServoUtils.angleToPosition(value);
       } else {
-        currentPosition.value = value;
+        localPosition.value = value.toInt();
       }
-
-      // TODO: Implement servo positioning via LCM
-      if (angleMode.value) {
-        setServoPosition(ServoUtils.angleToPosition(value));
-      } else {
-        setServoPosition(value.toInt());
-      }
+      setServoPosition(localPosition.value);
     }
 
     void onSliderChangeEnd(double value) {
-      // TODO: Implement servo positioning via LCM
-      if (angleMode.value) {
-        setServoPosition(ServoUtils.angleToPosition(value));
-      } else {
-        setServoPosition(value.toInt());
-      }
+      isDragging.value = false;
     }
 
     void toggleMode() {
@@ -92,8 +105,8 @@ class SensorServoScreen extends HookConsumerWidget {
         : ServoUtils.maxPosition.toDouble();
 
     final double sliderValue = angleMode.value
-        ? ServoUtils.positionToAngle(currentPosition.value.toInt())
-        : currentPosition.value;
+        ? ServoUtils.positionToAngle(localPosition.value)
+        : localPosition.value.toDouble();
 
     final modeToggle = Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -132,83 +145,85 @@ class SensorServoScreen extends HookConsumerWidget {
                 child: Stack(
                   alignment: Alignment.center,
                   children: [
-                    Positioned(
-                      bottom: -180,
-                      child: SleekCircularSlider(
-                        min: minValue,
-                        max: maxValue,
-                        initialValue: sliderValue,
-                        onChange: onSliderChange,
-                        onChangeEnd: onSliderChangeEnd,
-                        appearance: CircularSliderAppearance(
-                          startAngle: 180,
-                          angleRange: 180,
-                          customWidths: CustomSliderWidths(
-                            trackWidth: 75,
-                            progressBarWidth: 75,
-                            handlerSize: 30,
-                          ),
-                          customColors: CustomSliderColors(
-                            trackColor: Colors.grey.shade300,
-                            progressBarColor: Colors.blue,
-                            dotColor: Colors.white,
-                            shadowColor: Colors.grey,
-                            shadowMaxOpacity: 0.0,
-                          ),
-                          size: 480,
-                          infoProperties: InfoProperties(
-                            modifier: (double value) {
-                              return '${value.toInt()}${angleMode.value ? '°' : ''}';
-                            },
-                            mainLabelStyle: const TextStyle(
-                              fontSize: 32,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
+                    if (mountedSlider.value)
+                      Positioned(
+                        bottom: -180,
+                        child: SleekCircularSlider(
+                          min: minValue,
+                          max: maxValue,
+                          initialValue: sliderValue,
+                          onChange: onSliderChange,
+                          onChangeEnd: onSliderChangeEnd,
+                          appearance: CircularSliderAppearance(
+                            startAngle: 180,
+                            angleRange: 180,
+                            customWidths: CustomSliderWidths(
+                              trackWidth: 75,
+                              progressBarWidth: 75,
+                              handlerSize: 30,
+                            ),
+                            customColors: CustomSliderColors(
+                              trackColor: Colors.grey.shade300,
+                              progressBarColor: Colors.blue,
+                              dotColor: Colors.white,
+                              shadowColor: Colors.grey,
+                              shadowMaxOpacity: 0.0,
+                            ),
+                            size: 480,
+                            animationEnabled: false,
+                            infoProperties: InfoProperties(
+                              modifier: (double value) {
+                                return '${value.toInt()}${angleMode.value ? '°' : ''}';
+                              },
+                              mainLabelStyle: const TextStyle(
+                                fontSize: 32,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
                             ),
                           ),
+                          innerWidget: (value) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  angleMode.value
+                                      ? '${value.toStringAsFixed(1)}°'
+                                      : value.toStringAsFixed(0),
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  angleMode.value ? 'Angle' : 'Position',
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 20),
+                                Text(
+                                  angleMode.value
+                                      ? 'Position: ${localPosition.value}'
+                                      : 'Angle: ${getCurrentAngle().toStringAsFixed(1)}°',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Mode: ${servoMode?.name ?? "N/A"}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
-                        innerWidget: (value) {
-                          return Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                angleMode.value
-                                    ? '${value.toStringAsFixed(1)}°'
-                                    : value.toStringAsFixed(0),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                angleMode.value ? 'Angle' : 'Position',
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                angleMode.value
-                                    ? 'Position: ${currentPosition.value.toInt()}'
-                                    : 'Angle: ${getCurrentAngle().toStringAsFixed(1)}°',
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Mode: ${servoMode?.name ?? "N/A"}',
-                                style: const TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ],
-                          );
-                        },
                       ),
-                    ),
                   ],
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_credentials.dart';
 
@@ -57,7 +58,7 @@ class _WifiEnterpriseCredentialScreenState
                       ? null
                       : _caCertController.text,
                 );
-                Navigator.pop(context, creds);
+                context.pop(creds);
               },
               child: const Text('Submit'),
             ),

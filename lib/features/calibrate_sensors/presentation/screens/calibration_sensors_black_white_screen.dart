@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/features/screen_renderer/application/screen_renderer_provider.dart';
@@ -125,7 +126,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
         ),
       );
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
-      Navigator.of(ref.context).pop();
+      ref.context.pop();
     }
 
     void onConfirm() {
@@ -149,7 +150,7 @@ class BlackWhiteCalibrateScreenUnified extends HookConsumerWidget
       _manualPop = true;
       ref.read(blackWhiteCalibrateControllerProvider.notifier).setState(null);
       ref.read(screenRenderProviderProvider.notifier).clear();
-      Navigator.of(ref.context).pop();
+      ref.context.pop();
     }
 
     return SafeArea(

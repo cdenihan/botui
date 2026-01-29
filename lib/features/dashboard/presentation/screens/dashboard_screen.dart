@@ -1,51 +1,34 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
-import 'package:stpvelox/application/screensaver/screensaver_settings_provider.dart';
-import 'package:stpvelox/core/logging/has_logging.dart';
+import 'package:go_router/go_router.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
-import 'package:stpvelox/core/widgets/dashboard_tile.dart';
-import 'package:stpvelox/features/program/presentation/screens/program_selection_screen.dart';
-import 'package:stpvelox/features/sensors/presentation/screens/sensor_selection_screen.dart';
-import 'package:stpvelox/features/settings/presentation/pages/settings_screen.dart';
-import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 
 import '../../../screen_renderer/application/screen_renderer_provider.dart';
 
-class DashboardScreen extends ConsumerWidget with HasLogger{
-  DashboardScreen({super.key});
+class DashboardScreen extends ConsumerWidget {
+  const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final screensaverEnabled = ref.watch(screensaverEnabledProvider);
+    final router = ref.watch(appRouterProvider);
 
-    ref.listen<bool>(inactivityProvider, (previous, next) {
-      if (next == true) {
-        // Only show screensaver if enabled and DashboardScreen is in the whitelist
-        if (screensaverEnabled && ScreensaverConfig.isWhitelisted('DashboardScreen')) {
-          Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const RobotFaceScreen()),
-          );
-        }
-      }
-    });
-
+    // Handle calibration screens pushed from LCM - only when on dashboard
     ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
-      if (next == null){
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
+      final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
+      if (!isDashboardRoute(currentLocation)) {
+        return; // Don't push calibration screens on non-dashboard pages
+      }
+
+      if (next == null) {
+        if (context.canPop()) {
+          context.pop();
         }
         return;
       }
       if (previous == next || previous.runtimeType.toString() == next.runtimeType.toString()) return;
-      final routeName = next.runtimeType.toString();
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => next,
-          settings: RouteSettings(name: routeName),
-        ),
-      );
+      context.push(AppRoutes.calibrationScreen, extra: next);
     });
 
     return Scaffold(
@@ -55,37 +38,99 @@ class DashboardScreen extends ConsumerWidget with HasLogger{
           padding: const EdgeInsets.all(32.0),
           child: Column(
             children: [
-              const Expanded(
+              Expanded(
                 flex: 1,
-                child: DashboardTile(
+                child: _DashboardTile(
                   label: "Sensors & Actors",
                   icon: Icons.sensors,
-                  destination: SensorSelectionScreen(),
+                  route: AppRoutes.sensors,
                   color: AppColors.sensors,
                 ),
               ),
               const SizedBox(height: 16),
               Expanded(
                 flex: 2,
-                child: DashboardTile(
+                child: _DashboardTile(
                   label: "Programs",
                   icon: Icons.code,
-                  destination: ProgramSelectionScreen(),
+                  route: AppRoutes.programs,
                   color: AppColors.programs,
                   isMain: true,
                 ),
               ),
               const SizedBox(height: 16),
-              const Expanded(
+              Expanded(
                 flex: 1,
-                child: DashboardTile(
+                child: _DashboardTile(
                   label: "Settings",
                   icon: Icons.settings,
-                  destination: SettingsScreen(),
+                  route: AppRoutes.settings,
                   color: AppColors.settings,
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dashboard tile that navigates using go_router
+class _DashboardTile extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final String route;
+  final Color color;
+  final bool isMain;
+
+  const _DashboardTile({
+    required this.label,
+    required this.icon,
+    required this.route,
+    required this.color,
+    this.isMain = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: label,
+      button: true,
+      child: GestureDetector(
+        onTap: () => context.push(route),
+        child: Container(
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: const [
+              BoxShadow(
+                color: Colors.black45,
+                offset: Offset(0, 4),
+                blurRadius: 6,
+              ),
+            ],
+          ),
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  icon,
+                  size: isMain ? 60 : 50,
+                  color: Colors.white,
+                ),
+                SizedBox(height: isMain ? 12 : 8),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: isMain ? 26 : 22,
+                    fontWeight: isMain ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

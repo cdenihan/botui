@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+/// Dashboard tile that navigates using go_router route paths.
+/// Use [route] to specify the path and [extra] for additional data.
 class DashboardTile extends StatelessWidget {
   final String label;
   final IconData icon;
-  final Widget destination;
+  final String route;
+  final Object? extra;
   final Color color;
   final bool isMain;
 
@@ -11,7 +15,8 @@ class DashboardTile extends StatelessWidget {
     super.key,
     required this.label,
     required this.icon,
-    required this.destination,
+    required this.route,
+    this.extra,
     required this.color,
     this.isMain = false,
   });
@@ -22,12 +27,7 @@ class DashboardTile extends StatelessWidget {
       label: label,
       button: true,
       child: GestureDetector(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => destination),
-          );
-        },
+        onTap: () => context.push(route, extra: extra),
         child: Container(
           decoration: BoxDecoration(
             color: color,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
 import 'package:stpvelox/core/service/sensors/digital_sensor.dart';
 import 'package:stpvelox/core/utils/colors/device_color_generator.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_face_animation_manager.dart';
@@ -63,11 +62,7 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
 
   @override
   Widget build(BuildContext context) {
-    ref.listen<bool>(inactivityProvider, (previous, next) {
-      if (next == false) {
-        Navigator.of(context).pop();
-      }
-    });
+    // Screensaver dismissal is handled by InactivityListener
 
     // Watch button 10 directly using useDigitalValue
     final button10State = useDigitalValue(ref, 10);

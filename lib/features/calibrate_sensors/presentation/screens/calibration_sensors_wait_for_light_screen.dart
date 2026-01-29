@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
+import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/features/calibrate_sensors/domain/entities/calibrate_sensor.dart';
@@ -541,7 +542,7 @@ class _ConfirmUI extends StatelessWidget {
         ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "retry", reason: "Retry"));
       ref.read(waitForLightCalibrateControllerProvider.notifier).setState('setup');
       ref.read(screenRenderProviderProvider.notifier).clear();
-      Navigator.of(context).pop();
+      context.pop();
     }
 
     void onConfirm() {
@@ -556,7 +557,7 @@ class _ConfirmUI extends StatelessWidget {
         ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "confirmed", reason: "Confirmed"));
       ref.read(waitForLightCalibrateControllerProvider.notifier).setState('setup');
       ref.read(screenRenderProviderProvider.notifier).clear();
-      Navigator.of(context).pop();
+      context.pop();
     }
 
     final offVal = double.tryParse(offController.text) ?? 0;

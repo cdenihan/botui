@@ -1,9 +1,10 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/wifi_client_notifier.dart';
-import 'package:stpvelox/features/wifi/presentation/pages/wifi_manual_connect_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/wifi_scan_list_item.dart';
 
 class WifiScanListScreen extends ConsumerStatefulWidget {
@@ -60,13 +61,7 @@ class _WifiScanListScreenState extends ConsumerState<WifiScanListScreen> {
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (_) => const WifiManualConnectScreen()),
-                      );
-                    },
+                    onPressed: () => context.push(AppRoutes.wifiManualConnect),
                     icon: const Icon(Icons.add, size: 28),
                     label: const Text(
                       'Manual',

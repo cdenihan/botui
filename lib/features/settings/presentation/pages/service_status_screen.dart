@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/utils/sudo_process.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/settings/presentation/pages/service_tile_page.dart';
 
 class ServiceStatusScreen extends StatefulWidget {
   const ServiceStatusScreen({super.key});
@@ -97,11 +98,7 @@ class _ServiceStatusScreenState extends State<ServiceStatusScreen> {
   }
 
   void _navigateToServiceControl(Map<String, String> service) {
-    Navigator.of(context)
-        .push(MaterialPageRoute(
-          builder: (context) => ServiceTilePage(service: service),
-        ))
-        .then((_) => _fetchServices());
+    context.push(AppRoutes.serviceTile, extra: service).then((_) => _fetchServices());
   }
 
   @override

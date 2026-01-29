@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/wifi/application/network_mode_notifier.dart';
 import 'package:stpvelox/features/wifi/domain/enities/network_mode.dart';
-import 'package:stpvelox/features/wifi/domain/presentation/screens/access_point_config_screen.dart';
-import 'package:stpvelox/features/wifi/domain/presentation/screens/saved_networks_screen.dart';
-import 'package:stpvelox/features/wifi/presentation/pages/access_point_status_screen.dart';
-import 'package:stpvelox/features/wifi/presentation/pages/device_info_screen.dart';
-import 'package:stpvelox/features/wifi/presentation/pages/lan_only_status_screen.dart';
-import 'package:stpvelox/features/wifi/presentation/pages/wifi_scan_list_screen.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 
 class WifiHomeScreen extends ConsumerStatefulWidget {
@@ -154,19 +150,13 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             label: "Connect to WiFi",
             icon: Icons.wifi,
             color: Colors.blue[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const WifiScanListScreen()),
-            ),
+            onPressed: () => context.push(AppRoutes.wifiScan),
           ),
           ResponsiveGridTile(
             label: "Saved Networks",
             icon: Icons.bookmark,
             color: Colors.green[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SavedNetworksScreen()),
-            ),
+            onPressed: () => context.push(AppRoutes.wifiSavedNetworks),
           ),
         ],
         if (currentMode == NetworkMode.accessPoint) ...[
@@ -174,20 +164,13 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             label: "Hotspot Settings",
             icon: Icons.router,
             color: Colors.purple[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                  builder: (_) => const AccessPointConfigScreen()),
-            ),
+            onPressed: () => context.push(AppRoutes.wifiAccessPointConfig),
           ),
           ResponsiveGridTile(
             label: "Network Status",
             icon: Icons.network_check,
             color: Colors.orange[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const AccessPointStatusScreen()),
-            ),
+            onPressed: () => context.push(AppRoutes.wifiAccessPointStatus),
           ),
         ],
         if (currentMode == NetworkMode.lanOnly)
@@ -195,19 +178,13 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
             label: "LAN Status",
             icon: Icons.cable,
             color: Colors.grey[600]!,
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const LanOnlyStatusScreen()),
-            ),
+            onPressed: () => context.push(AppRoutes.wifiLanStatus),
           ),
         ResponsiveGridTile(
           label: "Device Info",
           icon: Icons.info,
           color: Colors.teal[600]!,
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const DeviceInfoScreen()),
-          ),
+          onPressed: () => context.push(AppRoutes.wifiDeviceInfo),
         ),
       ],
     );

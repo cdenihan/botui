@@ -15,7 +15,7 @@ for arg in "$@"; do
 done
 dart pub get
 
-drat run build_runner build -d
+dart run build_runner build -d
 
 # Build Flutter app
 flutterpi_tool build --arch=arm64 --cpu=pi3 --release

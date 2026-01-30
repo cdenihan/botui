@@ -7,6 +7,7 @@ import 'package:stpvelox/core/service/sensors/servo_position_sensor.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
+import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
 import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 
 class ServoUtils {
@@ -68,6 +69,7 @@ class SensorServoScreen extends HookConsumerWidget {
         ServoUtils.positionToAngle(localPosition.value);
 
     void setServoPosition(int position) {
+      // Position command automatically enables the servo on the STM32 side
       lcmService.publish(
         'libstp/servo/$port/position_cmd',
         ScalarI32T(value: position),
@@ -76,7 +78,11 @@ class SensorServoScreen extends HookConsumerWidget {
 
     void disableServo() {
       localPosition.value = 0;
-      setServoPosition(0);
+      // Disable the servo mode (not just set position to 0)
+      lcmService.publish(
+        'libstp/servo/$port/mode',
+        ScalarI8T(dir: ServoMode.fullyDisabled.value),
+      );
     }
 
     void onSliderChange(double value) {

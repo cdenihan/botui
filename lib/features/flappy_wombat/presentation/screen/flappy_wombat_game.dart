@@ -61,16 +61,23 @@ class FlappyWombatGame extends HookConsumerWidget {
     useEffect(() {
       void gameLoop() {
         gameController.gameLoop();
-        if (gameState.value == GameState.running) {
-          controller.repeat();
-        } else {
-          controller.stop();
-        }
       }
 
       controller.addListener(gameLoop);
-      return () => controller.removeListener(gameLoop);
+      return () {
+        controller.removeListener(gameLoop);
+        controller.stop();
+      };
     }, []);
+
+    useEffect(() {
+      if (gameState.value == GameState.running) {
+        controller.repeat();
+      } else {
+        controller.stop();
+      }
+      return null;
+    }, [gameState.value]);
 
     return Scaffold(
       appBar: createTopBar(context, "Flappy Wombat"),

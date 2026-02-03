@@ -16,20 +16,47 @@ class DashboardScreen extends ConsumerWidget with HasLogger {
 
     // Handle calibration screens pushed from LCM - only when on dashboard
     ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
+      final timestamp = DateTime.now().toIso8601String();
       final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
+
+      log.info('[LISTENER @ $timestamp] screenRenderProvider changed');
+      log.info('[LISTENER] currentLocation="$currentLocation"');
+      log.info('[LISTENER] previous: ${previous?.runtimeType} (key=${previous?.key})');
+      log.info('[LISTENER] next: ${next?.runtimeType} (key=${next?.key})');
+
       if (!isDashboardRoute(currentLocation)) {
+        log.info('[LISTENER] Not on dashboard route, ignoring screen update');
         return; // Don't push calibration screens on non-dashboard pages
       }
 
       if (next == null) {
+        log.info('[LISTENER] next is null, attempting to pop');
         if (context.canPop()) {
+          log.info('[LISTENER] Popping current screen');
           context.pop();
+        } else {
+          log.info('[LISTENER] Cannot pop, no screen to pop');
         }
         return;
       }
-      if (previous == next || previous.runtimeType.toString() == next.runtimeType.toString()) return;
 
+      // IMPORTANT: Compare by key instead of just runtimeType to detect content changes
+      final previousKey = previous?.key;
+      final nextKey = next.key;
+
+      if (previous == next) {
+        log.info('[LISTENER] previous == next (same object), skipping');
+        return;
+      }
+
+      if (previousKey != null && nextKey != null && previousKey == nextKey) {
+        log.info('[LISTENER] Same key ($previousKey), skipping duplicate');
+        return;
+      }
+
+      log.info('[LISTENER] Pushing new screen to calibrationScreen route');
       context.push(AppRoutes.calibrationScreen, extra: next);
+      log.info('[LISTENER] Screen pushed successfully');
     });
 
     return Scaffold(

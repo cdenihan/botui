@@ -41,6 +41,9 @@ import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 
 // Other
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
+import 'package:stpvelox/features/flappy_wombat/presentation/screen/flappy_wombat_game.dart';
+import 'package:stpvelox/features/dev_menu/presentation/screens/dev_menu_screen.dart';
+import 'package:stpvelox/features/tilt_maze/presentation/screens/tilt_maze_screen.dart';
 
 part 'app_router.g.dart';
 
@@ -85,6 +88,11 @@ abstract class AppRoutes {
 
   // Screensaver
   static const robotFace = '/robot-face';
+
+  // Dev menu & easter eggs
+  static const devMenu = '/dev-menu';
+  static const flappyWombat = '/flappy-wombat';
+  static const tiltMaze = '/tilt-maze';
 }
 
 /// Check if the current route is the dashboard
@@ -276,6 +284,23 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.robotFace,
         name: 'robotFace',
         builder: (context, state) => const RobotFaceScreen(),
+      ),
+
+      // Dev menu & easter eggs
+      GoRoute(
+        path: AppRoutes.devMenu,
+        name: 'devMenu',
+        builder: (context, state) => const DevMenuScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.flappyWombat,
+        name: 'flappyWombat',
+        builder: (context, state) => const FlappyWombatGame(),
+      ),
+      GoRoute(
+        path: AppRoutes.tiltMaze,
+        name: 'tiltMaze',
+        builder: (context, state) => const TiltMazeScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

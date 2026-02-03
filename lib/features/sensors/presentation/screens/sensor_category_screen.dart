@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
@@ -18,7 +17,7 @@ import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
 import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
 
-class SensorCategoryScreen extends HookConsumerWidget {
+class SensorCategoryScreen extends ConsumerWidget {
   final SensorCategory category;
   final List<Sensor> sensor;
 
@@ -27,14 +26,6 @@ class SensorCategoryScreen extends HookConsumerWidget {
     required this.category,
     required this.sensor,
   });
-
-  static const _holdDuration = Duration(seconds: 5);
-
-
-  void _openFlappyBirdGame(BuildContext context) {
-    // TODO: Fix flappy bird game reference - use go_router when available
-    context.push(AppRoutes.sensorScreen, extra: Container());
-  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -46,10 +37,6 @@ class SensorCategoryScreen extends HookConsumerWidget {
         category.name == 'Accel' ||
         category.name == 'Magneto' ||
         category.name == 'Orientation';
-
-    final heldStart = useState<DateTime?>(null);
-    final prevDigital10 = useState<int>(0);
-    final mounted = useIsMounted();
 
     Future<void> disableAllServos() async {
       for (int i = 0; i <4; i++){
@@ -65,30 +52,6 @@ class SensorCategoryScreen extends HookConsumerWidget {
         // await KiprPlugin.stopMotor(i);
       }
     }
-
-    useEffect(() {
-      if (!isDigitalCategory) return null;
-
-      final timer = Timer.periodic(const Duration(milliseconds: 100), (_) async {
-        // TODO: Replace with real digital sensor reading
-        final current = 0; // await KiprPlugin.getDigital(10);
-
-        if (current == 1) {
-          heldStart.value ??= DateTime.now();
-          final heldTime = DateTime.now().difference(heldStart.value!);
-          if (heldTime >= _holdDuration) {
-            heldStart.value = null;
-            if (mounted()) _openFlappyBirdGame(context);
-          }
-        } else {
-          heldStart.value = null;
-        }
-
-        prevDigital10.value = current;
-      });
-
-      return timer.cancel;
-    }, [isDigitalCategory]);
 
     final actions = <Widget>[];
     if (isIMUCategory) {

@@ -1,18 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/ScreenReadingStrategy.dart';
-import 'package:stpvelox/features/calibrate_sensors/data/datasource/calibration_remote_data_source.dart';
-import 'package:stpvelox/features/screen_renderer/controller/wait_for_light_calibrate_controller.dart';
-import 'package:stpvelox/features/screen_renderer/controller/distance_calibrate_controller.dart';
-import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
+import 'package:stpvelox/features/dynamic_ui/presentation/dynamic_ui_screen.dart';
 import 'package:stpvelox/lcm/types/screen_render_t.g.dart';
-import '../controller/black_white_calibrate_controller.dart';
 
 part 'screen_renderer_provider.g.dart';
 
@@ -22,21 +17,26 @@ Widget? useScreenRenderValue(Ref ref) {
 
 @Riverpod(keepAlive: true)
 class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
+  int _messageCounter = 0;
+
   @override
   Widget? build() {
+    log.info('[ScreenRenderProvider] build() called, initializing...');
     ref.onDispose(_dispose);
     _startSubscription();
     return null;
   }
-  final dataSource = CalibrationSensorsRemoteDataSourceImpl();
+
   StreamSubscription? _subscription;
 
   void clear() {
+    log.info('[ScreenRenderProvider] clear() called, setting state to null');
     state = null;
   }
 
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
+    log.info('[ScreenRenderProvider] Starting LCM subscription on libstp/screen_render');
 
     _subscription = lcm
         .subscribeAs<ScreenRenderT>(
@@ -44,101 +44,60 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
       ScreenRenderT.decode,
     )
         .listen((decoded) async {
+      _messageCounter++;
+      final msgId = _messageCounter;
       final rawEntries = decoded.value.entries;
       final screenName = decoded.value.screen_name;
+      final timestamp = DateTime.now().toIso8601String();
 
-      Map<String, dynamic> parsed = jsonDecode(rawEntries) as Map<String, dynamic>;
+      log.info('[LCM RX #$msgId @ $timestamp] screen_render <- name=$screenName');
+      log.fine('[LCM RX #$msgId] raw entries (${rawEntries.length} chars): ${rawEntries.substring(0, rawEntries.length > 200 ? 200 : rawEntries.length)}...');
 
-      if (screenName == 'calibrate_sensors') {
-        if (parsed['type'] == 'IR'){
-          await handleBlackWhite(parsed);
-        } else if (parsed['type'] == "waitForLight"){
-          await handleWaitForLight(parsed);
-        } else if (parsed['type'] == "distanceCalibration"){
-          await handleDistanceCalibration(parsed);
+      try {
+        Map<String, dynamic> parsed = jsonDecode(rawEntries) as Map<String, dynamic>;
+        log.fine('[LCM RX #$msgId] JSON parsed successfully, keys: ${parsed.keys.toList()}');
+
+        if (screenName == 'dynamic_ui') {
+          final oldState = state;
+          log.info('[LCM RX #$msgId] Processing dynamic_ui message, current state: ${oldState?.runtimeType}');
+
+          // Handle dynamic UI screens from Python
+          if (parsed['screen'] == 'close') {
+            // Close the dynamic UI screen
+            log.info('[LCM RX #$msgId] Closing dynamic UI screen');
+            clear();
+          } else {
+            final title = parsed['title'] ?? '<no title>';
+            final bodyType = parsed['body']?['widget'] ?? '<no body widget>';
+            log.info('[LCM RX #$msgId] Showing dynamic UI screen: title="$title", body widget="$bodyType"');
+
+            final newScreen = DynamicUIScreen(
+              key: ValueKey('dynamic_ui_$msgId'),
+              screenData: parsed,
+            );
+            state = newScreen;
+            log.info('[LCM RX #$msgId] State updated with new DynamicUIScreen (key: dynamic_ui_$msgId)');
+          }
         } else {
-          sendCancelRequest("Type for the screen $screenName was not found");
+          log.warning('[LCM RX #$msgId] Unknown screen_name: $screenName, ignoring');
         }
+      } catch (e, stackTrace) {
+        log.severe('[LCM RX #$msgId] Error processing screen_render message: $e');
+        log.severe('[LCM RX #$msgId] Stack trace: $stackTrace');
       }
+    }, onError: (error, stackTrace) {
+      log.severe('[ScreenRenderProvider] LCM subscription error: $error');
+      log.severe('[ScreenRenderProvider] Stack trace: $stackTrace');
     });
-  }
-  
-  void sendCancelRequest(String reason){
-    final lcm = ref.read(lcmServiceProvider);
-    lcm.publish("libstp/screen_render/cancel", ScreenRenderAnswerT(screen_name: "calibrate_sensors", value: "cancel", reason: "Got Canceled"));
-  }
-      
-  Future<void> handleWaitForLight(Map<String, dynamic> parsed) async {
-    final controller = ref.read(waitForLightCalibrateControllerProvider.notifier);
 
-    final stateVal = parsed["state"];
-    final port = parsed["port"] as int? ?? 0;
-
-    controller.setTopBarTitle(stateVal);
-    if (stateVal == "confirm"){
-      final lightOff = (parsed["wfl_off_value"] as num?)?.toDouble();
-      final lightOn = (parsed["wfl_on_value"] as num?)?.toDouble();
-      controller.setOn(lightOn);
-      controller.setOff(lightOff);
-    }
-
-    controller.setState(stateVal);
-    final calibrateSensor = dataSource.getWaitForLight(port);
-    state = calibrateSensor.getWidgetScreen(calibrateSensor);
-  }
-  
-  Future<void> handleBlackWhite(Map<String, dynamic> parsed) async {
-    final controller = ref.read(blackWhiteCalibrateControllerProvider.notifier);
-
-    final stateVal = parsed['state'];
-    controller.setTopBarTitle(stateVal);
-    if (stateVal == 'confirm') {
-      final black = (parsed['black_thresh'] as num?)?.toDouble();
-      final white = (parsed['white_thresh'] as num?)?.toDouble();
-      final values = (parsed['collected_values']as List<dynamic>?)?.toList();
-      controller.setBlack(black);
-      controller.setWhite(white);
-      controller.setValues(values);
-    } else if (stateVal == "canceled"){
-      ref
-          .read(blackWhiteCalibrateControllerProvider.notifier)
-          .setState(null);
-      ref.read(screenRenderProviderProvider.notifier).clear();
-      return;
-    }
-    final hasValues = (parsed['hasValues'] as bool?);
-
-    controller.setState(stateVal);
-    controller.setHasValues(hasValues);
-
-    final calibrateSensor = dataSource.getBlackWhite();
-    state = calibrateSensor.getWidgetScreen(calibrateSensor);
-  }
-
-  Future<void> handleDistanceCalibration(Map<String, dynamic> parsed) async {
-    final controller = ref.read(distanceCalibrateControllerProvider.notifier);
-
-    final stateVal = parsed["state"] as String? ?? "prepare";
-    final requestedDistance = (parsed["requested_distance_cm"] as num?)?.toDouble() ?? 30.0;
-
-    controller.setTopBarTitle("Distance Calibration");
-    controller.setState(stateVal);
-    controller.setRequestedDistance(requestedDistance);
-
-    if (stateVal == "confirm") {
-      final measured = (parsed["measured_distance_cm"] as num?)?.toDouble();
-      final scaleFactor = (parsed["scale_factor"] as num?)?.toDouble();
-      controller.setMeasuredDistance(measured);
-      controller.setScaleFactor(scaleFactor);
-    }
-
-    final calibrateSensor = dataSource.getDistanceCalibration();
-    state = calibrateSensor.getWidgetScreen(calibrateSensor);
+    log.info('[ScreenRenderProvider] LCM subscription started');
   }
 
   void _dispose() {
+    log.info('[ScreenRenderProvider] _dispose() called, cancelling subscription');
     _subscription?.cancel();
     _subscription = null;
+    log.info('[ScreenRenderProvider] Subscription cancelled');
   }
 }
 
@@ -148,4 +107,3 @@ class ScreenRenderProviderStrategy extends ScreenReadingStrategy {
     return useScreenRenderValue(ref);
   }
 }
-

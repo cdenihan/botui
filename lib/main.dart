@@ -1,12 +1,12 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/service/battery_check_service.dart';
+import 'package:stpvelox/core/service/button10_monitor_widget.dart';
 import 'package:stpvelox/core/service/sensors/imu_accuracy_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 
@@ -91,6 +91,11 @@ class StpVeloxApp extends HookConsumerWidget {
           title: 'stpvelox',
           // debugShowCheckedModeBanner: false,
           routerConfig: router,
+          builder: (context, child) {
+            return Button10MonitorWidget(
+              child: child ?? const SizedBox.shrink(),
+            );
+          },
           theme: ThemeData(
             brightness: Brightness.dark,
             primaryColor: AppColors.programs,

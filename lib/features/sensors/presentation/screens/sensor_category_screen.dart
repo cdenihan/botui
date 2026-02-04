@@ -6,6 +6,7 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
+import 'package:stpvelox/core/service/shutdown_status_service.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/imu_accuracy_display.dart';
 import 'package:stpvelox/core/widgets/imu_temperature_display.dart';
@@ -30,6 +31,7 @@ class SensorCategoryScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lcmService = ref.watch(lcmServiceProvider);
+    final shutdownStatus = ref.watch(shutdownStatusProvider);
     final isMotorCategory = category.name == 'Motor';
     final isServoCategory = category.name == 'Servo';
     final isDigitalCategory = category.name == 'Digital';
@@ -51,6 +53,33 @@ class SensorCategoryScreen extends ConsumerWidget {
         lcmService.publish("libstp/motor/$i/power_cmd", ScalarI32T(value: 0));
         // await KiprPlugin.stopMotor(i);
       }
+    }
+
+    /// Check if shutdown is blocking this category and show dialog if so
+    Future<bool> checkShutdownAndNavigate(Sensor sensorItem) async {
+      final isShutdownBlocking = (isMotorCategory && shutdownStatus.motorShutdown) ||
+          (isServoCategory && shutdownStatus.servoShutdown);
+
+      if (!isShutdownBlocking) {
+        return true; // Allow navigation
+      }
+
+      // Show shutdown warning dialog
+      final result = await showDialog<String>(
+        context: context,
+        barrierColor: Colors.black87,
+        builder: (ctx) => _ShutdownWarningDialog(
+          isMotor: isMotorCategory,
+          onDisableShutdown: () async {
+            await ref.read(shutdownStatusServiceProvider.notifier).setShutdown(false);
+          },
+        ),
+      );
+
+      if (result == 'proceed') {
+        return true;
+      }
+      return false;
     }
 
     final actions = <Widget>[];
@@ -88,7 +117,15 @@ class SensorCategoryScreen extends ConsumerWidget {
                 return ResponsiveGridTile(
                   label: entry.value.name,
                   icon: Icons.auto_graph,
-                  onPressed: () => context.push(AppRoutes.sensorScreen, extra: entry.value.screen),
+                  onPressed: () async {
+                    if (isMotorCategory || isServoCategory) {
+                      final shouldProceed = await checkShutdownAndNavigate(entry.value);
+                      if (!shouldProceed) return;
+                    }
+                    if (context.mounted) {
+                      context.push(AppRoutes.sensorScreen, extra: entry.value.screen);
+                    }
+                  },
                   color: AppColors.getTileColor(category.index),
                 );
               }).toList(),
@@ -184,6 +221,101 @@ class _CategoryActionButton extends StatelessWidget {
             label,
             style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ShutdownWarningDialog extends StatelessWidget {
+  final bool isMotor;
+  final Future<void> Function() onDisableShutdown;
+
+  const _ShutdownWarningDialog({
+    required this.isMotor,
+    required this.onDisableShutdown,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final actorType = isMotor ? 'Motors' : 'Servos';
+
+    return Dialog(
+      backgroundColor: Colors.grey[900],
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orange,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '$actorType Disabled',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Shutdown flags are enabled. $actorType cannot be controlled until shutdown is disabled.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[400], fontSize: 16),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.of(context).pop('cancel'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.grey[700],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: SizedBox(
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: () async {
+                        await onDisableShutdown();
+                        if (context.mounted) {
+                          Navigator.of(context).pop('proceed');
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.green[700],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Disable',
+                        style: TextStyle(fontSize: 18, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

@@ -18,15 +18,17 @@ class DashboardScreen extends ConsumerWidget with HasLogger {
     ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
       final timestamp = DateTime.now().toIso8601String();
       final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
+      final isDashboard = isDashboardRoute(currentLocation);
+      final isCalibrationRoute = currentLocation == AppRoutes.calibrationScreen;
 
       log.info('[LISTENER @ $timestamp] screenRenderProvider changed');
       log.info('[LISTENER] currentLocation="$currentLocation"');
       log.info('[LISTENER] previous: ${previous?.runtimeType} (key=${previous?.key})');
       log.info('[LISTENER] next: ${next?.runtimeType} (key=${next?.key})');
 
-      if (!isDashboardRoute(currentLocation)) {
-        log.info('[LISTENER] Not on dashboard route, ignoring screen update');
-        return; // Don't push calibration screens on non-dashboard pages
+      if (!isDashboard && !isCalibrationRoute) {
+        log.info('[LISTENER] Not on dashboard or calibration route, ignoring screen update');
+        return; // Only react when on dashboard (push) or calibration (replace)
       }
 
       if (next == null) {
@@ -49,14 +51,15 @@ class DashboardScreen extends ConsumerWidget with HasLogger {
         return;
       }
 
-      if (previousKey != null && nextKey != null && previousKey == nextKey) {
-        log.info('[LISTENER] Same key ($previousKey), skipping duplicate');
-        return;
+      if (isCalibrationRoute) {
+        log.info('[LISTENER] Replacing existing calibration screen with updated content');
+        router.replace(AppRoutes.calibrationScreen, extra: next);
+        log.info('[LISTENER] Screen replaced successfully');
+      } else {
+        log.info('[LISTENER] Pushing new screen to calibrationScreen route');
+        context.push(AppRoutes.calibrationScreen, extra: next);
+        log.info('[LISTENER] Screen pushed successfully');
       }
-
-      log.info('[LISTENER] Pushing new screen to calibrationScreen route');
-      context.push(AppRoutes.calibrationScreen, extra: next);
-      log.info('[LISTENER] Screen pushed successfully');
     });
 
     return Scaffold(

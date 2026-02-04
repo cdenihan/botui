@@ -92,15 +92,6 @@ class DevMenuScreen extends StatelessWidget {
       ),
     );
   }
-
-  void _showComingSoon(BuildContext context, String feature) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('$feature - Coming Soon!'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
 }
 
 class _DevMenuTile extends StatelessWidget {

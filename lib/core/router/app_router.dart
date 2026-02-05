@@ -39,6 +39,9 @@ import 'package:stpvelox/features/wifi/domain/presentation/screens/saved_network
 import 'package:stpvelox/features/wifi/domain/presentation/screens/access_point_config_screen.dart';
 import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 
+// Dynamic UI
+import 'package:stpvelox/features/dynamic_ui/presentation/dynamic_ui_screen.dart';
+
 // Other
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 import 'package:stpvelox/features/flappy_wombat/presentation/screen/flappy_wombat_game.dart';
@@ -269,14 +272,11 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) => const DeviceInfoScreen(),
       ),
 
-      // Dynamic calibration screen (pushed from LCM)
+      // Dynamic UI screen (single instance, watches provider for content)
       GoRoute(
         path: AppRoutes.calibrationScreen,
         name: 'calibrationScreen',
-        builder: (context, state) {
-          final screen = state.extra as Widget;
-          return screen;
-        },
+        builder: (context, state) => const DynamicUIScreen(),
       ),
 
       // Screensaver

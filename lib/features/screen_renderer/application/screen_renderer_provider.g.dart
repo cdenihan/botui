@@ -13,7 +13,7 @@ part of 'screen_renderer_provider.dart';
 const screenRenderProviderProvider = ScreenRenderProviderProvider._();
 
 final class ScreenRenderProviderProvider
-    extends $NotifierProvider<ScreenRenderProvider, Widget?> {
+    extends $NotifierProvider<ScreenRenderProvider, Map<String, dynamic>?> {
   const ScreenRenderProviderProvider._()
       : super(
           from: null,
@@ -33,26 +33,29 @@ final class ScreenRenderProviderProvider
   ScreenRenderProvider create() => ScreenRenderProvider();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(Widget? value) {
+  Override overrideWithValue(Map<String, dynamic>? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<Widget?>(value),
+      providerOverride: $SyncValueProvider<Map<String, dynamic>?>(value),
     );
   }
 }
 
 String _$screenRenderProviderHash() =>
-    r'79568f3c22c93cd9c2438ddc7ba2528e0cdff1c6';
+    r'7bfb4091eec415487d373bc7c7e1fc7e606f7be3';
 
-abstract class _$ScreenRenderProvider extends $Notifier<Widget?> {
-  Widget? build();
+abstract class _$ScreenRenderProvider extends $Notifier<Map<String, dynamic>?> {
+  Map<String, dynamic>? build();
   @$mustCallSuper
   @override
   void runBuild() {
     final created = build();
-    final ref = this.ref as $Ref<Widget?, Widget?>;
+    final ref = this.ref as $Ref<Map<String, dynamic>?, Map<String, dynamic>?>;
     final element = ref.element as $ClassProviderElement<
-        AnyNotifier<Widget?, Widget?>, Widget?, Object?, Object?>;
+        AnyNotifier<Map<String, dynamic>?, Map<String, dynamic>?>,
+        Map<String, dynamic>?,
+        Object?,
+        Object?>;
     element.handleValue(ref, created);
   }
 }

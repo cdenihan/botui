@@ -14,8 +14,10 @@ class DashboardScreen extends ConsumerWidget with HasLogger {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(appRouterProvider);
 
-    // Handle calibration screens pushed from LCM - only when on dashboard
-    ref.listen<Widget?>(screenRenderProviderProvider, (previous, next) {
+    // Handle dynamic UI screen — push once when data appears, pop when cleared.
+    // The DynamicUIScreen itself watches the provider for content updates,
+    // so we never need to push/replace for content changes.
+    ref.listen<Map<String, dynamic>?>(screenRenderProviderProvider, (previous, next) {
       final timestamp = DateTime.now().toIso8601String();
       final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
       final isDashboard = isDashboardRoute(currentLocation);
@@ -23,43 +25,29 @@ class DashboardScreen extends ConsumerWidget with HasLogger {
 
       log.info('[LISTENER @ $timestamp] screenRenderProvider changed');
       log.info('[LISTENER] currentLocation="$currentLocation"');
-      log.info('[LISTENER] previous: ${previous?.runtimeType} (key=${previous?.key})');
-      log.info('[LISTENER] next: ${next?.runtimeType} (key=${next?.key})');
+      log.info('[LISTENER] had data=${previous != null}, has data=${next != null}');
 
       if (!isDashboard && !isCalibrationRoute) {
-        log.info('[LISTENER] Not on dashboard or calibration route, ignoring screen update');
-        return; // Only react when on dashboard (push) or calibration (replace)
+        log.info('[LISTENER] Not on dashboard or calibration route, ignoring');
+        return;
       }
 
-      if (next == null) {
-        log.info('[LISTENER] next is null, attempting to pop');
+      final wasOpen = previous != null;
+      final shouldBeOpen = next != null;
+
+      if (!wasOpen && shouldBeOpen && isDashboard) {
+        // First data arrived — push the screen once
+        log.info('[LISTENER] Pushing DynamicUI screen');
+        context.push(AppRoutes.calibrationScreen);
+      } else if (wasOpen && !shouldBeOpen && isCalibrationRoute) {
+        // Data cleared — pop the screen
+        log.info('[LISTENER] Popping DynamicUI screen');
         if (context.canPop()) {
-          log.info('[LISTENER] Popping current screen');
           context.pop();
-        } else {
-          log.info('[LISTENER] Cannot pop, no screen to pop');
         }
-        return;
       }
-
-      // IMPORTANT: Compare by key instead of just runtimeType to detect content changes
-      final previousKey = previous?.key;
-      final nextKey = next.key;
-
-      if (previous == next) {
-        log.info('[LISTENER] previous == next (same object), skipping');
-        return;
-      }
-
-      if (isCalibrationRoute) {
-        log.info('[LISTENER] Replacing existing calibration screen with updated content');
-        router.replace(AppRoutes.calibrationScreen, extra: next);
-        log.info('[LISTENER] Screen replaced successfully');
-      } else {
-        log.info('[LISTENER] Pushing new screen to calibrationScreen route');
-        context.push(AppRoutes.calibrationScreen, extra: next);
-        log.info('[LISTENER] Screen pushed successfully');
-      }
+      // Content changes (wasOpen && shouldBeOpen) are handled by
+      // DynamicUIScreen watching the provider — no navigation needed.
     });
 
     return Scaffold(

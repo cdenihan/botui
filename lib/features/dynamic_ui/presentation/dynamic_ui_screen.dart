@@ -4,6 +4,7 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
+import 'package:stpvelox/features/screen_renderer/application/screen_renderer_provider.dart';
 import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
 
 import 'widget_decoder.dart';
@@ -12,37 +13,40 @@ final _log = Logger('DynamicUIScreen');
 
 /// Dynamic UI screen that renders widgets from JSON definitions.
 ///
-/// Listens to LCM messages and renders the UI based on the JSON payload.
-/// Sends events back to Python via LCM when the user interacts.
+/// Watches the [ScreenRenderProvider] directly so that only a single instance
+/// ever exists. When new data arrives the widget simply re-renders in place
+/// instead of being pushed/popped on the navigation stack.
 class DynamicUIScreen extends HookConsumerWidget {
-  final Map<String, dynamic> screenData;
-
-  const DynamicUIScreen({
-    super.key,
-    required this.screenData,
-  });
+  const DynamicUIScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final screenData = ref.watch(screenRenderProviderProvider);
+
+    if (screenData == null) {
+      // Provider cleared while we're still mounted — show nothing.
+      return const SizedBox.shrink();
+    }
+
     final buildTimestamp = DateTime.now().toIso8601String();
     final title = screenData['title'] as String? ?? 'Screen';
     final body = screenData['body'] as Map<String, dynamic>?;
 
-    _log.info('[BUILD @ $buildTimestamp] DynamicUIScreen building with title="$title", key=$key');
+    _log.info('[BUILD @ $buildTimestamp] DynamicUIScreen building with title="$title"');
     _log.fine('[BUILD] screenData keys: ${screenData.keys.toList()}');
     _log.fine('[BUILD] body widget type: ${body?['widget'] ?? 'null'}');
 
     // Track current input values
     final values = useState<Map<String, dynamic>>({});
 
-    // Initialize values from widgets
+    // Re-extract initial values whenever screenData changes
     useEffect(() {
       _log.info('[EFFECT] useEffect triggered for screenData change, title="$title"');
-      _extractInitialValues(screenData, values.value);
+      final newValues = <String, dynamic>{};
+      _extractInitialValues(screenData, newValues);
+      values.value = newValues;
       _log.fine('[EFFECT] Initial values extracted: ${values.value}');
-      return () {
-        _log.info('[EFFECT] useEffect cleanup for title="$title"');
-      };
+      return null;
     }, [screenData]);
 
     void sendEvent(String action, {Map<String, dynamic>? extra}) {
@@ -137,48 +141,44 @@ class DynamicUIScreen extends HookConsumerWidget {
       ),
     );
   }
+}
 
-  void _extractInitialValues(Map<String, dynamic> data, Map<String, dynamic> values) {
-    // Recursively extract initial values from widgets
-    void extract(dynamic item) {
-      if (item is Map<String, dynamic>) {
-        // Check if this widget has an id and value
-        final id = item['id'] as String?;
-        final value = item['value'];
-        if (id != null && value != null) {
-          values[id] = value;
-        }
+void _extractInitialValues(Map<String, dynamic> data, Map<String, dynamic> values) {
+  // Recursively extract initial values from widgets
+  void extract(dynamic item) {
+    if (item is Map<String, dynamic>) {
+      final id = item['id'] as String?;
+      final value = item['value'];
+      if (id != null && value != null) {
+        values[id] = value;
+      }
 
-        // Recurse into children
-        final children = item['children'];
-        if (children is List) {
-          for (final child in children) {
-            extract(child);
-          }
-        }
-
-        // Check left/right for Split layouts
-        final left = item['left'];
-        if (left is List) {
-          for (final child in left) {
-            extract(child);
-          }
-        }
-        final right = item['right'];
-        if (right is List) {
-          for (final child in right) {
-            extract(child);
-          }
-        }
-
-        // Check body
-        final body = item['body'];
-        if (body is Map<String, dynamic>) {
-          extract(body);
+      final children = item['children'];
+      if (children is List) {
+        for (final child in children) {
+          extract(child);
         }
       }
-    }
 
-    extract(data);
+      final left = item['left'];
+      if (left is List) {
+        for (final child in left) {
+          extract(child);
+        }
+      }
+      final right = item['right'];
+      if (right is List) {
+        for (final child in right) {
+          extract(child);
+        }
+      }
+
+      final body = item['body'];
+      if (body is Map<String, dynamic>) {
+        extract(body);
+      }
+    }
   }
+
+  extract(data);
 }

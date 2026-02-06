@@ -1,55 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 
-import '../../../screen_renderer/application/screen_renderer_provider.dart';
-
-class DashboardScreen extends ConsumerWidget with HasLogger {
-  DashboardScreen({super.key});
+class DashboardScreen extends ConsumerWidget {
+  const DashboardScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final router = ref.watch(appRouterProvider);
-
-    // Handle dynamic UI screen — push once when data appears, pop when cleared.
-    // The DynamicUIScreen itself watches the provider for content updates,
-    // so we never need to push/replace for content changes.
-    ref.listen<Map<String, dynamic>?>(screenRenderProviderProvider, (previous, next) {
-      final timestamp = DateTime.now().toIso8601String();
-      final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
-      final isDashboard = isDashboardRoute(currentLocation);
-      final isCalibrationRoute = currentLocation == AppRoutes.calibrationScreen;
-
-      log.info('[LISTENER @ $timestamp] screenRenderProvider changed');
-      log.info('[LISTENER] currentLocation="$currentLocation"');
-      log.info('[LISTENER] had data=${previous != null}, has data=${next != null}');
-
-      if (!isDashboard && !isCalibrationRoute) {
-        log.info('[LISTENER] Not on dashboard or calibration route, ignoring');
-        return;
-      }
-
-      final wasOpen = previous != null;
-      final shouldBeOpen = next != null;
-
-      if (!wasOpen && shouldBeOpen && isDashboard) {
-        // First data arrived — push the screen once
-        log.info('[LISTENER] Pushing DynamicUI screen');
-        context.push(AppRoutes.calibrationScreen);
-      } else if (wasOpen && !shouldBeOpen && isCalibrationRoute) {
-        // Data cleared — pop the screen
-        log.info('[LISTENER] Popping DynamicUI screen');
-        if (context.canPop()) {
-          context.pop();
-        }
-      }
-      // Content changes (wasOpen && shouldBeOpen) are handled by
-      // DynamicUIScreen watching the provider — no navigation needed.
-    });
-
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

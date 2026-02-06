@@ -2,6 +2,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:logging/logging.dart';
 import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
@@ -9,6 +10,7 @@ import 'package:stpvelox/core/service/battery_check_service.dart';
 import 'package:stpvelox/core/service/button10_monitor_widget.dart';
 import 'package:stpvelox/core/service/sensors/imu_accuracy_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
+import 'package:stpvelox/features/screen_renderer/application/screen_renderer_provider.dart';
 
 import 'core/di/injection.dart';
 import 'core/utils/touch_calibrator.dart';
@@ -61,6 +63,8 @@ class CalibratedGestureRecognizerFactory
   void initializer(CalibratedTapGestureRecognizer instance) {}
 }
 
+final _log = Logger('StpVeloxApp');
+
 class StpVeloxApp extends HookConsumerWidget {
   const StpVeloxApp({super.key});
 
@@ -71,6 +75,25 @@ class StpVeloxApp extends HookConsumerWidget {
 
     // Initialize IMU accuracy sensor early so data is always available
     ref.watch(imuAccuracySensorProvider);
+
+    // Handle dynamic UI screen navigation at app level so the listener
+    // survives route changes (go_router swaps routes, unmounting previous ones).
+    ref.listen<Map<String, dynamic>?>(screenRenderProviderProvider, (previous, next) {
+      final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
+      final isDashboard = isDashboardRoute(currentLocation);
+      final isCalibrationRoute = currentLocation == AppRoutes.calibrationScreen;
+
+      final wasOpen = previous != null;
+      final shouldBeOpen = next != null;
+
+      if (!wasOpen && shouldBeOpen && isDashboard) {
+        _log.info('[DynamicUI] Opening dynamic UI screen');
+        router.go(AppRoutes.calibrationScreen);
+      } else if (wasOpen && !shouldBeOpen && isCalibrationRoute) {
+        _log.info('[DynamicUI] Closing dynamic UI screen, returning to dashboard');
+        router.go(AppRoutes.dashboard);
+      }
+    });
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {

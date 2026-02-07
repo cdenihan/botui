@@ -110,7 +110,7 @@ class ShutdownStatusService extends _$ShutdownStatusService with HasLogger {
     final lcm = ref.read(lcmServiceProvider);
     await lcm.publish(
       'libstp/system/shutdown_cmd',
-      ScalarI32T(value: enabled ? 1 : 0),
+      ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: enabled ? 1 : 0),
     );
     log.info('Sent shutdown command: ${enabled ? "enable" : "disable"}');
   }

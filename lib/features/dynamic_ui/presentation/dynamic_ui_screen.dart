@@ -60,6 +60,7 @@ class DynamicUIScreen extends HookConsumerWidget {
       };
 
       final response = ScreenRenderAnswerT(
+        timestamp: DateTime.now().microsecondsSinceEpoch,
         screen_name: 'dynamic_ui',
         value: action,
         reason: jsonEncode(payload),

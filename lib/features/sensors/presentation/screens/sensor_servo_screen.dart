@@ -72,7 +72,7 @@ class SensorServoScreen extends HookConsumerWidget {
       // Position command automatically enables the servo on the STM32 side
       lcmService.publish(
         'libstp/servo/$port/position_cmd',
-        ScalarI32T(value: position),
+        ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: position),
       );
     }
 
@@ -81,7 +81,7 @@ class SensorServoScreen extends HookConsumerWidget {
       // Disable the servo mode (not just set position to 0)
       lcmService.publish(
         'libstp/servo/$port/mode',
-        ScalarI8T(dir: ServoMode.fullyDisabled.value),
+        ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value),
       );
     }
 

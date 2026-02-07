@@ -50,7 +50,7 @@ class SensorMotorScreen extends HookConsumerWidget {
       sliderValue.value = value;
       isDragging.value = true;
       lcmService.publish(
-          "libstp/motor/$port/power_cmd", ScalarI32T(value: value.toInt()));
+          "libstp/motor/$port/power_cmd", ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: value.toInt()));
     }
 
     void onSliderChangeEnd(double value) {
@@ -59,7 +59,7 @@ class SensorMotorScreen extends HookConsumerWidget {
 
     void stopMotor() {
       sliderValue.value = 0;
-      lcmService.publish("libstp/motor/$port/power_cmd", ScalarI32T(value: 0));
+      lcmService.publish("libstp/motor/$port/power_cmd", ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
     }
 
     return Scaffold(

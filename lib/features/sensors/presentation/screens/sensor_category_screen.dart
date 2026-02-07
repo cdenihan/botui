@@ -43,14 +43,14 @@ class SensorCategoryScreen extends ConsumerWidget {
     Future<void> disableAllServos() async {
       for (int i = 0; i <4; i++){
         //todo test this
-        lcmService.publish('libstp/servo/$i/mode', ScalarI8T(dir: ServoMode.fullyDisabled.value));
+        lcmService.publish('libstp/servo/$i/mode', ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value));
       }
     }
 
     Future<void> stopAllMotors() async {
 
       for (int i = 0; i < 4; i++) {
-        lcmService.publish("libstp/motor/$i/power_cmd", ScalarI32T(value: 0));
+        lcmService.publish("libstp/motor/$i/power_cmd", ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
         // await KiprPlugin.stopMotor(i);
       }
     }

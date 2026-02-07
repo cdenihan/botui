@@ -42,7 +42,7 @@ final class ShutdownStatusServiceProvider
 }
 
 String _$shutdownStatusServiceHash() =>
-    r'b0a938c4feb7e7b7952dfbe1e7513a3d2841ca3c';
+    r'e1b426ea656130a21b0393119c043fb7d8ce393c';
 
 abstract class _$ShutdownStatusService extends $Notifier<ShutdownStatus> {
   ShutdownStatus build();

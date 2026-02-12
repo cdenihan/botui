@@ -18,7 +18,7 @@ dependencies:
   fl_chart: ^1.0.0
   sleek_circular_slider:
     git:
-      url: "git@gitlab.com:da253/sleek_circular_slider.git"
+      url: "git@github.com:htl-stp-ecer/sleek_circular_slider.git"
   shared_preferences: ^2.5.3
   flutter_riverpod: ^3.0.1
   riverpod: ^3.0.1

@@ -1,14 +1,22 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:sleek_circular_slider/sleek_circular_slider.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/service/sensors/back_emf_sensor.dart';
+import 'package:stpvelox/core/service/sensors/motor_done_sensor.dart';
+import 'package:stpvelox/core/service/sensors/motor_position_sensor.dart';
 import 'package:stpvelox/core/service/sensors/motor_power_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
-import 'package:stpvelox/features/sensors/presentation/widgets/back_emf_display.dart';
+import 'package:stpvelox/features/sensors/presentation/services/sensor_data_processor.dart';
+import 'package:stpvelox/features/sensors/presentation/widgets/motor_graph_view.dart';
+import 'package:stpvelox/features/sensors/presentation/widgets/motor_mode_sidebar.dart';
+import 'package:stpvelox/features/sensors/presentation/widgets/motor_position_view.dart';
+import 'package:stpvelox/features/sensors/presentation/widgets/motor_radial_slider.dart';
 import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
+import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
 
 class SensorMotorScreen extends HookConsumerWidget {
   final int port;
@@ -22,141 +30,348 @@ class SensorMotorScreen extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final lcmService = ref.watch(lcmServiceProvider);
-    final motorPower = ref.read(motorPowerSensorProvider(port));
+    final lcm = ref.watch(lcmServiceProvider);
+    final motorPower = ref.watch(motorPowerSensorProvider(port));
+    final backEmf = ref.watch(backEmfSensorProvider(port));
+    final motorPosition = ref.watch(motorPositionSensorProvider(port));
+    final motorDone = useMotorDone(ref, port);
 
-    const double minValue = -100;
-    const double maxValue = 100;
+    final mode = useState(MotorMode.power);
 
-    final sliderValue = useState<double>(motorPower?.toDouble() ?? 0.0);
-    final isDragging = useState<bool>(false);
-    final mountedSlider = useState<bool>(false);
+    // Power state
+    final powerValue = useState<double>(motorPower?.toDouble() ?? 0.0);
+    final powerDragging = useState(false);
+    final sliderMounted = useState(false);
+
+    // Velocity state
+    final velValue = useState<double>(0.0);
+    final targetVelocity = useState<int?>(null);
+
+    // Position state
+    final posInput = useState('');
+    final posIsNegative = useState(false);
+    final posVelocity = useState(1000);
+    final isRelative = useState(false);
+
+    // Graph state
+    final graphMode = useState(MotorGraphMode.bemf);
+    const maxPoints = 250;
+    final processor = useMemoized(
+        () => SensorDataProcessor(maxPoints: maxPoints, movingAvgWindow: 10));
+    final bemfData = useState<List<double>>([]);
+    final bemfMovingAvg = useState<List<double>>([]);
+    final positionData = useState<List<double>>([]);
+    final targetVelData = useState<List<double>>([]);
+    final sampleCount = useState(0);
+    final lastBemf = useState<double>(0);
+    final lastPosition = useState<double>(0);
+
+    // --- Effects ---
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        mountedSlider.value = true;
+        sliderMounted.value = true;
       });
       return null;
     }, []);
 
     useEffect(() {
-      if (!isDragging.value && motorPower != null) {
-        sliderValue.value = motorPower.toDouble();
+      if (!powerDragging.value && motorPower != null) {
+        powerValue.value = motorPower.toDouble();
       }
       return null;
     }, [motorPower]);
 
-    void onSliderChange(double value) {
-      sliderValue.value = value;
-      isDragging.value = true;
-      lcmService.publish(
-          "libstp/motor/$port/power_cmd", ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: value.toInt()));
+    void appendSample(double bemf, double pos) {
+      bemfData.value = processor.appendToRawData(bemfData.value, bemf);
+      bemfMovingAvg.value =
+          processor.appendToMovingAverage(bemfMovingAvg.value, bemfData.value);
+
+      final pList = List<double>.from(positionData.value)..add(pos);
+      if (pList.length > maxPoints) pList.removeAt(0);
+      positionData.value = pList;
+
+      final tv = targetVelocity.value;
+      final tList = List<double>.from(targetVelData.value)
+        ..add(tv?.toDouble() ?? double.nan);
+      if (tList.length > maxPoints) tList.removeAt(0);
+      targetVelData.value = tList;
+
+      sampleCount.value = sampleCount.value + 1;
     }
 
-    void onSliderChangeEnd(double value) {
-      isDragging.value = false;
+    // Store latest BEMF and position values when they change
+    useEffect(() {
+      if (backEmf != null) {
+        lastBemf.value = backEmf.toDouble();
+      }
+      return null;
+    }, [backEmf]);
+
+    useEffect(() {
+      if (motorPosition != null) {
+        lastPosition.value = motorPosition.toDouble();
+      }
+      return null;
+    }, [motorPosition]);
+
+    // Timer drives the graph at 10Hz, using the latest known values
+    useEffect(() {
+      final timer = Timer.periodic(const Duration(milliseconds: 100), (_) {
+        appendSample(lastBemf.value, lastPosition.value);
+      });
+      return timer.cancel;
+    }, const []);
+
+    // --- Commands ---
+
+    void sendPower(int p) => lcm.publish(
+        'libstp/motor/$port/power_cmd',
+        ScalarI32T(
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: p));
+
+    void sendVelocity(int v) {
+      targetVelocity.value = v;
+      lcm.publish(
+          'libstp/motor/$port/velocity_cmd',
+          ScalarI32T(
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: v));
     }
+
+    void sendPositionCmd(int velocity, int goal) => lcm.publish(
+        'libstp/motor/$port/position_cmd',
+        Vector3fT(
+            timestamp: DateTime.now().microsecondsSinceEpoch,
+            x: velocity.toDouble(),
+            y: goal.toDouble(),
+            z: 0));
+
+    void sendRelativeCmd(int velocity, int delta) => lcm.publish(
+        'libstp/motor/$port/relative_cmd',
+        Vector3fT(
+            timestamp: DateTime.now().microsecondsSinceEpoch,
+            x: velocity.toDouble(),
+            y: delta.toDouble(),
+            z: 0));
 
     void stopMotor() {
-      sliderValue.value = 0;
-      lcmService.publish("libstp/motor/$port/power_cmd", ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
+      powerValue.value = 0;
+      targetVelocity.value = null;
+      sendPower(0);
     }
+
+    // --- Keypad ---
+
+    int calcPosInputValue() {
+      final raw = int.tryParse(posInput.value) ?? 0;
+      return posIsNegative.value ? -raw : raw;
+    }
+
+    void onKeyPress(String key) {
+      if (key == 'back') {
+        if (posInput.value.isNotEmpty) {
+          posInput.value =
+              posInput.value.substring(0, posInput.value.length - 1);
+        }
+      } else if (key == '.') {
+        // ignore decimal for integer input
+      } else {
+        if (posInput.value.length < 7) posInput.value += key;
+      }
+    }
+
+    void submitPosition() {
+      final pos = calcPosInputValue();
+      if (posInput.value.isEmpty) return;
+      if (isRelative.value) {
+        sendRelativeCmd(posVelocity.value, pos);
+      } else {
+        sendPositionCmd(posVelocity.value, pos);
+      }
+    }
+
+    // --- Layout ---
 
     return Scaffold(
       appBar: createTopBar(context, sensor.name),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            BackEmfDisplay(port: port),
-            Expanded(
-              child: Center(
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    if (mountedSlider.value)
-                      Positioned(
-                        bottom: -163,
-                        child: SleekCircularSlider(
-                          min: minValue,
-                          max: maxValue,
-                          initialValue: sliderValue.value,
-                          onChange: onSliderChange,
-                          onChangeEnd: onSliderChangeEnd,
-                          appearance: CircularSliderAppearance(
-                            startAngle: 180,
-                            angleRange: 180,
-                            customWidths: CustomSliderWidths(
-                              trackWidth: 70,
-                              progressBarWidth: 75,
-                              handlerSize: 30,
-                            ),
-                            customColors: CustomSliderColors(
-                              trackColor: Colors.grey.shade300,
-                              progressBarColor: Colors.blue,
-                              dotColor: Colors.white,
-                              shadowColor: Colors.grey,
-                              shadowMaxOpacity: 0.0,
-                            ),
-                            size: 400,
-                            animationEnabled: false,
-                            infoProperties: InfoProperties(
-                              modifier: (value) => '${value.toInt()}',
-                              mainLabelStyle: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ),
-                          innerWidget: (velocity) => Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                sliderValue.value.toStringAsFixed(0),
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const Text(
-                                'Power',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+      body: Column(
+        children: [
+          // Main area: sidebar + content
+          Expanded(
+            child: Row(
+              children: [
+                MotorModeSidebar(
+                  selected: mode.value,
+                  onSelect: (m) => mode.value = m,
+                ),
+                Container(width: 1, color: Colors.grey[800]),
+                Expanded(
+                  child: switch (mode.value) {
+                    MotorMode.power => MotorRadialSlider(
+                        mounted: sliderMounted.value,
+                        value: powerValue.value,
+                        min: -100,
+                        max: 100,
+                        label: 'Power',
+                        valueStr: powerValue.value.toInt().toString(),
+                        onChange: (v) {
+                          powerValue.value = v;
+                          powerDragging.value = true;
+                          sendPower(v.toInt());
+                        },
+                        onChangeEnd: (_) => powerDragging.value = false,
                       ),
-                  ],
+                    MotorMode.velocity => MotorRadialSlider(
+                        mounted: sliderMounted.value,
+                        value: velValue.value,
+                        min: -1500,
+                        max: 1500,
+                        label: 'Velocity',
+                        valueStr: velValue.value.toInt().toString(),
+                        onChange: (v) {
+                          velValue.value = v;
+                          sendVelocity(v.toInt());
+                        },
+                        onChangeEnd: (_) {},
+                      ),
+                    MotorMode.position => MotorPositionView(
+                        posDisplay:
+                            '${posIsNegative.value && posInput.value.isNotEmpty ? "-" : ""}${posInput.value.isEmpty ? "0" : posInput.value}',
+                        velocity: posVelocity.value,
+                        isRelative: isRelative.value,
+                        motorPosition: motorPosition,
+                        motorDone: motorDone,
+                        onKeyPress: onKeyPress,
+                        onToggleSign: () =>
+                            posIsNegative.value = !posIsNegative.value,
+                        onClear: () {
+                          posInput.value = '';
+                          posIsNegative.value = false;
+                        },
+                        onVelocityUp: () => posVelocity.value =
+                            (posVelocity.value + 100).clamp(0, 5000),
+                        onVelocityDown: () => posVelocity.value =
+                            (posVelocity.value - 100).clamp(0, 5000),
+                        onToggleRelative: (v) => isRelative.value = v,
+                        onSubmit: submitPosition,
+                      ),
+                    MotorMode.graph => MotorGraphView(
+                        bemfData: bemfData.value,
+                        movingAvg: bemfMovingAvg.value,
+                        positionData: positionData.value,
+                        targetVelocity: targetVelData.value,
+                        maxPoints: maxPoints,
+                        totalSamples: sampleCount.value,
+                        mode: graphMode.value,
+                        onModeChanged: (m) => graphMode.value = m,
+                      ),
+                  },
                 ),
-              ),
+              ],
             ),
-            SizedBox(
-              width: double.infinity,
-              height: 70,
-              child: ElevatedButton(
-                onPressed: stopMotor,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          ),
+          // Bottom bar
+          Container(
+            color: Colors.grey[900],
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Stats row (hidden in graph mode)
+                if (mode.value != MotorMode.graph)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      children: [
+                        _BottomStat('BEMF', '${backEmf ?? "--"}'),
+                        _BottomStat('POS', '${motorPosition ?? "--"}'),
+                        _BottomStat('PWR', '${motorPower ?? "--"}'),
+                        _DoneChip(motorDone),
+                      ],
+                    ),
+                  ),
+                // Stop button (always visible)
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: stopMotor,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red[700],
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8)),
+                      elevation: 4,
+                    ),
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.stop_circle, size: 26),
+                        SizedBox(width: 8),
+                        Text('STOP',
+                            style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 2)),
+                      ],
+                    ),
                   ),
                 ),
-                child: const Text(
-                  'Stop',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Bottom bar helper widgets ───────────────────────────────
+
+class _BottomStat extends StatelessWidget {
+  final String label, value;
+  const _BottomStat(this.label, this.value);
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$label ',
+            style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+        Text(value,
+            style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'monospace',
+                color: Colors.white)),
+      ],
+    );
+  }
+}
+
+class _DoneChip extends StatelessWidget {
+  final bool? done;
+  const _DoneChip(this.done);
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        color: done == true ? Colors.green[700] : Colors.grey[800],
+        border: Border.all(color: Colors.grey[600]!, width: 1.5),
+      ),
+      child: Center(
+        child: done == null
+            ? Text('?',
+                style: TextStyle(fontSize: 12, color: Colors.grey[500]))
+            : done!
+                ? const Icon(Icons.check, size: 16, color: Colors.white)
+                : const Icon(Icons.close, size: 16, color: Colors.grey),
       ),
     );
   }

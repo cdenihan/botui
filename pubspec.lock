@@ -794,7 +794,7 @@ packages:
       path: "."
       ref: HEAD
       resolved-ref: "00783d0c50dea40a2c70c512a887140340d54f25"
-      url: "git@gitlab.com:da253/sleek_circular_slider.git"
+      url: "git@github.com:htl-stp-ecer/sleek_circular_slider.git"
     source: git
     version: "2.1.0"
   source_gen:

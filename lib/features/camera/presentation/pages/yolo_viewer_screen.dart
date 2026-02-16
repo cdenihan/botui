@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/camera/application/yolo_viewer_provider.dart';
@@ -19,14 +20,25 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
   double _fps = 0.0;
 
   @override
+  void initState() {
+    super.initState();
+    // Force LCM service to be initialized
+    Future.microtask(() {
+      final lcm = ref.read(lcmServiceProvider);
+      print('LCM initialized: ${lcm.isInitialized}');
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final frame = ref.watch(yoloFrameStreamProvider);
+    final lcm = ref.watch(lcmServiceProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: createTopBar(context, 'YOLO Viewer'),
       body: SafeArea(
-        child: frame != null ? _buildFrameView(frame) : _buildLoadingView(),
+        child: frame != null ? _buildFrameView(frame) : _buildLoadingView(lcm.isInitialized),
       ),
     );
   }
@@ -43,7 +55,7 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
     }
   }
 
-  Widget _buildLoadingView() {
+  Widget _buildLoadingView(bool lcmInitialized) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -58,6 +70,31 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
           Text(
             'Channel: $kYoloFrameChannel',
             style: TextStyle(color: Colors.white38, fontSize: 12),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'LCM Status: ${lcmInitialized ? "Initialized ✓" : "Initializing..."}',
+            style: TextStyle(
+              color: lcmInitialized ? Colors.green[300] : Colors.orange[300], 
+              fontSize: 12
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Frames received: $_frameCount',
+            style: TextStyle(color: Colors.white54, fontSize: 12),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () {
+              // Force refresh provider
+              ref.invalidate(yoloFrameStreamProvider);
+            },
+            icon: Icon(Icons.refresh),
+            label: Text('Refresh'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[700],
+            ),
           ),
         ],
       ),

@@ -30,6 +30,13 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         onTap: (context) => context.push(AppRoutes.wifi),
       ),
       Setting(
+        icon: Icons.videocam,
+        label: "YOLO Viewer",
+        color: Colors.blue,
+        type: SettingType.button,
+        onTap: (context) => context.push(AppRoutes.yoloViewer),
+      ),
+      Setting(
         icon: Icons.power_settings_new,
         label: "Shutdown",
         color: Colors.red,

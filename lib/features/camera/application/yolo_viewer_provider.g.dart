@@ -44,7 +44,7 @@ final class YoloFrameStreamProvider
   }
 }
 
-String _$yoloFrameStreamHash() => r'f54954d5d18e9fbcd94402f796357a646b2cb2b7';
+String _$yoloFrameStreamHash() => r'e100d2798c54c22fe1f5833883b7d2b98d764b58';
 
 /// Provider that streams YOLO detection frames from LCM
 

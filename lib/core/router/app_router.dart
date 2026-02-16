@@ -42,6 +42,9 @@ import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 // Dynamic UI
 import 'package:stpvelox/features/dynamic_ui/presentation/dynamic_ui_screen.dart';
 
+// Camera
+import 'package:stpvelox/features/camera/presentation/pages/yolo_viewer_screen.dart';
+
 // Other
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 import 'package:stpvelox/features/flappy_wombat/presentation/screen/flappy_wombat_game.dart';
@@ -88,6 +91,9 @@ abstract class AppRoutes {
 
   // Calibration (pushed dynamically from LCM)
   static const calibrationScreen = '/calibration';
+
+  // Camera
+  static const yoloViewer = '/yolo-viewer';
 
   // Screensaver
   static const robotFace = '/robot-face';
@@ -277,6 +283,13 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.calibrationScreen,
         name: 'calibrationScreen',
         builder: (context, state) => const DynamicUIScreen(),
+      ),
+
+      // Camera
+      GoRoute(
+        path: AppRoutes.yoloViewer,
+        name: 'yoloViewer',
+        builder: (context, state) => const YoloViewerScreen(),
       ),
 
       // Screensaver

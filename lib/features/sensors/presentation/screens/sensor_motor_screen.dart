@@ -7,7 +7,6 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/service/sensors/back_emf_sensor.dart';
 import 'package:stpvelox/core/service/sensors/motor_done_sensor.dart';
 import 'package:stpvelox/core/service/sensors/motor_position_sensor.dart';
-import 'package:stpvelox/core/service/sensors/motor_power_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/presentation/services/sensor_data_processor.dart';
@@ -31,7 +30,6 @@ class SensorMotorScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lcm = ref.watch(lcmServiceProvider);
-    final motorPower = ref.watch(motorPowerSensorProvider(port));
     final backEmf = ref.watch(backEmfSensorProvider(port));
     final motorPosition = ref.watch(motorPositionSensorProvider(port));
     final motorDone = useMotorDone(ref, port);
@@ -39,8 +37,7 @@ class SensorMotorScreen extends HookConsumerWidget {
     final mode = useState(MotorMode.power);
 
     // Power state
-    final powerValue = useState<double>(motorPower?.toDouble() ?? 0.0);
-    final powerDragging = useState(false);
+    final powerValue = useState<double>(0.0);
     final sliderMounted = useState(false);
 
     // Velocity state
@@ -74,13 +71,6 @@ class SensorMotorScreen extends HookConsumerWidget {
       });
       return null;
     }, []);
-
-    useEffect(() {
-      if (!powerDragging.value && motorPower != null) {
-        powerValue.value = motorPower.toDouble();
-      }
-      return null;
-    }, [motorPower]);
 
     void appendSample(double bemf, double pos) {
       bemfData.value = processor.appendToRawData(bemfData.value, bemf);
@@ -245,10 +235,9 @@ class SensorMotorScreen extends HookConsumerWidget {
                         valueStr: powerValue.value.toInt().toString(),
                         onChange: (v) {
                           powerValue.value = v;
-                          powerDragging.value = true;
                           sendPower(v.toInt());
                         },
-                        onChangeEnd: (_) => powerDragging.value = false,
+                        onChangeEnd: (_) {},
                       ),
                     MotorMode.velocity => MotorRadialSlider(
                         mounted: sliderMounted.value,
@@ -315,7 +304,6 @@ class SensorMotorScreen extends HookConsumerWidget {
                       children: [
                         _BottomStat('BEMF', '${backEmf ?? "--"}'),
                         _BottomStat('POS', '${motorPosition ?? "--"}'),
-                        _BottomStat('PWR', '${motorPower ?? "--"}'),
                         _DoneChip(motorDone),
                       ],
                     ),

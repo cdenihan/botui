@@ -154,10 +154,33 @@ class SensorMotorScreen extends HookConsumerWidget {
             y: delta.toDouble(),
             z: 0));
 
+    void sendStop() => lcm.publish(
+        'libstp/motor/$port/stop_cmd',
+        ScalarI32T(
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
+
+    void sendBrake() => lcm.publish(
+        'libstp/motor/$port/stop_cmd',
+        ScalarI32T(
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
+
+    void resetBemf() => lcm.publish(
+        'libstp/bemf/$port/reset_cmd',
+        ScalarI32T(
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
+
     void stopMotor() {
       powerValue.value = 0;
+      velValue.value = 0;
       targetVelocity.value = null;
-      sendPower(0);
+      sendStop();
+    }
+
+    void brakeMotor() {
+      powerValue.value = 0;
+      velValue.value = 0;
+      targetVelocity.value = null;
+      sendBrake();
     }
 
     // --- Keypad ---
@@ -291,32 +314,91 @@ class SensorMotorScreen extends HookConsumerWidget {
                       ],
                     ),
                   ),
-                // Stop button (always visible)
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: stopMotor,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[700],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      elevation: 4,
+                // Action buttons
+                Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: stopMotor,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red[700],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            elevation: 4,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.stop_circle, size: 24),
+                              SizedBox(width: 6),
+                              Text('STOP',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.stop_circle, size: 26),
-                        SizedBox(width: 8),
-                        Text('STOP',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 2)),
-                      ],
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: brakeMotor,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange[800],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            elevation: 4,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.block, size: 22),
+                              SizedBox(width: 6),
+                              Text('BRAKE',
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 1)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: resetBemf,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.restart_alt, size: 20),
+                            Text('BEMF',
+                                style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

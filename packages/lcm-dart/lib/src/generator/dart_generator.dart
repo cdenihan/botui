@@ -43,6 +43,18 @@ class DartGenerator {
     _writeln("import 'dart:convert';");
     _writeln("import 'dart:typed_data';");
     _writeln("import 'package:lcm_dart/lcm_dart.dart';");
+
+    // Import nested (non-primitive) types
+    final importedTypes = <String>{};
+    for (final member in struct.members) {
+      if (!member.type.isPrimitive && member.type.fullName != struct.fullName) {
+        if (importedTypes.add(member.type.fullName)) {
+          final importPath = _computeImportPath(struct, member.type);
+          _writeln("import '$importPath';");
+        }
+      }
+    }
+
     _writeln();
 
     // Doc comment
@@ -104,11 +116,20 @@ class DartGenerator {
   }
 
   void _generateEncodeMethod(StructDecl struct) {
+    // encode() - with fingerprint header, for top-level messages
     _writeln('@override');
     _writeln('void encode(LcmBuffer buf) {');
     _indent++;
-
     _writeln('buf.putInt64(LCM_FINGERPRINT);');
+    _writeln('encodeBody(buf);');
+    _indent--;
+    _writeln('}');
+    _writeln();
+
+    // encodeBody() - fields only, used by nested types
+    _writeln('@override');
+    _writeln('void encodeBody(LcmBuffer buf) {');
+    _indent++;
 
     for (final member in struct.members) {
       if (member.dimensions.isEmpty) {
@@ -140,8 +161,8 @@ class DartGenerator {
       final method = _typeMapper.getEncodeMethod(lcmType);
       _writeln('buf.$method($accessor);');
     } else {
-      // Custom type
-      _writeln('$accessor.encode(buf);');
+      // Custom type - encode fields only (no fingerprint)
+      _writeln('$accessor.encodeBody(buf);');
     }
   }
 
@@ -180,16 +201,23 @@ class DartGenerator {
   }
 
   void _generateDecodeMethod(StructDecl struct, String className) {
+    // decode() - with fingerprint check, for top-level messages
     _writeln('static $className decode(LcmBuffer buf) {');
     _indent++;
-
     _writeln('final fingerprint = buf.getInt64();');
     _writeln('if (fingerprint != LCM_FINGERPRINT) {');
     _indent++;
-    _writeln("throw Exception('Invalid fingerprint');");
+    _writeln("throw Exception('Invalid fingerprint: expected 0x\${BigInt.from(LCM_FINGERPRINT).toUnsigned(64).toRadixString(16).padLeft(16, '0')}, received 0x\${BigInt.from(fingerprint).toUnsigned(64).toRadixString(16).padLeft(16, '0')}');");
+    _indent--;
+    _writeln('}');
+    _writeln('return decodeBody(buf);');
     _indent--;
     _writeln('}');
     _writeln();
+
+    // decodeBody() - fields only, used by nested types
+    _writeln('static $className decodeBody(LcmBuffer buf) {');
+    _indent++;
 
     // Decode each field
     for (final member in struct.members) {
@@ -232,9 +260,9 @@ class DartGenerator {
       final method = _typeMapper.getDecodeMethod(lcmType);
       _writeln('final $varName = buf.$method();');
     } else {
-      // Custom type
+      // Custom type - decode fields only (no fingerprint)
       final typeName = _typeMapper.toPascalCase(_shortName(lcmType));
-      _writeln('final $varName = $typeName.decode(buf);');
+      _writeln('final $varName = $typeName.decodeBody(buf);');
     }
   }
 
@@ -310,6 +338,32 @@ class DartGenerator {
       type = 'List<$type>';
     }
     return type;
+  }
+
+  String _computeImportPath(StructDecl currentStruct, TypeRef referencedType) {
+    final currentPkg = currentStruct.package;
+    final refPkg = referencedType.package;
+
+    if (currentPkg == refPkg) {
+      // Same package (or both null) - simple relative import
+      return '${referencedType.shortName}.g.dart';
+    }
+
+    // Different packages - compute relative path
+    final currentParts = currentPkg?.split('.') ?? [];
+    final refParts = refPkg?.split('.') ?? [];
+
+    final buffer = StringBuffer();
+    // Go up from current package directory
+    for (var i = 0; i < currentParts.length; i++) {
+      buffer.write('../');
+    }
+    // Go down into referenced package directory
+    for (final part in refParts) {
+      buffer.write('$part/');
+    }
+    buffer.write('${referencedType.shortName}.g.dart');
+    return buffer.toString();
   }
 
   String _shortName(String fullName) {

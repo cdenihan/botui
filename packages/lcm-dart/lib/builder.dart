@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:build/build.dart';
+import 'package:glob/glob.dart';
 
 import 'src/parser/lexer.dart';
 import 'src/parser/parser.dart';
@@ -40,6 +41,23 @@ class LcmBuilder implements Builder {
 
       // Generate Dart code
       final generator = DartGenerator();
+
+      // Find and parse all other .lcm files so nested type fingerprints
+      // are computed correctly (each type needs to know its dependencies).
+      await for (final assetId in buildStep.findAssets(Glob('**.lcm'))) {
+        if (assetId == inputId) continue;
+        try {
+          final depContent = await buildStep.readAsString(assetId);
+          final depLexer = LcmLexer(depContent, assetId.path);
+          final depTokens = depLexer.tokenize();
+          final depParser = LcmParser(depTokens, assetId.path);
+          final depFile = depParser.parse();
+          generator.registerStructs(depFile);
+        } catch (e) {
+          log.warning('Could not parse ${assetId.path} for type resolution: $e');
+        }
+      }
+
       final dartCode = generator.generate(lcmFile);
 
       // Write output

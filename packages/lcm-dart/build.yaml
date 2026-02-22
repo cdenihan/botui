@@ -2,7 +2,7 @@ builders:
   lcm:
     import: "package:lcm_dart/builder.dart"
     builder_factories: ["lcmBuilder"]
-    build_extensions: {".lcm": [".g.dart"]}
+    build_extensions: {".lcm": [".dart"]}
     auto_apply: dependents
     build_to: source
     applies_builders: ["source_gen|combining_builder"]

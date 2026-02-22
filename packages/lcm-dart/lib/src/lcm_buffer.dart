@@ -5,8 +5,11 @@ abstract class LcmMessage {
   /// Get the LCM fingerprint for this message type
   int get lcmFingerprint;
 
-  /// Encode this message to the given buffer
+  /// Encode this message to the given buffer (with fingerprint header)
   void encode(LcmBuffer buf);
+
+  /// Encode only the fields (without fingerprint header), used for nested types
+  void encodeBody(LcmBuffer buf);
 }
 
 /// Buffer for encoding and decoding LCM messages

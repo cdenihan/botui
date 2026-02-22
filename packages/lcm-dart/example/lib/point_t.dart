@@ -25,6 +25,11 @@ class PointT implements LcmMessage {
   @override
   void encode(LcmBuffer buf) {
     buf.putInt64(LCM_FINGERPRINT);
+    encodeBody(buf);
+  }
+
+  @override
+  void encodeBody(LcmBuffer buf) {
     buf.putFloat64(x);
     buf.putFloat64(y);
     buf.putFloat64(z);
@@ -33,9 +38,12 @@ class PointT implements LcmMessage {
   static PointT decode(LcmBuffer buf) {
     final fingerprint = buf.getInt64();
     if (fingerprint != LCM_FINGERPRINT) {
-      throw Exception('Invalid fingerprint');
+      throw Exception('Invalid fingerprint: expected 0x${BigInt.from(LCM_FINGERPRINT).toUnsigned(64).toRadixString(16).padLeft(16, '0')}, received 0x${BigInt.from(fingerprint).toUnsigned(64).toRadixString(16).padLeft(16, '0')}');
     }
+    return decodeBody(buf);
+  }
 
+  static PointT decodeBody(LcmBuffer buf) {
     final x = buf.getFloat64();
     final y = buf.getFloat64();
     final z = buf.getFloat64();

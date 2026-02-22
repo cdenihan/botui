@@ -154,33 +154,39 @@ class SensorMotorScreen extends HookConsumerWidget {
             y: delta.toDouble(),
             z: 0));
 
-    void sendStop() => lcm.publish(
-        'libstp/motor/$port/stop_cmd',
-        ScalarI32T(
-            timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
-
-    void sendBrake() => lcm.publish(
-        'libstp/motor/$port/stop_cmd',
+    void resetPosition() => lcm.publish(
+        'libstp/motor/$port/position_reset_cmd',
         ScalarI32T(
             timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
 
-    void resetBemf() => lcm.publish(
-        'libstp/bemf/$port/reset_cmd',
-        ScalarI32T(
-            timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
-
-    void stopMotor() {
+    void resetUiState() {
       powerValue.value = 0;
       velValue.value = 0;
       targetVelocity.value = null;
-      sendStop();
     }
 
+    // Coast: no current, motor spins freely (MotorControlMode::Off)
+    void coastMotor() {
+      resetUiState();
+      lcm.publish(
+          'libstp/motor/$port/stop_cmd',
+          ScalarI32T(
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
+    }
+
+    // Active brake: PID holds velocity at 0 (uses current)
+    void stopMotor() {
+      resetUiState();
+      sendVelocity(0);
+    }
+
+    // Passive brake: shorts motor windings (MotorControlMode::PassiveBrake)
     void brakeMotor() {
-      powerValue.value = 0;
-      velValue.value = 0;
-      targetVelocity.value = null;
-      sendBrake();
+      resetUiState();
+      lcm.publish(
+          'libstp/motor/$port/stop_cmd',
+          ScalarI32T(
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
     }
 
     // --- Keypad ---
@@ -317,6 +323,7 @@ class SensorMotorScreen extends HookConsumerWidget {
                 // Action buttons
                 Row(
                   children: [
+                    // STOP: active brake (PID holds vel=0)
                     Expanded(
                       flex: 3,
                       child: SizedBox(
@@ -345,7 +352,8 @@ class SensorMotorScreen extends HookConsumerWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
+                    // BRAKE: passive brake (shorts windings)
                     Expanded(
                       flex: 2,
                       child: SizedBox(
@@ -357,28 +365,43 @@ class SensorMotorScreen extends HookConsumerWidget {
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),
-                            elevation: 4,
                           ),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.block, size: 22),
-                              SizedBox(width: 6),
-                              Text('BRAKE',
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1)),
-                            ],
-                          ),
+                          child: const Text('BRAKE',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1)),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
+                    // OFF: coast (no current)
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: coastMotor,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[800],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('OFF',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Reset position counter
                     SizedBox(
                       height: 48,
                       child: ElevatedButton(
-                        onPressed: resetBemf,
+                        onPressed: resetPosition,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.grey[700],
                           foregroundColor: Colors.white,
@@ -390,7 +413,7 @@ class SensorMotorScreen extends HookConsumerWidget {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(Icons.restart_alt, size: 20),
-                            Text('BEMF',
+                            Text('POS',
                                 style: TextStyle(
                                     fontSize: 9,
                                     fontWeight: FontWeight.w700)),

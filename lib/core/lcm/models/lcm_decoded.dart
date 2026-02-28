@@ -1,5 +1,5 @@
 import 'dart:typed_data';
-import 'package:lcm_dart/lcm_dart.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 typedef LcmDecoder<T> = T Function(LcmBuffer buffer);
 

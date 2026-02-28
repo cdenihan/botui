@@ -6,7 +6,8 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/messages/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'accelerometer_sensor.g.dart';
 
@@ -34,7 +35,7 @@ class AccelerometerSensor extends _$AccelerometerSensor with HasLogger {
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
-        .subscribeAs<Vector3fT>('libstp/accel/value', Vector3fT.decode)
+        .subscribeAs<Vector3fT>(Channels.accelerometer, Vector3fT.decode)
         .listen(
           (decoded) {
         _currentValue = Accel(decoded.value.x, decoded.value.y, decoded.value.z);

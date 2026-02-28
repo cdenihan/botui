@@ -5,7 +5,8 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/features/screen_renderer/application/screen_renderer_provider.dart';
-import 'package:stpvelox/lcm/types/screen_render_answer_t.g.dart';
+import 'package:raccoon_transport/messages/types/screen_render_answer_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 import 'widget_decoder.dart';
 
@@ -70,7 +71,7 @@ class DynamicUIScreen extends HookConsumerWidget {
       _log.fine('[LCM TX] extra=$extra');
       _log.fine('[LCM TX] current values=${values.value}');
       _log.fine('[LCM TX] full payload=${jsonEncode(payload)}');
-      lcm.publish('libstp/screen_render/answer', response);
+      lcm.publish(Channels.screenRenderAnswer, response);
       _log.info('[LCM TX] Message published successfully');
     }
 

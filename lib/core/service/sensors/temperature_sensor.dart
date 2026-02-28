@@ -6,7 +6,8 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/scalar_f_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_f_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'temperature_sensor.g.dart';
 
@@ -29,7 +30,7 @@ class TemperatureSensor extends _$TemperatureSensor with HasLogger {
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
     _subscription =
-        lcm.subscribeAs<ScalarFT>('libstp/imu/temp/value', ScalarFT.decode).listen(
+        lcm.subscribeAs<ScalarFT>(Channels.temperature, ScalarFT.decode).listen(
               (decoded) {
             _currentValue = decoded.value.value;
             state = _currentValue;

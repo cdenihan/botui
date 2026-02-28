@@ -5,7 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'servo_sensor.g.dart';
 
@@ -47,7 +48,7 @@ class ServoModeSensor extends _$ServoModeSensor with HasLogger {
   void _startSubscription(int port) {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
-        .subscribeAs<ScalarI8T>('libstp/servo/$port/mode', ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.servoMode(port), ScalarI8T.decode)
         .listen(
       (decoded) {
         _currentValue = ServoMode.fromValue(decoded.value.dir);

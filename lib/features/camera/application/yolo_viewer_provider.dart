@@ -4,11 +4,12 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/logging.dart';
-import 'package:stpvelox/lcm/types/yolo_frame_t.g.dart' as yolo;
+import 'package:raccoon_transport/messages/types/yolo_frame_t.g.dart' as yolo;
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'yolo_viewer_provider.g.dart';
 
-const String kYoloFrameChannel = 'libstp/yolo/frame';
+final String kYoloFrameChannel = Channels.yoloFrame;
 
 final _log = getLogger('YoloViewer');
 

@@ -6,7 +6,8 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/messages/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'magnetometer_sensor.g.dart';
 
@@ -34,7 +35,7 @@ class MagnetometerSensor extends _$MagnetometerSensor with HasLogger {
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
     _subscription =
-        lcm.subscribeAs<Vector3fT>('libstp/mag/value', Vector3fT.decode).listen(
+        lcm.subscribeAs<Vector3fT>(Channels.magnetometer, Vector3fT.decode).listen(
               (decoded) {
             _currentValue = Magnetometer(decoded.value.x, decoded.value.y, decoded.value.z);
             state = _currentValue;

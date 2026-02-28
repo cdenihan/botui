@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:lcm_dart/lcm_dart.dart' as lcm;
+import 'package:raccoon_transport/messages/types/quaternion_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
-import 'package:stpvelox/lcm/types/quaternion_t.g.dart';
 
 part 'quaternion_sensor.g.dart';
 
@@ -60,7 +60,7 @@ class QuaternionSensor extends _$QuaternionSensor with HasLogger {
   void _startSubscription() {
     final lcmService = ref.read(lcmServiceProvider);
     _subscription = lcmService
-        .subscribeAs<QuaternionT>('libstp/imu/quaternion', QuaternionT.decode)
+        .subscribeAs<QuaternionT>(Channels.orientation, QuaternionT.decode)
         .listen(
       (decoded) {
         log.fine('Received quaternion: w=${decoded.value.w}, x=${decoded.value.x}, y=${decoded.value.y}, z=${decoded.value.z}');

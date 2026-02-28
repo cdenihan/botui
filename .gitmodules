@@ -1,3 +1,0 @@
-[submodule "lib/lcm"]
-	path = lib/lcm
-	url = git@github.com:htl-stp-ecer/lcm-messages.git

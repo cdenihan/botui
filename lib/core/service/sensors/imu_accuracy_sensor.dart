@@ -5,7 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'imu_accuracy_sensor.g.dart';
 
@@ -64,7 +65,7 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
     log.info('Starting IMU accuracy subscriptions');
 
     _gyroSub = lcm
-        .subscribeAs<ScalarI8T>('libstp/gyro/accuracy', ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.gyroAccuracy, ScalarI8T.decode)
         .listen(
       (decoded) {
         log.info('Gyro accuracy received: ${decoded.value.dir}');
@@ -77,7 +78,7 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
     );
 
     _accelSub = lcm
-        .subscribeAs<ScalarI8T>('libstp/accel/accuracy', ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.accelAccuracy, ScalarI8T.decode)
         .listen(
       (decoded) {
         log.info('Accel accuracy received: ${decoded.value.dir}');
@@ -90,7 +91,7 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
     );
 
     _magSub = lcm
-        .subscribeAs<ScalarI8T>('libstp/mag/accuracy', ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.compassAccuracy, ScalarI8T.decode)
         .listen(
       (decoded) {
         log.info('Mag accuracy received: ${decoded.value.dir}');
@@ -104,7 +105,7 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
 
     _quatSub = lcm
         .subscribeAs<ScalarI8T>(
-            'libstp/imu/quaternion_accuracy', ScalarI8T.decode)
+            Channels.quaternionAccuracy, ScalarI8T.decode)
         .listen(
       (decoded) {
         log.info('Quaternion accuracy received: ${decoded.value.dir}');

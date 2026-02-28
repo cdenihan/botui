@@ -14,8 +14,9 @@ import 'package:stpvelox/features/sensors/presentation/widgets/motor_graph_view.
 import 'package:stpvelox/features/sensors/presentation/widgets/motor_mode_sidebar.dart';
 import 'package:stpvelox/features/sensors/presentation/widgets/motor_position_view.dart';
 import 'package:stpvelox/features/sensors/presentation/widgets/motor_radial_slider.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 class SensorMotorScreen extends HookConsumerWidget {
   final int port;
@@ -116,20 +117,20 @@ class SensorMotorScreen extends HookConsumerWidget {
     // --- Commands ---
 
     void sendPower(int p) => lcm.publish(
-        'libstp/motor/$port/power_cmd',
+        Channels.motorPowerCommand(port),
         ScalarI32T(
             timestamp: DateTime.now().microsecondsSinceEpoch, value: p));
 
     void sendVelocity(int v) {
       targetVelocity.value = v;
       lcm.publish(
-          'libstp/motor/$port/velocity_cmd',
+          Channels.motorVelocityCommand(port),
           ScalarI32T(
               timestamp: DateTime.now().microsecondsSinceEpoch, value: v));
     }
 
     void sendPositionCmd(int velocity, int goal) => lcm.publish(
-        'libstp/motor/$port/position_cmd',
+        Channels.motorPositionCommand(port),
         Vector3fT(
             timestamp: DateTime.now().microsecondsSinceEpoch,
             x: velocity.toDouble(),
@@ -137,7 +138,7 @@ class SensorMotorScreen extends HookConsumerWidget {
             z: 0));
 
     void sendRelativeCmd(int velocity, int delta) => lcm.publish(
-        'libstp/motor/$port/relative_cmd',
+        Channels.motorRelativeCommand(port),
         Vector3fT(
             timestamp: DateTime.now().microsecondsSinceEpoch,
             x: velocity.toDouble(),
@@ -145,7 +146,7 @@ class SensorMotorScreen extends HookConsumerWidget {
             z: 0));
 
     void resetPosition() => lcm.publish(
-        'libstp/motor/$port/position_reset_cmd',
+        Channels.motorPositionResetCommand(port),
         ScalarI32T(
             timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
 
@@ -159,7 +160,7 @@ class SensorMotorScreen extends HookConsumerWidget {
     void coastMotor() {
       resetUiState();
       lcm.publish(
-          'libstp/motor/$port/stop_cmd',
+          Channels.motorStopCommand(port),
           ScalarI32T(
               timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
     }
@@ -174,7 +175,7 @@ class SensorMotorScreen extends HookConsumerWidget {
     void brakeMotor() {
       resetUiState();
       lcm.publish(
-          'libstp/motor/$port/stop_cmd',
+          Channels.motorStopCommand(port),
           ScalarI32T(
               timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
     }

@@ -16,7 +16,7 @@ fi
 SERVICE_FILE="${SCRIPT_DIR}/systemd/flutter-ui.service"
 
 # --- Preflight checks ---
-if [ ! -f "${BUILD_DIR}/data/flutter_assets/AssetManifest.json" ] && [ ! -f "${BUILD_DIR}/data/flutter_assets/AssetManifest.bin" ]; then
+if [ ! -f "${BUILD_DIR}/app.so" ]; then
   echo "ERROR: No Flutter build found in ${BUILD_DIR}"
   echo "Run build.sh first, or extract a release bundle."
   exit 1

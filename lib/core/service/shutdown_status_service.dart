@@ -5,7 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'shutdown_status_service.g.dart';
 
@@ -83,7 +84,7 @@ class ShutdownStatusService extends _$ShutdownStatusService with HasLogger {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
         .subscribeAs<ScalarI32T>(
-            'libstp/system/shutdown_status', ScalarI32T.decode)
+            Channels.shutdownStatus, ScalarI32T.decode)
         .listen(
       (decoded) {
         final flags = decoded.value.value;
@@ -109,7 +110,7 @@ class ShutdownStatusService extends _$ShutdownStatusService with HasLogger {
   Future<void> setShutdown(bool enabled) async {
     final lcm = ref.read(lcmServiceProvider);
     await lcm.publish(
-      'libstp/system/shutdown_cmd',
+      Channels.shutdownCmd,
       ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: enabled ? 1 : 0),
     );
     log.info('Sent shutdown command: ${enabled ? "enable" : "disable"}');

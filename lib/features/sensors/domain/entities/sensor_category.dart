@@ -7,6 +7,7 @@ enum SensorCategory {
   accel('Accel'),
   mag('Magneto'),
   orientation('Orientation'),
+  heading('Heading'),
   temperature('Temperature'),
   battery('Battery'),
   ;

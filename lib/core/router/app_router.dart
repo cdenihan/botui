@@ -15,6 +15,7 @@ import 'package:stpvelox/features/program/domain/entities/program.dart';
 // Sensors
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_selection_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_category_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/imu_selection_screen.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 
@@ -42,6 +43,9 @@ import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 // Dynamic UI
 import 'package:stpvelox/features/dynamic_ui/presentation/dynamic_ui_screen.dart';
 
+// Camera
+import 'package:stpvelox/features/camera/presentation/pages/yolo_viewer_screen.dart';
+
 // Other
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
 import 'package:stpvelox/features/flappy_wombat/presentation/screen/flappy_wombat_game.dart';
@@ -58,6 +62,7 @@ abstract class AppRoutes {
   // Sensors
   static const sensors = '/sensors';
   static const sensorCategory = '/sensors/category';
+  static const imuSelection = '/sensors/imu';
   static const sensorScreen = '/sensors/screen';
 
   // Programs
@@ -88,6 +93,9 @@ abstract class AppRoutes {
 
   // Calibration (pushed dynamically from LCM)
   static const calibrationScreen = '/calibration';
+
+  // Camera
+  static const yoloViewer = '/yolo-viewer';
 
   // Screensaver
   static const robotFace = '/robot-face';
@@ -121,6 +129,14 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.sensors,
         name: 'sensors',
         builder: (context, state) => const SensorSelectionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.imuSelection,
+        name: 'imuSelection',
+        builder: (context, state) {
+          final imuGroups = state.extra as Map<SensorCategory, List<Sensor>>;
+          return ImuSelectionScreen(imuGroups: imuGroups);
+        },
       ),
       GoRoute(
         path: AppRoutes.sensorCategory,
@@ -277,6 +293,13 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.calibrationScreen,
         name: 'calibrationScreen',
         builder: (context, state) => const DynamicUIScreen(),
+      ),
+
+      // Camera
+      GoRoute(
+        path: AppRoutes.yoloViewer,
+        name: 'yoloViewer',
+        builder: (context, state) => const YoloViewerScreen(),
       ),
 
       // Screensaver

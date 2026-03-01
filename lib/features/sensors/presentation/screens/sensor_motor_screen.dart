@@ -7,7 +7,6 @@ import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/service/sensors/back_emf_sensor.dart';
 import 'package:stpvelox/core/service/sensors/motor_done_sensor.dart';
 import 'package:stpvelox/core/service/sensors/motor_position_sensor.dart';
-import 'package:stpvelox/core/service/sensors/motor_power_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/presentation/services/sensor_data_processor.dart';
@@ -15,8 +14,9 @@ import 'package:stpvelox/features/sensors/presentation/widgets/motor_graph_view.
 import 'package:stpvelox/features/sensors/presentation/widgets/motor_mode_sidebar.dart';
 import 'package:stpvelox/features/sensors/presentation/widgets/motor_position_view.dart';
 import 'package:stpvelox/features/sensors/presentation/widgets/motor_radial_slider.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
-import 'package:stpvelox/lcm/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/vector3f_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 class SensorMotorScreen extends HookConsumerWidget {
   final int port;
@@ -31,7 +31,6 @@ class SensorMotorScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final lcm = ref.watch(lcmServiceProvider);
-    final motorPower = ref.watch(motorPowerSensorProvider(port));
     final backEmf = ref.watch(backEmfSensorProvider(port));
     final motorPosition = ref.watch(motorPositionSensorProvider(port));
     final motorDone = useMotorDone(ref, port);
@@ -39,8 +38,7 @@ class SensorMotorScreen extends HookConsumerWidget {
     final mode = useState(MotorMode.power);
 
     // Power state
-    final powerValue = useState<double>(motorPower?.toDouble() ?? 0.0);
-    final powerDragging = useState(false);
+    final powerValue = useState<double>(0.0);
     final sliderMounted = useState(false);
 
     // Velocity state
@@ -74,13 +72,6 @@ class SensorMotorScreen extends HookConsumerWidget {
       });
       return null;
     }, []);
-
-    useEffect(() {
-      if (!powerDragging.value && motorPower != null) {
-        powerValue.value = motorPower.toDouble();
-      }
-      return null;
-    }, [motorPower]);
 
     void appendSample(double bemf, double pos) {
       bemfData.value = processor.appendToRawData(bemfData.value, bemf);
@@ -126,20 +117,20 @@ class SensorMotorScreen extends HookConsumerWidget {
     // --- Commands ---
 
     void sendPower(int p) => lcm.publish(
-        'libstp/motor/$port/power_cmd',
+        Channels.motorPowerCommand(port),
         ScalarI32T(
             timestamp: DateTime.now().microsecondsSinceEpoch, value: p));
 
     void sendVelocity(int v) {
       targetVelocity.value = v;
       lcm.publish(
-          'libstp/motor/$port/velocity_cmd',
+          Channels.motorVelocityCommand(port),
           ScalarI32T(
               timestamp: DateTime.now().microsecondsSinceEpoch, value: v));
     }
 
     void sendPositionCmd(int velocity, int goal) => lcm.publish(
-        'libstp/motor/$port/position_cmd',
+        Channels.motorPositionCommand(port),
         Vector3fT(
             timestamp: DateTime.now().microsecondsSinceEpoch,
             x: velocity.toDouble(),
@@ -147,17 +138,46 @@ class SensorMotorScreen extends HookConsumerWidget {
             z: 0));
 
     void sendRelativeCmd(int velocity, int delta) => lcm.publish(
-        'libstp/motor/$port/relative_cmd',
+        Channels.motorRelativeCommand(port),
         Vector3fT(
             timestamp: DateTime.now().microsecondsSinceEpoch,
             x: velocity.toDouble(),
             y: delta.toDouble(),
             z: 0));
 
-    void stopMotor() {
+    void resetPosition() => lcm.publish(
+        Channels.motorPositionResetCommand(port),
+        ScalarI32T(
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
+
+    void resetUiState() {
       powerValue.value = 0;
+      velValue.value = 0;
       targetVelocity.value = null;
-      sendPower(0);
+    }
+
+    // Coast: no current, motor spins freely (MotorControlMode::Off)
+    void coastMotor() {
+      resetUiState();
+      lcm.publish(
+          Channels.motorStopCommand(port),
+          ScalarI32T(
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
+    }
+
+    // Active brake: PID holds velocity at 0 (uses current)
+    void stopMotor() {
+      resetUiState();
+      sendVelocity(0);
+    }
+
+    // Passive brake: shorts motor windings (MotorControlMode::PassiveBrake)
+    void brakeMotor() {
+      resetUiState();
+      lcm.publish(
+          Channels.motorStopCommand(port),
+          ScalarI32T(
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
     }
 
     // --- Keypad ---
@@ -216,10 +236,9 @@ class SensorMotorScreen extends HookConsumerWidget {
                         valueStr: powerValue.value.toInt().toString(),
                         onChange: (v) {
                           powerValue.value = v;
-                          powerDragging.value = true;
                           sendPower(v.toInt());
                         },
-                        onChangeEnd: (_) => powerDragging.value = false,
+                        onChangeEnd: (_) {},
                       ),
                     MotorMode.velocity => MotorRadialSlider(
                         mounted: sliderMounted.value,
@@ -286,37 +305,112 @@ class SensorMotorScreen extends HookConsumerWidget {
                       children: [
                         _BottomStat('BEMF', '${backEmf ?? "--"}'),
                         _BottomStat('POS', '${motorPosition ?? "--"}'),
-                        _BottomStat('PWR', '${motorPower ?? "--"}'),
                         _DoneChip(motorDone),
                       ],
                     ),
                   ),
-                // Stop button (always visible)
-                SizedBox(
-                  width: double.infinity,
-                  height: 48,
-                  child: ElevatedButton(
-                    onPressed: stopMotor,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red[700],
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8)),
-                      elevation: 4,
+                // Action buttons
+                Row(
+                  children: [
+                    // STOP: active brake (PID holds vel=0)
+                    Expanded(
+                      flex: 3,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: stopMotor,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red[700],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                            elevation: 4,
+                          ),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.stop_circle, size: 24),
+                              SizedBox(width: 6),
+                              Text('STOP',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 2)),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
-                    child: const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.stop_circle, size: 26),
-                        SizedBox(width: 8),
-                        Text('STOP',
-                            style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 2)),
-                      ],
+                    const SizedBox(width: 6),
+                    // BRAKE: passive brake (shorts windings)
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: brakeMotor,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.orange[800],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('BRAKE',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1)),
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 6),
+                    // OFF: coast (no current)
+                    Expanded(
+                      flex: 2,
+                      child: SizedBox(
+                        height: 48,
+                        child: ElevatedButton(
+                          onPressed: coastMotor,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.grey[800],
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                          child: const Text('OFF',
+                              style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1)),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    // Reset position counter
+                    SizedBox(
+                      height: 48,
+                      child: ElevatedButton(
+                        onPressed: resetPosition,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[700],
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8)),
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                        ),
+                        child: const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.restart_alt, size: 20),
+                            Text('POS',
+                                style: TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w700)),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

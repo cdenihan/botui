@@ -5,7 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'servo_position_sensor.g.dart';
 
@@ -31,7 +32,7 @@ class ServoPositionSensor extends _$ServoPositionSensor with HasLogger {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
         .subscribeAs<ScalarI32T>(
-            'libstp/servo/$port/position', ScalarI32T.decode)
+            Channels.servoPosition(port), ScalarI32T.decode)
         .listen(
       (decoded) {
         _currentValue = decoded.value.value;

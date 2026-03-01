@@ -9,14 +9,14 @@ import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
 import 'package:raccoon_transport/messages/types/scalar_f_t.g.dart';
 import 'package:raccoon_transport/raccoon_transport.dart';
 
-part 'battery_voltage_sensor.g.dart';
+part 'heading_sensor.g.dart';
 
-double? useBatteryVoltage(WidgetRef ref) {
-  return ref.watch(batteryVoltageSensorProvider);
+double? useHeading(WidgetRef ref) {
+  return ref.watch(headingSensorProvider);
 }
 
 @riverpod
-class BatteryVoltageSensor extends _$BatteryVoltageSensor with HasLogger {
+class HeadingSensor extends _$HeadingSensor with HasLogger {
   StreamSubscription<LcmDecoded<ScalarFT>>? _subscription;
   double? _currentValue;
 
@@ -29,17 +29,16 @@ class BatteryVoltageSensor extends _$BatteryVoltageSensor with HasLogger {
 
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
-    _subscription = lcm
-        .subscribeAs<ScalarFT>(Channels.batteryVoltage, ScalarFT.decode)
-        .listen(
-      (decoded) {
-        _currentValue = decoded.value.value;
-        state = _currentValue;
-      },
-      onError: (error) {
-        log.severe('Error in battery voltage subscription: $error');
-      },
-    );
+    _subscription =
+        lcm.subscribeAs<ScalarFT>(Channels.heading, ScalarFT.decode).listen(
+              (decoded) {
+            _currentValue = decoded.value.value;
+            state = _currentValue;
+          },
+          onError: (error) {
+            log.severe('Error in heading subscription: $error');
+          },
+        );
   }
 
   void _dispose() {
@@ -48,10 +47,10 @@ class BatteryVoltageSensor extends _$BatteryVoltageSensor with HasLogger {
   }
 }
 
-/// Strategy for reading battery voltage values
-class BatteryVoltageSensorReadingStrategy extends SensorReadingStrategy {
+/// Strategy for reading heading sensor values
+class HeadingSensorReadingStrategy extends SensorReadingStrategy {
   @override
   double? readValue(WidgetRef ref, int? port) {
-    return useBatteryVoltage(ref);
+    return useHeading(ref);
   }
 }

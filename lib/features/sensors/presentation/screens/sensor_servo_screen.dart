@@ -7,8 +7,9 @@ import 'package:stpvelox/core/service/sensors/servo_position_sensor.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
-import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 class ServoUtils {
   static const double minAngle = 0.0;
@@ -71,7 +72,7 @@ class SensorServoScreen extends HookConsumerWidget {
     void setServoPosition(int position) {
       // Position command automatically enables the servo on the STM32 side
       lcmService.publish(
-        'libstp/servo/$port/position_cmd',
+        Channels.servoPositionCommand(port),
         ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: position),
       );
     }
@@ -80,7 +81,7 @@ class SensorServoScreen extends HookConsumerWidget {
       localPosition.value = 0;
       // Disable the servo mode (not just set position to 0)
       lcmService.publish(
-        'libstp/servo/$port/mode',
+        Channels.servoMode(port),
         ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value),
       );
     }

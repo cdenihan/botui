@@ -5,7 +5,8 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'motor_done_sensor.g.dart';
 
@@ -32,7 +33,7 @@ class MotorDoneSensor extends _$MotorDoneSensor with HasLogger {
   void _startSubscription(int port) {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
-        .subscribeAs<ScalarI32T>('libstp/motor/$port/done', ScalarI32T.decode)
+        .subscribeAs<ScalarI32T>(Channels.motorDone(port), ScalarI32T.decode)
         .listen(
       (decoded) {
         _currentValue = decoded.value.value;

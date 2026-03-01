@@ -15,8 +15,9 @@ import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
-import 'package:stpvelox/lcm/types/scalar_i32_t.g.dart';
-import 'package:stpvelox/lcm/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
+import 'package:raccoon_transport/messages/types/scalar_i8_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 class SensorCategoryScreen extends ConsumerWidget {
   final SensorCategory category;
@@ -38,19 +39,20 @@ class SensorCategoryScreen extends ConsumerWidget {
     final isIMUCategory = category.name == 'Gyro' ||
         category.name == 'Accel' ||
         category.name == 'Magneto' ||
-        category.name == 'Orientation';
+        category.name == 'Orientation' ||
+        category.name == 'Heading';
 
     Future<void> disableAllServos() async {
       for (int i = 0; i <4; i++){
         //todo test this
-        lcmService.publish('libstp/servo/$i/mode', ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value));
+        lcmService.publish(Channels.servoMode(i), ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value));
       }
     }
 
     Future<void> stopAllMotors() async {
 
       for (int i = 0; i < 4; i++) {
-        lcmService.publish("libstp/motor/$i/power_cmd", ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
+        lcmService.publish(Channels.motorPowerCommand(i), ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
         // await KiprPlugin.stopMotor(i);
       }
     }

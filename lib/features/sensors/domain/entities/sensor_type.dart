@@ -16,6 +16,7 @@ enum SensorType {
   quaternionX,
   quaternionY,
   quaternionZ,
+  heading,
   temperature,
   cpuTemperature,
   batteryVoltage,

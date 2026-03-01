@@ -3,7 +3,8 @@ import 'dart:convert';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:stpvelox/lcm/types/screen_render_t.g.dart';
+import 'package:raccoon_transport/messages/types/screen_render_t.g.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'screen_renderer_provider.g.dart';
 
@@ -32,7 +33,7 @@ class ScreenRenderProvider extends _$ScreenRenderProvider with HasLogger {
 
     _subscription = lcm
         .subscribeAs<ScreenRenderT>(
-      'libstp/screen_render',
+      Channels.screenRender,
       ScreenRenderT.decode,
     )
         .listen((decoded) async {

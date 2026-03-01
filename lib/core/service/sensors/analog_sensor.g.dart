@@ -56,7 +56,7 @@ final class AnalogSensorProvider extends $NotifierProvider<AnalogSensor, int?> {
   }
 }
 
-String _$analogSensorHash() => r'4db07976ae1e27ad28ee0776c839818c638a61a3';
+String _$analogSensorHash() => r'798d4ed1cd212d8f8a62762a8c57659a3986aac1';
 
 final class AnalogSensorFamily extends $Family
     with $ClassFamilyOverride<AnalogSensor, int?, int?, int?, int> {

@@ -42,7 +42,7 @@ final class MagnetometerSensorProvider
 }
 
 String _$magnetometerSensorHash() =>
-    r'e93776ce5f3e81f25efbab373ad3c7cb3c181e89';
+    r'76a05b874ecc8c9558b499009f35adb469b0b547';
 
 abstract class _$MagnetometerSensor extends $Notifier<Magnetometer?> {
   Magnetometer? build();

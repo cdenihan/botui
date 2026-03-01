@@ -57,7 +57,7 @@ final class MotorDoneSensorProvider
   }
 }
 
-String _$motorDoneSensorHash() => r'225724586a65fbe4071791ad8adc6ff734de9990';
+String _$motorDoneSensorHash() => r'851efa62727cb7563fc33927c7662004aca80f57';
 
 final class MotorDoneSensorFamily extends $Family
     with $ClassFamilyOverride<MotorDoneSensor, int?, int?, int?, int> {

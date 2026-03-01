@@ -41,7 +41,7 @@ final class QuaternionSensorProvider
   }
 }
 
-String _$quaternionSensorHash() => r'20a30441cb9b79c36c07dc13f5218abb5ddd5c74';
+String _$quaternionSensorHash() => r'c5a202a261ed5cf46df5b28c39aa1f1d4b66410e';
 
 abstract class _$QuaternionSensor extends $Notifier<Quaternion?> {
   Quaternion? build();

@@ -41,7 +41,7 @@ final class TemperatureSensorProvider
   }
 }
 
-String _$temperatureSensorHash() => r'86e2209edd959860deeb7354ae2921f9cd846da3';
+String _$temperatureSensorHash() => r'd6cd43b5f30df794431ef451c8dbf4a97c547e3b';
 
 abstract class _$TemperatureSensor extends $Notifier<double?> {
   double? build();

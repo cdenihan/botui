@@ -57,7 +57,7 @@ final class DigitalSensorProvider
   }
 }
 
-String _$digitalSensorHash() => r'617f03eb89e00af4375ac37a4bd9d5183da26263';
+String _$digitalSensorHash() => r'c1deeb082f27e48d2702e7dcafa8ab4c68067b5f';
 
 final class DigitalSensorFamily extends $Family
     with $ClassFamilyOverride<DigitalSensor, bool?, bool?, bool?, int> {

@@ -42,7 +42,7 @@ final class AccelerometerSensorProvider
 }
 
 String _$accelerometerSensorHash() =>
-    r'e143be8d078bf16f92d2e18ecdc8b89ed4061c04';
+    r'10e7687d165c90c0a2f775f32be1be822de82563';
 
 abstract class _$AccelerometerSensor extends $Notifier<Accel?> {
   Accel? build();

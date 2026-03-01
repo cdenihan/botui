@@ -7,13 +7,18 @@ RPI_USER="${RPI_USER:-pi}"
 REMOTE_APP_DIR="/home/${RPI_USER}/stp-velox"
 SERVICE_NAME="flutter-ui"
 
-BUILD_DIR="${SCRIPT_DIR}/build/flutter-pi/pi3-64"
+# Support both repo (build output) and release bundle (files at root) layouts
+if [ -d "${SCRIPT_DIR}/build/flutter-pi/pi3-64" ]; then
+  BUILD_DIR="${SCRIPT_DIR}/build/flutter-pi/pi3-64"
+else
+  BUILD_DIR="${SCRIPT_DIR}"
+fi
 SERVICE_FILE="${SCRIPT_DIR}/systemd/flutter-ui.service"
 
 # --- Preflight checks ---
-if [ ! -d "$BUILD_DIR" ]; then
-  echo "ERROR: Build directory not found: ${BUILD_DIR}"
-  echo "Run build.sh first."
+if [ ! -f "${BUILD_DIR}/data/flutter_assets/AssetManifest.json" ] && [ ! -f "${BUILD_DIR}/data/flutter_assets/AssetManifest.bin" ]; then
+  echo "ERROR: No Flutter build found in ${BUILD_DIR}"
+  echo "Run build.sh first, or extract a release bundle."
   exit 1
 fi
 

@@ -1,0 +1,42 @@
+name: Build & Release
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          token: ${{ secrets.GH_PAT }}
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install flutterpi_tool
+        run: dart pub global activate flutterpi_tool
+
+      - name: Build
+        run: BUILD_NUMBER=${{ github.run_number }} bash ./build.sh
+
+      - name: Bundle release
+        run: |
+          mkdir -p release-bundle/systemd
+          cp -r build/flutter-pi/pi3-64/* release-bundle/
+          cp install.sh release-bundle/
+          cp systemd/flutter-ui.service release-bundle/systemd/
+          tar -czf botui-release.tar.gz -C release-bundle .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          files: botui-release.tar.gz

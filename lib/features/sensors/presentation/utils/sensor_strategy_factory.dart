@@ -4,6 +4,7 @@ import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
 import 'package:stpvelox/core/service/sensors/cpu_temperature_sensor.dart';
 import 'package:stpvelox/core/service/sensors/digital_sensor.dart';
 import 'package:stpvelox/core/service/sensors/gyro_sensor.dart';
+import 'package:stpvelox/core/service/sensors/heading_sensor.dart';
 import 'package:stpvelox/core/service/sensors/magnetometer_sensor.dart';
 import 'package:stpvelox/core/service/sensors/quaternion_sensor.dart';
 import 'package:stpvelox/core/service/sensors/sensor_reading_strategy.dart';
@@ -45,6 +46,8 @@ class SensorStrategyFactory {
         return QuaternionYSensorReadingStrategy();
       case SensorType.quaternionZ:
         return QuaternionZSensorReadingStrategy();
+      case SensorType.heading:
+        return HeadingSensorReadingStrategy();
       case SensorType.temperature:
         return TemperatureSensorReadingStrategy();
       case SensorType.cpuTemperature:

@@ -12,6 +12,14 @@ import 'package:stpvelox/features/sensors/application/sensor_providers.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 
+const _imuCategories = {
+  SensorCategory.gyro,
+  SensorCategory.accel,
+  SensorCategory.mag,
+  SensorCategory.orientation,
+  SensorCategory.heading,
+};
+
 class SensorSelectionScreen extends ConsumerWidget {
   const SensorSelectionScreen({super.key});
 
@@ -32,14 +40,36 @@ class SensorSelectionScreen extends ConsumerWidget {
             ),
           ),
           data: (sensors) {
-            final sensoryByCategory =
-            sensors.groupListsBy((sensor) => sensor.category);
+            final sensorsByCategory =
+                sensors.groupListsBy((sensor) => sensor.category);
+
+            // Separate IMU and non-IMU categories
+            final imuGroups = <SensorCategory, List<Sensor>>{};
+            final nonImuEntries = <MapEntry<SensorCategory, List<Sensor>>>[];
+
+            for (final entry in sensorsByCategory.entries) {
+              if (_imuCategories.contains(entry.key)) {
+                imuGroups[entry.key] = entry.value;
+              } else {
+                nonImuEntries.add(entry);
+              }
+            }
+
+            final tiles = <Widget>[];
+
+            // Add non-IMU tiles
+            for (final entry in nonImuEntries) {
+              tiles.add(_buildSensorTile(context, entry.key, entry.value));
+            }
+
+            // Add single IMU tile if there are any IMU sensors
+            if (imuGroups.isNotEmpty) {
+              tiles.add(_buildImuTile(context, imuGroups));
+            }
 
             return ResponsiveGrid(
               isScrollable: true,
-              children: sensoryByCategory.entries
-                  .map((entry) => _buildSensorTile(context, entry.key, entry.value))
-                  .toList(),
+              children: tiles,
             );
           },
         ),
@@ -47,7 +77,20 @@ class SensorSelectionScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildSensorTile(BuildContext context, SensorCategory category, List<Sensor> sensor) {
+  Widget _buildImuTile(
+      BuildContext context, Map<SensorCategory, List<Sensor>> imuGroups) {
+    return ResponsiveGridTile(
+      label: 'IMU',
+      icon: Icons.sensors,
+      onPressed: () {
+        context.push(AppRoutes.imuSelection, extra: imuGroups);
+      },
+      color: AppColors.getTileColor(SensorCategory.gyro.index),
+    );
+  }
+
+  Widget _buildSensorTile(
+      BuildContext context, SensorCategory category, List<Sensor> sensor) {
     return ResponsiveGridTile(
       label: category.name,
       icon: Icons.auto_graph,

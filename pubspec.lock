@@ -643,7 +643,7 @@ packages:
   raccoon_transport:
     dependency: "direct main"
     description:
-      path: "../raccoon-transport/dart"
+      path: "packages/raccoon-transport/dart"
       relative: true
     source: path
     version: "0.1.0"

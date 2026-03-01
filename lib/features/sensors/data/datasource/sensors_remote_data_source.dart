@@ -164,6 +164,17 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
         name: 'Orientation',
         getSensorScreen: (sensor) => QuaternionScreen(sensor: sensor),
       ),
+      // Heading sensor
+      Sensor(
+        category: SensorCategory.heading,
+        name: 'Heading',
+        getSensorScreen: (sensor) => SensorGraphScreen(
+          sensor: sensor,
+          graphMin: 0,
+          graphMax: 360,
+          sensorType: SensorType.heading,
+        ),
+      ),
       // New sensors using LCM system
       Sensor(
         category: SensorCategory.temperature,

@@ -15,6 +15,7 @@ import 'package:stpvelox/features/program/domain/entities/program.dart';
 // Sensors
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_selection_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_category_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/imu_selection_screen.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 
@@ -61,6 +62,7 @@ abstract class AppRoutes {
   // Sensors
   static const sensors = '/sensors';
   static const sensorCategory = '/sensors/category';
+  static const imuSelection = '/sensors/imu';
   static const sensorScreen = '/sensors/screen';
 
   // Programs
@@ -127,6 +129,14 @@ GoRouter appRouter(Ref ref) {
         path: AppRoutes.sensors,
         name: 'sensors',
         builder: (context, state) => const SensorSelectionScreen(),
+      ),
+      GoRoute(
+        path: AppRoutes.imuSelection,
+        name: 'imuSelection',
+        builder: (context, state) {
+          final imuGroups = state.extra as Map<SensorCategory, List<Sensor>>;
+          return ImuSelectionScreen(imuGroups: imuGroups);
+        },
       ),
       GoRoute(
         path: AppRoutes.sensorCategory,

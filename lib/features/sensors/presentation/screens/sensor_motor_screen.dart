@@ -116,17 +116,21 @@ class SensorMotorScreen extends HookConsumerWidget {
 
     // --- Commands ---
 
+    const reliable = PublishOptions(reliable: true);
+
     void sendPower(int p) => lcm.publish(
         Channels.motorPowerCommand(port),
         ScalarI32T(
-            timestamp: DateTime.now().microsecondsSinceEpoch, value: p));
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: p),
+        options: reliable);
 
     void sendVelocity(int v) {
       targetVelocity.value = v;
       lcm.publish(
           Channels.motorVelocityCommand(port),
           ScalarI32T(
-              timestamp: DateTime.now().microsecondsSinceEpoch, value: v));
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: v),
+          options: reliable);
     }
 
     void sendPositionCmd(int velocity, int goal) => lcm.publish(
@@ -135,7 +139,8 @@ class SensorMotorScreen extends HookConsumerWidget {
             timestamp: DateTime.now().microsecondsSinceEpoch,
             x: velocity.toDouble(),
             y: goal.toDouble(),
-            z: 0));
+            z: 0),
+        options: reliable);
 
     void sendRelativeCmd(int velocity, int delta) => lcm.publish(
         Channels.motorRelativeCommand(port),
@@ -143,12 +148,14 @@ class SensorMotorScreen extends HookConsumerWidget {
             timestamp: DateTime.now().microsecondsSinceEpoch,
             x: velocity.toDouble(),
             y: delta.toDouble(),
-            z: 0));
+            z: 0),
+        options: reliable);
 
     void resetPosition() => lcm.publish(
         Channels.motorPositionResetCommand(port),
         ScalarI32T(
-            timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
+            timestamp: DateTime.now().microsecondsSinceEpoch, value: 1),
+        options: reliable);
 
     void resetUiState() {
       powerValue.value = 0;
@@ -162,7 +169,8 @@ class SensorMotorScreen extends HookConsumerWidget {
       lcm.publish(
           Channels.motorStopCommand(port),
           ScalarI32T(
-              timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 0),
+          options: reliable);
     }
 
     // Active brake: PID holds velocity at 0 (uses current)
@@ -177,7 +185,8 @@ class SensorMotorScreen extends HookConsumerWidget {
       lcm.publish(
           Channels.motorStopCommand(port),
           ScalarI32T(
-              timestamp: DateTime.now().microsecondsSinceEpoch, value: 1));
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 1),
+          options: reliable);
     }
 
     // --- Keypad ---

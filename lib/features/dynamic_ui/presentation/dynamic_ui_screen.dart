@@ -71,7 +71,8 @@ class DynamicUIScreen extends HookConsumerWidget {
       _log.fine('[LCM TX] extra=$extra');
       _log.fine('[LCM TX] current values=${values.value}');
       _log.fine('[LCM TX] full payload=${jsonEncode(payload)}');
-      lcm.publish(Channels.screenRenderAnswer, response);
+      lcm.publish(Channels.screenRenderAnswer, response,
+          options: const PublishOptions(reliable: true));
       _log.info('[LCM TX] Message published successfully');
     }
 

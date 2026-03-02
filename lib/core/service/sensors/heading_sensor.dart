@@ -29,8 +29,10 @@ class HeadingSensor extends _$HeadingSensor with HasLogger {
 
   void _startSubscription() {
     final lcm = ref.read(lcmServiceProvider);
-    _subscription =
-        lcm.subscribeAs<ScalarFT>(Channels.heading, ScalarFT.decode).listen(
+    _subscription = lcm
+        .subscribeAs<ScalarFT>(Channels.heading, ScalarFT.decode,
+            options: const SubscribeOptions(requestRetained: true))
+        .listen(
               (decoded) {
             _currentValue = decoded.value.value;
             state = _currentValue;

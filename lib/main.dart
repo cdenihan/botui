@@ -7,6 +7,7 @@ import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/service/battery_check_service.dart';
+import 'package:stpvelox/core/service/error_message_service.dart';
 import 'package:stpvelox/core/service/button10_monitor_widget.dart';
 import 'package:stpvelox/core/service/sensors/imu_accuracy_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
@@ -71,6 +72,7 @@ class StpVeloxApp extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final batteryService = ref.watch(batteryCheckServiceProvider.notifier);
+    final errorService = ref.watch(errorMessageServiceProvider.notifier);
     final router = ref.watch(appRouterProvider);
 
     // Initialize IMU accuracy sensor early so data is always available
@@ -98,8 +100,12 @@ class StpVeloxApp extends HookConsumerWidget {
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         batteryService.start(context);
+        errorService.start(context);
       });
-      return () => batteryService.stop();
+      return () {
+        batteryService.stop();
+        errorService.stop();
+      };
     }, []);
 
     final calibrator = ref.watch(touchCalibratorProvider);

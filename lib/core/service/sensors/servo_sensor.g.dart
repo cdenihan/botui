@@ -57,7 +57,7 @@ final class ServoModeSensorProvider
   }
 }
 
-String _$servoModeSensorHash() => r'38998d9c0423577008bdffbb0f63b68e3d2b8742';
+String _$servoModeSensorHash() => r'97504845f86f0d4053553b42983c8590d332c761';
 
 final class ServoModeSensorFamily extends $Family
     with

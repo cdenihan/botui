@@ -59,7 +59,7 @@ final class ServoPositionSensorProvider
 }
 
 String _$servoPositionSensorHash() =>
-    r'bd3067d5fd426a593766d7e14bef57cc7af2de98';
+    r'997be2ee47856c58d89cb173141b1b67705bf2c8';
 
 final class ServoPositionSensorFamily extends $Family
     with $ClassFamilyOverride<ServoPositionSensor, int?, int?, int?, int> {

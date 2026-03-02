@@ -8,7 +8,6 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 LcmService lcmService(Ref ref) {
   final service = LcmService();
-  //service.debugEnabled = true;
 
   service.init().catchError((e) {
     getLogger("LCM").severe('Failed to initialize LCM service: $e');

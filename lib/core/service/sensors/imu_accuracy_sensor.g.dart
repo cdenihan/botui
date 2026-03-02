@@ -41,7 +41,7 @@ final class ImuAccuracySensorProvider
   }
 }
 
-String _$imuAccuracySensorHash() => r'2b15f7f477eabff9459aeecee311829fa6639600';
+String _$imuAccuracySensorHash() => r'a532572efa2d50abaf6a34257240693054eb87dc';
 
 abstract class _$ImuAccuracySensor extends $Notifier<ImuAccuracy> {
   ImuAccuracy build();

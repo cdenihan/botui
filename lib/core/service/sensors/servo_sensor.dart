@@ -48,7 +48,8 @@ class ServoModeSensor extends _$ServoModeSensor with HasLogger {
   void _startSubscription(int port) {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
-        .subscribeAs<ScalarI8T>(Channels.servoMode(port), ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.servoMode(port), ScalarI8T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         _currentValue = ServoMode.fromValue(decoded.value.dir);

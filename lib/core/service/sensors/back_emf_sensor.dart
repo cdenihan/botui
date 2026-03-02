@@ -31,7 +31,8 @@ class BackEmfSensor extends _$BackEmfSensor with HasLogger {
   void _startSubscription(int port) {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
-        .subscribeAs<ScalarI32T>(Channels.backEmf(port), ScalarI32T.decode)
+        .subscribeAs<ScalarI32T>(Channels.backEmf(port), ScalarI32T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         _currentValue = decoded.value.value;

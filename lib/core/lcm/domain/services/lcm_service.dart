@@ -5,35 +5,24 @@ import 'package:raccoon_transport/raccoon_transport.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 
-/// LCM Service - uses lcm-dart directly (no MethodChannel, no polling!)
+/// LCM Service - uses RaccoonTransport for retain + reliable delivery
 class LcmService with HasLogger {
-  Lcm? _lcm;
+  RaccoonTransport? _transport;
   Completer<void>? _initCompleter;
   final Map<String, StreamController<LcmDecodedRaw>> _controllers = {};
   final Map<String, LcmSubscription> _subscriptions = {};
-  bool _debugEnabled = false;
-
-  /// Enable debug logging
-  set debugEnabled(bool value) {
-    _debugEnabled = value;
-    _lcm?.debugEnabled = value;
-  }
-
-  bool get debugEnabled => _debugEnabled;
-
-  /// Get LCM statistics
-  LcmStats? get stats => _lcm?.stats;
+  final Map<String, SubscribeOptions> _subscribeOptions = {};
 
   /// Check if initialized
-  bool get isInitialized => _lcm != null;
+  bool get isInitialized => _transport != null;
 
   /// Future that completes when initialized
   Future<void> get ready => _initCompleter?.future ?? Future.value();
 
-  /// Initialize LCM connection
+  /// Initialize transport connection
   Future<void> init({String? provider}) async {
-    if (_lcm != null) {
-      log.warning('LCM already initialized');
+    if (_transport != null) {
+      log.warning('Transport already initialized');
       return;
     }
 
@@ -45,34 +34,36 @@ class LcmService with HasLogger {
     _initCompleter = Completer<void>();
 
     try {
-      _lcm = await Lcm.create(provider);
-      _lcm!.debugEnabled = _debugEnabled;
-      log.info('LCM initialized: ${provider ?? "default"}');
+      _transport = await RaccoonTransport.create(provider);
+      log.info('Transport initialized: ${provider ?? "default"}');
       _initCompleter!.complete();
     } catch (e, st) {
-      log.severe('LCM init failed: $e', st);
+      log.severe('Transport init failed: $e', st);
       _initCompleter!.completeError(e, st);
       _initCompleter = null;
       rethrow;
     }
   }
 
-  /// Ensure LCM is ready before use
+  /// Ensure transport is ready before use
   Future<void> _ensureReady() async {
-    if (_lcm != null) return;
+    if (_transport != null) return;
     if (_initCompleter != null) {
       await _initCompleter!.future;
     } else {
-      throw StateError('LCM not initialized. Call init() first.');
+      throw StateError('Transport not initialized. Call init() first.');
     }
   }
 
   /// Subscribe to raw messages on a channel
-  Stream<LcmDecodedRaw> subscribe(String channel) {
+  Stream<LcmDecodedRaw> subscribe(String channel,
+      {SubscribeOptions options = const SubscribeOptions()}) {
     // Return existing stream if already subscribed
     if (_controllers.containsKey(channel)) {
       return _controllers[channel]!.stream;
     }
+
+    _subscribeOptions[channel] = options;
 
     final controller = StreamController<LcmDecodedRaw>.broadcast(
       onListen: () => _setupSubscription(channel),
@@ -80,7 +71,7 @@ class LcmService with HasLogger {
     _controllers[channel] = controller;
 
     // If already initialized, set up immediately
-    if (_lcm != null) {
+    if (_transport != null) {
       _setupSubscription(channel);
     }
 
@@ -89,7 +80,7 @@ class LcmService with HasLogger {
 
   void _setupSubscription(String channel) {
     if (_subscriptions.containsKey(channel)) return;
-    if (_lcm == null) {
+    if (_transport == null) {
       // Wait for init and retry
       _initCompleter?.future.then((_) => _setupSubscription(channel));
       return;
@@ -98,7 +89,10 @@ class LcmService with HasLogger {
     final controller = _controllers[channel];
     if (controller == null) return;
 
-    final sub = _lcm!.subscribe(channel, (ch, data) {
+    final options =
+        _subscribeOptions[channel] ?? const SubscribeOptions();
+
+    final sub = _transport!.subscribe(channel, (ch, data) {
       if (!controller.isClosed) {
         controller.add(LcmDecodedRaw(
           topic: ch,
@@ -106,14 +100,15 @@ class LcmService with HasLogger {
           data: data,
         ));
       }
-    });
+    }, options: options);
     _subscriptions[channel] = sub;
-    log.fine('Subscribed to: $channel');
+    log.fine('Subscribed to: $channel (retain=${options.requestRetained})');
   }
 
   /// Subscribe and decode messages to a specific type
-  Stream<LcmDecoded<T>> subscribeAs<T>(String channel, LcmDecoder<T> decode) {
-    return subscribe(channel).map((raw) {
+  Stream<LcmDecoded<T>> subscribeAs<T>(String channel, LcmDecoder<T> decode,
+      {SubscribeOptions options = const SubscribeOptions()}) {
+    return subscribe(channel, options: options).map((raw) {
       final buffer = LcmBuffer.fromUint8List(raw.data);
       return LcmDecoded<T>(
         topic: raw.topic,
@@ -128,34 +123,28 @@ class LcmService with HasLogger {
   void unsubscribe(String channel) {
     final sub = _subscriptions.remove(channel);
     if (sub != null) {
-      _lcm?.unsubscribe(sub);
+      _transport?.unsubscribe(sub);
     }
 
     final controller = _controllers.remove(channel);
     controller?.close();
+    _subscribeOptions.remove(channel);
 
     log.fine('Unsubscribed from: $channel');
   }
 
   /// Publish a typed message
-  Future<void> publish(String channel, LcmMessage message) async {
+  Future<void> publish(String channel, LcmMessage message,
+      {PublishOptions options = const PublishOptions()}) async {
     await _ensureReady();
-
-    final buffer = LcmBuffer(65536);
-    message.encode(buffer);
-    final data = Uint8List.sublistView(buffer.uint8List, 0, buffer.position);
-    _lcm!.publish(channel, data);
+    _transport!.publishMessage(channel, message, options: options);
   }
 
   /// Publish raw data
-  Future<void> publishRaw(String channel, Uint8List data) async {
+  Future<void> publishRaw(String channel, Uint8List data,
+      {PublishOptions options = const PublishOptions()}) async {
     await _ensureReady();
-    _lcm!.publish(channel, data);
-  }
-
-  /// Log current statistics
-  void logStats() {
-    _lcm?.logStats();
+    _transport!.publish(channel, data, options: options);
   }
 
   /// Dispose
@@ -165,9 +154,10 @@ class LcmService with HasLogger {
     }
     _controllers.clear();
     _subscriptions.clear();
-    _lcm?.close();
-    _lcm = null;
-    log.info('LCM disposed');
+    _subscribeOptions.clear();
+    _transport?.dispose();
+    _transport = null;
+    log.info('Transport disposed');
   }
 }
 

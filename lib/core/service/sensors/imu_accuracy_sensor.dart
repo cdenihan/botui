@@ -65,7 +65,8 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
     log.info('Starting IMU accuracy subscriptions');
 
     _gyroSub = lcm
-        .subscribeAs<ScalarI8T>(Channels.gyroAccuracy, ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.gyroAccuracy, ScalarI8T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         log.info('Gyro accuracy received: ${decoded.value.dir}');
@@ -78,7 +79,8 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
     );
 
     _accelSub = lcm
-        .subscribeAs<ScalarI8T>(Channels.accelAccuracy, ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.accelAccuracy, ScalarI8T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         log.info('Accel accuracy received: ${decoded.value.dir}');
@@ -91,7 +93,8 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
     );
 
     _magSub = lcm
-        .subscribeAs<ScalarI8T>(Channels.compassAccuracy, ScalarI8T.decode)
+        .subscribeAs<ScalarI8T>(Channels.compassAccuracy, ScalarI8T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         log.info('Mag accuracy received: ${decoded.value.dir}');
@@ -105,7 +108,8 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
 
     _quatSub = lcm
         .subscribeAs<ScalarI8T>(
-            Channels.quaternionAccuracy, ScalarI8T.decode)
+            Channels.quaternionAccuracy, ScalarI8T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         log.info('Quaternion accuracy received: ${decoded.value.dir}');

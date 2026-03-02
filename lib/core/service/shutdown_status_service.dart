@@ -84,7 +84,8 @@ class ShutdownStatusService extends _$ShutdownStatusService with HasLogger {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
         .subscribeAs<ScalarI32T>(
-            Channels.shutdownStatus, ScalarI32T.decode)
+            Channels.shutdownStatus, ScalarI32T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         final flags = decoded.value.value;
@@ -112,6 +113,7 @@ class ShutdownStatusService extends _$ShutdownStatusService with HasLogger {
     await lcm.publish(
       Channels.shutdownCmd,
       ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: enabled ? 1 : 0),
+      options: const PublishOptions(reliable: true),
     );
     log.info('Sent shutdown command: ${enabled ? "enable" : "disable"}');
   }

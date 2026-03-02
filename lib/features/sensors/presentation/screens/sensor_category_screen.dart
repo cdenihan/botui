@@ -42,18 +42,17 @@ class SensorCategoryScreen extends ConsumerWidget {
         category.name == 'Orientation' ||
         category.name == 'Heading';
 
+    const reliable = PublishOptions(reliable: true);
+
     Future<void> disableAllServos() async {
-      for (int i = 0; i <4; i++){
-        //todo test this
-        lcmService.publish(Channels.servoMode(i), ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value));
+      for (int i = 0; i < 4; i++) {
+        lcmService.publish(Channels.servoMode(i), ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value), options: reliable);
       }
     }
 
     Future<void> stopAllMotors() async {
-
       for (int i = 0; i < 4; i++) {
-        lcmService.publish(Channels.motorPowerCommand(i), ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
-        // await KiprPlugin.stopMotor(i);
+        lcmService.publish(Channels.motorPowerCommand(i), ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0), options: reliable);
       }
     }
 

@@ -41,7 +41,7 @@ final class HeadingSensorProvider
   }
 }
 
-String _$headingSensorHash() => r'2b05f827281d572a8e3d0095d85e2bfdd2ae7730';
+String _$headingSensorHash() => r'28fbce384c24a72824601565f91469dabe0ab1a8';
 
 abstract class _$HeadingSensor extends $Notifier<double?> {
   double? build();

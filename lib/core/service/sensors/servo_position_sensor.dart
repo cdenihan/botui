@@ -32,7 +32,8 @@ class ServoPositionSensor extends _$ServoPositionSensor with HasLogger {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
         .subscribeAs<ScalarI32T>(
-            Channels.servoPosition(port), ScalarI32T.decode)
+            Channels.servoPosition(port), ScalarI32T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         _currentValue = decoded.value.value;

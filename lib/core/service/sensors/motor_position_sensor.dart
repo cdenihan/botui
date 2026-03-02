@@ -32,7 +32,8 @@ class MotorPositionSensor extends _$MotorPositionSensor with HasLogger {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
         .subscribeAs<ScalarI32T>(
-            Channels.motorPosition(port), ScalarI32T.decode)
+            Channels.motorPosition(port), ScalarI32T.decode,
+            options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
         _currentValue = decoded.value.value;

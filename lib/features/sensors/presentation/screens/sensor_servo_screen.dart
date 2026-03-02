@@ -69,11 +69,14 @@ class SensorServoScreen extends HookConsumerWidget {
     double getCurrentAngle() =>
         ServoUtils.positionToAngle(localPosition.value);
 
+    const reliable = PublishOptions(reliable: true);
+
     void setServoPosition(int position) {
       // Position command automatically enables the servo on the STM32 side
       lcmService.publish(
         Channels.servoPositionCommand(port),
         ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: position),
+        options: reliable,
       );
     }
 
@@ -83,6 +86,7 @@ class SensorServoScreen extends HookConsumerWidget {
       lcmService.publish(
         Channels.servoMode(port),
         ScalarI8T(timestamp: DateTime.now().microsecondsSinceEpoch, dir: ServoMode.fullyDisabled.value),
+        options: reliable,
       );
     }
 

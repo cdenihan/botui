@@ -91,9 +91,12 @@ class SensorSelectionScreen extends ConsumerWidget {
 
   Widget _buildSensorTile(
       BuildContext context, SensorCategory category, List<Sensor> sensor) {
+    final icon = category == SensorCategory.system
+        ? Icons.monitor_heart
+        : Icons.auto_graph;
     return ResponsiveGridTile(
       label: category.name,
-      icon: Icons.auto_graph,
+      icon: icon,
       onPressed: () {
         if (sensor.length == 1) {
           context.push(AppRoutes.sensorScreen, extra: sensor.first.screen);

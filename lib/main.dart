@@ -76,7 +76,8 @@ class StpVeloxApp extends HookConsumerWidget {
     final router = ref.watch(appRouterProvider);
 
     // Initialize IMU accuracy sensor early so data is always available
-    ref.watch(imuAccuracySensorProvider);
+    // Use ref.read to initialize without causing rebuilds on every value change
+    ref.read(imuAccuracySensorProvider);
 
     // Handle dynamic UI screen navigation at app level so the listener
     // survives route changes (go_router swaps routes, unmounting previous ones).
@@ -117,7 +118,7 @@ class StpVeloxApp extends HookConsumerWidget {
       },
       child: InactivityListener(
         child: MaterialApp.router(
-          title: 'stpvelox',
+          title: 'BotUI',
           // debugShowCheckedModeBanner: false,
           routerConfig: router,
           builder: (context, child) {

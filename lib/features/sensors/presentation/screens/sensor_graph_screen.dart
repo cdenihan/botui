@@ -61,7 +61,6 @@ class SensorGraphScreen extends HookConsumerWidget {
     useEffect(() {
       if (reading != null) {
         lastValue.value = reading;
-        appendSample(reading);
       }
       return null;
     }, [reading]);

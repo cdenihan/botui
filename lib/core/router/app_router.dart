@@ -18,6 +18,8 @@ import 'package:stpvelox/features/sensors/presentation/screens/sensor_category_s
 import 'package:stpvelox/features/sensors/presentation/screens/imu_selection_screen.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/disk_usage_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/system_health_graph_screen.dart';
 
 // Settings
 import 'package:stpvelox/features/settings/presentation/pages/settings_screen.dart';
@@ -64,6 +66,8 @@ abstract class AppRoutes {
   static const sensorCategory = '/sensors/category';
   static const imuSelection = '/sensors/imu';
   static const sensorScreen = '/sensors/screen';
+  static const systemHealthGraph = '/sensors/system/graph';
+  static const diskUsage = '/sensors/system/disk';
 
   // Programs
   static const programs = '/programs';
@@ -156,6 +160,19 @@ GoRouter appRouter(Ref ref) {
           final screen = state.extra as Widget;
           return screen;
         },
+      ),
+      GoRoute(
+        path: AppRoutes.systemHealthGraph,
+        name: 'systemHealthGraph',
+        builder: (context, state) {
+          final metric = state.extra as SystemHealthMetric;
+          return SystemHealthGraphScreen(metric: metric);
+        },
+      ),
+      GoRoute(
+        path: AppRoutes.diskUsage,
+        name: 'diskUsage',
+        builder: (context, state) => const DiskUsageScreen(),
       ),
 
       // Programs

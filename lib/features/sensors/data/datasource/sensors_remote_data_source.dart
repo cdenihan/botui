@@ -1,8 +1,8 @@
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_category.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor_type.dart';
-import 'package:stpvelox/features/sensors/presentation/screens/dual_temperature_graph_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/quaternion_screen.dart';
+import 'package:stpvelox/features/sensors/presentation/screens/system_health_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_graph_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_motor_screen.dart';
 import 'package:stpvelox/features/sensors/presentation/screens/sensor_servo_screen.dart';
@@ -175,25 +175,11 @@ class SensorsRemoteDataSourceImpl implements SensorsRemoteDataSource {
           sensorType: SensorType.heading,
         ),
       ),
-      // New sensors using LCM system
+      // System health (CPU, RAM, Disk, Temp, Battery, Uptime)
       Sensor(
-        category: SensorCategory.temperature,
-        name: 'Temperature',
-        getSensorScreen: (sensor) => DualTemperatureGraphScreen(
-          sensor: sensor,
-          graphMin: -10,
-          graphMax: 100,
-        ),
-      ),
-      Sensor(
-        category: SensorCategory.battery,
-        name: 'Battery Voltage',
-        getSensorScreen: (sensor) => SensorGraphScreen(
-          sensor: sensor,
-          graphMin: 0,
-          graphMax: 20,
-          sensorType: SensorType.batteryVoltage,
-        ),
+        category: SensorCategory.system,
+        name: 'System',
+        getSensorScreen: (sensor) => const SystemHealthScreen(),
       ),
     ];
   }

@@ -118,19 +118,32 @@ class SensorMotorScreen extends HookConsumerWidget {
 
     const reliable = PublishOptions(reliable: true);
 
-    void sendPower(int p) => lcm.publish(
-        Channels.motorPowerCommand(port),
-        ScalarI32T(
-            timestamp: DateTime.now().microsecondsSinceEpoch, value: p),
-        options: reliable);
+    // Throttle continuous commands to ~30Hz to avoid flooding the bus
+    final lastPowerSend = useRef<DateTime>(DateTime(0));
+    final lastVelSend = useRef<DateTime>(DateTime(0));
+    const throttleInterval = Duration(milliseconds: 33); // ~30Hz
+
+    // Power and velocity are continuous control loops — plain delivery
+    // matches the stm32_data_reader's non-reliable subscription.
+    void sendPower(int p) {
+      final now = DateTime.now();
+      if (now.difference(lastPowerSend.value) < throttleInterval) return;
+      lastPowerSend.value = now;
+      lcm.publish(
+          Channels.motorPowerCommand(port),
+          ScalarI32T(
+              timestamp: now.microsecondsSinceEpoch, value: p));
+    }
 
     void sendVelocity(int v) {
+      final now = DateTime.now();
+      if (now.difference(lastVelSend.value) < throttleInterval) return;
+      lastVelSend.value = now;
       targetVelocity.value = v;
       lcm.publish(
           Channels.motorVelocityCommand(port),
           ScalarI32T(
-              timestamp: DateTime.now().microsecondsSinceEpoch, value: v),
-          options: reliable);
+              timestamp: now.microsecondsSinceEpoch, value: v));
     }
 
     void sendPositionCmd(int velocity, int goal) => lcm.publish(

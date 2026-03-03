@@ -52,7 +52,8 @@ class SensorCategoryScreen extends ConsumerWidget {
 
     Future<void> stopAllMotors() async {
       for (int i = 0; i < 4; i++) {
-        lcmService.publish(Channels.motorPowerCommand(i), ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0), options: reliable);
+        // motorPowerCommand uses plain delivery (continuous control loop)
+        lcmService.publish(Channels.motorPowerCommand(i), ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: 0));
       }
     }
 

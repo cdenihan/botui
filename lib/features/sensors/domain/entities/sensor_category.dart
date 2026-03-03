@@ -8,8 +8,7 @@ enum SensorCategory {
   mag('Magneto'),
   orientation('Orientation'),
   heading('Heading'),
-  temperature('Temperature'),
-  battery('Battery'),
+  system('System'),
   ;
 
   final String name;

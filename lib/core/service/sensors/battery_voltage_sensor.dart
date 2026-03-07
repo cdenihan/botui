@@ -15,7 +15,7 @@ double? useBatteryVoltage(WidgetRef ref) {
   return ref.watch(batteryVoltageSensorProvider);
 }
 
-@riverpod
+@Riverpod(keepAlive: true)
 class BatteryVoltageSensor extends _$BatteryVoltageSensor with HasLogger {
   StreamSubscription<LcmDecoded<ScalarFT>>? _subscription;
   double? _currentValue;

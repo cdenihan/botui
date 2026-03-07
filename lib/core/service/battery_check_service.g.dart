@@ -42,7 +42,7 @@ final class BatteryCheckServiceProvider
 }
 
 String _$batteryCheckServiceHash() =>
-    r'13cc226fb9b1e5cac318680bf6d1a797d3f5de8d';
+    r'e5d6419cbb7b526d8a9e1d67fb29a7a590e966c0';
 
 abstract class _$BatteryCheckService extends $Notifier<double?> {
   double? build();

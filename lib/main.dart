@@ -6,8 +6,8 @@ import 'package:logging/logging.dart';
 import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
 import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
-import 'package:stpvelox/core/service/battery_check_service.dart';
 import 'package:stpvelox/core/service/error_message_service.dart';
+import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
 import 'package:stpvelox/core/service/button10_monitor_widget.dart';
 import 'package:stpvelox/core/service/sensors/imu_accuracy_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
@@ -71,7 +71,6 @@ class StpVeloxApp extends HookConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final batteryService = ref.watch(batteryCheckServiceProvider.notifier);
     final errorService = ref.watch(errorMessageServiceProvider.notifier);
     final router = ref.watch(appRouterProvider);
 
@@ -100,11 +99,9 @@ class StpVeloxApp extends HookConsumerWidget {
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        batteryService.start(context);
         errorService.start(context);
       });
       return () {
-        batteryService.stop();
         errorService.stop();
       };
     }, []);
@@ -122,8 +119,10 @@ class StpVeloxApp extends HookConsumerWidget {
           // debugShowCheckedModeBanner: false,
           routerConfig: router,
           builder: (context, child) {
-            return Button10MonitorWidget(
-              child: child ?? const SizedBox.shrink(),
+            return _AppServicesStarter(
+              child: Button10MonitorWidget(
+                child: child ?? const SizedBox.shrink(),
+              ),
             );
           },
           theme: ThemeData(
@@ -154,6 +153,74 @@ class StpVeloxApp extends HookConsumerWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AppServicesStarter extends ConsumerWidget {
+  final Widget child;
+
+  const _AppServicesStarter({required this.child});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final voltage = ref.watch(batteryVoltageSensorProvider);
+    final showWarning = voltage != null && voltage > 0 && voltage < 5.5;
+
+    return Stack(
+      children: [
+        child,
+        if (showWarning) _LowBatteryOverlay(voltage: voltage),
+      ],
+    );
+  }
+}
+
+class _LowBatteryOverlay extends StatelessWidget {
+  final double voltage;
+
+  const _LowBatteryOverlay({required this.voltage});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black87,
+      child: Center(
+        child: Material(
+          color: Colors.grey[900],
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(
+                  Icons.battery_alert_rounded,
+                  color: Colors.orange,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Low Battery',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Battery voltage is ${voltage.toStringAsFixed(2)}V.\n'
+                  'The robot may restart at any time.\n'
+                  'Please switch the battery now.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                ),
+              ],
             ),
           ),
         ),

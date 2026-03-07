@@ -20,7 +20,7 @@ final class BatteryVoltageSensorProvider
           argument: null,
           retry: null,
           name: r'batteryVoltageSensorProvider',
-          isAutoDispose: true,
+          isAutoDispose: false,
           dependencies: null,
           $allTransitiveDependencies: null,
         );
@@ -42,7 +42,7 @@ final class BatteryVoltageSensorProvider
 }
 
 String _$batteryVoltageSensorHash() =>
-    r'858bfd42a3a0d9468840c64c8c9dd477c7a42be8';
+    r'99d03e9612f2855b05c567f12b4d7b3a321c7933';
 
 abstract class _$BatteryVoltageSensor extends $Notifier<double?> {
   double? build();

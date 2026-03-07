@@ -16,3 +16,4 @@ export 'animated_robot_widget.dart';
 export 'pulsing_arrow_widget.dart';
 export 'robot_driving_animation_widget.dart';
 export 'measuring_tape_widget.dart';
+export 'calibration_chart_widget.dart';

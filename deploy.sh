@@ -2,4 +2,4 @@
 set -e
 
 bash ./build.sh
-bash ./install.sh
+python3 ./install.py

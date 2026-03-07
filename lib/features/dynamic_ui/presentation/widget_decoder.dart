@@ -168,6 +168,12 @@ class WidgetDecoder {
         return MeasuringTapeWidget(
           distance: (json['distance'] as num?)?.toDouble() ?? 30.0,
         );
+      case 'calibrationchart':
+        return CalibrationChartWidget(
+          rawSamples: json['samples'] as List? ?? [],
+          rawThresholds: json['thresholds'] as List? ?? [],
+          height: (json['height'] as int? ?? 200).toDouble(),
+        );
 
       // Layout widgets
       case 'row':
@@ -383,9 +389,12 @@ class WidgetDecoder {
     final align = json['align'] as String? ?? 'stretch';
     final spacing = (json['spacing'] as int? ?? 12).toDouble();
 
+    // If any child is Expanded, the Column must fill available space
+    final hasExpanded = children.any((c) => c is Expanded);
+
     return Column(
       crossAxisAlignment: _parseCrossAxisAlignment(align),
-      mainAxisSize: MainAxisSize.min,
+      mainAxisSize: hasExpanded ? MainAxisSize.max : MainAxisSize.min,
       children: _addSpacing(children, spacing, Axis.vertical),
     );
   }
@@ -449,22 +458,27 @@ class WidgetDecoder {
     final rightFlex = (ratio?[1] as int?) ?? 1;
 
     return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Expanded(
           flex: leftFlex,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: leftChildren,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: leftChildren,
+            ),
           ),
         ),
         const SizedBox(width: 16),
         Expanded(
           flex: rightFlex,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: rightChildren,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: rightChildren,
+            ),
           ),
         ),
       ],
@@ -584,6 +598,8 @@ class WidgetDecoder {
     'speed' => Icons.speed,
     'timer' => Icons.timer,
     'tune' => Icons.tune,
+    'dashboard' => Icons.dashboard,
+    'check_circle' => Icons.check_circle,
     _ => Icons.help_outline,
   };
 }

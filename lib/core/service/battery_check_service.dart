@@ -1,22 +1,16 @@
 ///
 /// Created by Tobias on 25,September,2025}
 ///
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
-import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
 
 part 'battery_check_service.g.dart';
 
-const _minWarnV = 2.0;
-const _maxWarnV = 5.8;
-const _shutdownDelay = Duration(seconds: 15);
+const _lowBatteryThreshold = 5.5;
 
 @riverpod
 class BatteryCheckService extends _$BatteryCheckService {
-  Timer? _shutdownTimer;
   bool _warningVisible = false;
   BuildContext? _context;
 
@@ -48,48 +42,61 @@ class BatteryCheckService extends _$BatteryCheckService {
   }
 
   void _handleVoltageChange(BuildContext context, double voltage) {
-    if (voltage > _minWarnV && voltage < _maxWarnV) {
+    if (voltage > 0 && voltage < _lowBatteryThreshold) {
       _maybeShowBatteryWarning(context, voltage);
     } else {
       _dismissWarningIfAny(context);
-      _cancelShutdownTimer();
     }
   }
 
   void _maybeShowBatteryWarning(BuildContext context, double voltage) {
     if (_warningVisible) return;
 
-    if (ModalRoute.of(context)?.isCurrent == false) return;
-
     _warningVisible = true;
 
     showDialog<void>(
       context: context,
       barrierDismissible: false,
+      barrierColor: Colors.black87,
       builder: (ctx) {
-        _startShutdownTimer();
-
-        return AlertDialog(
-          title: const Text('Low Battery Warning'),
-          content: Text(
-            'Battery voltage is ${voltage.toStringAsFixed(2)} V.\n'
-            'The robot will shut down in ${_shutdownDelay.inSeconds} seconds if ignored.',
+        return PopScope(
+          canPop: false,
+          child: Dialog(
+            backgroundColor: Colors.grey[900],
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.battery_alert_rounded,
+                    color: Colors.orange,
+                    size: 48,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Low Battery',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Battery voltage is ${voltage.toStringAsFixed(2)}V.\n'
+                    'The robot may restart at any time.\n'
+                    'Please switch the battery now.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                  ),
+                ],
+              ),
+            ),
           ),
-          actions: <Widget>[
-            TextButton(
-              child: const Text('Ignore'),
-              onPressed: () {
-                Navigator.of(ctx).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('Shutdown Now'),
-              onPressed: () async {
-                Navigator.of(ctx).pop();
-                await _shutdownRobot();
-              },
-            ),
-          ],
         );
       },
     ).whenComplete(() {
@@ -105,25 +112,7 @@ class BatteryCheckService extends _$BatteryCheckService {
     _warningVisible = false;
   }
 
-  void _startShutdownTimer() {
-    _shutdownTimer?.cancel();
-    _shutdownTimer = Timer(_shutdownDelay, () {
-      _shutdownRobot();
-    });
-  }
-
-  void _cancelShutdownTimer() {
-    _shutdownTimer?.cancel();
-    _shutdownTimer = null;
-  }
-
-  Future<void> _shutdownRobot() async {
-    final reboot = ref.read(rebootDeviceProvider);
-    await reboot.call(true);
-  }
-
   void _disposeAll() {
-    _cancelShutdownTimer();
     _context = null;
   }
 }

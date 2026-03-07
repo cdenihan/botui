@@ -8,6 +8,7 @@ import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/service/error_message_service.dart';
 import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
+import 'package:stpvelox/features/settings/domain/usecases/reboot.dart';
 import 'package:stpvelox/core/service/button10_monitor_widget.dart';
 import 'package:stpvelox/core/service/sensors/imu_accuracy_sensor.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
@@ -161,6 +162,8 @@ class StpVeloxApp extends HookConsumerWidget {
   }
 }
 
+final lowBatteryIgnoredProvider = StateProvider<bool>((ref) => false);
+
 class _AppServicesStarter extends ConsumerWidget {
   final Widget child;
 
@@ -169,7 +172,9 @@ class _AppServicesStarter extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final voltage = ref.watch(batteryVoltageSensorProvider);
-    final showWarning = voltage != null && voltage > 0 && voltage < 5.5;
+    final ignored = ref.watch(lowBatteryIgnoredProvider);
+    final isLow = voltage != null && voltage > 0 && voltage < 5.5;
+    final showWarning = isLow && !ignored;
 
     return Stack(
       children: [
@@ -180,10 +185,17 @@ class _AppServicesStarter extends ConsumerWidget {
   }
 }
 
-class _LowBatteryOverlay extends StatelessWidget {
+class _LowBatteryOverlay extends ConsumerStatefulWidget {
   final double voltage;
 
   const _LowBatteryOverlay({required this.voltage});
+
+  @override
+  ConsumerState<_LowBatteryOverlay> createState() => _LowBatteryOverlayState();
+}
+
+class _LowBatteryOverlayState extends ConsumerState<_LowBatteryOverlay> {
+  bool _ignoreConfirmPending = false;
 
   @override
   Widget build(BuildContext context) {
@@ -214,11 +226,61 @@ class _LowBatteryOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Battery voltage is ${voltage.toStringAsFixed(2)}V.\n'
+                  'Battery voltage is ${widget.voltage.toStringAsFixed(2)}V.\n'
                   'The robot may restart at any time.\n'
                   'Please switch the battery now.',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: Colors.grey[400], fontSize: 16),
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      height: 56,
+                      width: 160,
+                      child: ElevatedButton(
+                        onPressed: _ignoreConfirmPending
+                            ? () {
+                                ref.read(lowBatteryIgnoredProvider.notifier).state = true;
+                              }
+                            : () {
+                                setState(() => _ignoreConfirmPending = true);
+                              },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.grey[700],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          _ignoreConfirmPending ? 'Confirm Ignore' : 'Ignore',
+                          style: const TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    SizedBox(
+                      height: 56,
+                      width: 160,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          final reboot = ref.read(rebootDeviceProvider);
+                          await reboot.call(true);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red[700],
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text(
+                          'Shutdown',
+                          style: TextStyle(fontSize: 18, color: Colors.white),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

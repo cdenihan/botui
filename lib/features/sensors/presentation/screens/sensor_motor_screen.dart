@@ -176,13 +176,13 @@ class SensorMotorScreen extends HookConsumerWidget {
       targetVelocity.value = null;
     }
 
-    // Coast: no current, motor spins freely (MotorControlMode::Off)
-    void coastMotor() {
+    // Passive brake: shorts motor windings (MotorControlMode::PassiveBrake)
+    void brakeMotor() {
       resetUiState();
       lcm.publish(
-          Channels.motorStopCommand(port),
+          Channels.motorModeCommand(port),
           ScalarI32T(
-              timestamp: DateTime.now().microsecondsSinceEpoch, value: 0),
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 1),
           options: reliable);
     }
 
@@ -192,13 +192,13 @@ class SensorMotorScreen extends HookConsumerWidget {
       sendVelocity(0);
     }
 
-    // Passive brake: shorts motor windings (MotorControlMode::PassiveBrake)
-    void brakeMotor() {
+    // Off: no current, motor spins freely (MotorControlMode::Off)
+    void coastMotor() {
       resetUiState();
       lcm.publish(
-          Channels.motorStopCommand(port),
+          Channels.motorModeCommand(port),
           ScalarI32T(
-              timestamp: DateTime.now().microsecondsSinceEpoch, value: 1),
+              timestamp: DateTime.now().microsecondsSinceEpoch, value: 0),
           options: reliable);
     }
 
@@ -334,13 +334,13 @@ class SensorMotorScreen extends HookConsumerWidget {
                 // Action buttons
                 Row(
                   children: [
-                    // STOP: active brake (PID holds vel=0)
+                    // BRAKE: passive brake (shorts windings)
                     Expanded(
                       flex: 3,
                       child: SizedBox(
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: stopMotor,
+                          onPressed: brakeMotor,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.red[700],
                             foregroundColor: Colors.white,
@@ -353,7 +353,7 @@ class SensorMotorScreen extends HookConsumerWidget {
                             children: [
                               Icon(Icons.stop_circle, size: 24),
                               SizedBox(width: 6),
-                              Text('STOP',
+                              Text('BRAKE',
                                   style: TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w900,
@@ -364,20 +364,20 @@ class SensorMotorScreen extends HookConsumerWidget {
                       ),
                     ),
                     const SizedBox(width: 6),
-                    // BRAKE: passive brake (shorts windings)
+                    // STOP: active brake (PID holds vel=0)
                     Expanded(
                       flex: 2,
                       child: SizedBox(
                         height: 48,
                         child: ElevatedButton(
-                          onPressed: brakeMotor,
+                          onPressed: stopMotor,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.orange[800],
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8)),
                           ),
-                          child: const Text('BRAKE',
+                          child: const Text('HOLD',
                               style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w900,

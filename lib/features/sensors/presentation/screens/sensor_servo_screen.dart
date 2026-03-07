@@ -257,7 +257,7 @@ class SensorServoScreen extends HookConsumerWidget {
                         ),
                       ),
                       child: const Text(
-                        'Disable',
+                        'Fully Disable',
                         style: TextStyle(
                           fontSize: 30,
                           fontWeight: FontWeight.bold,

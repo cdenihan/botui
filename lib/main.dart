@@ -162,7 +162,14 @@ class StpVeloxApp extends HookConsumerWidget {
   }
 }
 
-final lowBatteryIgnoredProvider = StateProvider<bool>((ref) => false);
+final lowBatteryIgnoredProvider = NotifierProvider<_LowBatteryIgnored, bool>(_LowBatteryIgnored.new);
+
+class _LowBatteryIgnored extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void ignore() => state = true;
+}
 
 class _AppServicesStarter extends ConsumerWidget {
   final Widget child;
@@ -242,7 +249,7 @@ class _LowBatteryOverlayState extends ConsumerState<_LowBatteryOverlay> {
                       child: ElevatedButton(
                         onPressed: _ignoreConfirmPending
                             ? () {
-                                ref.read(lowBatteryIgnoredProvider.notifier).state = true;
+                                ref.read(lowBatteryIgnoredProvider.notifier).ignore();
                               }
                             : () {
                                 setState(() => _ignoreConfirmPending = true);

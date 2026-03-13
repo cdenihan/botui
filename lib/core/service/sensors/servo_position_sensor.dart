@@ -5,22 +5,21 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/lcm/models/lcm_decoded.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
-import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
 import 'package:raccoon_transport/raccoon_transport.dart';
 
 part 'servo_position_sensor.g.dart';
 
-int? useServoPosition(WidgetRef ref, int port) {
+double? useServoPosition(WidgetRef ref, int port) {
   return ref.watch(servoPositionSensorProvider(port));
 }
 
 @riverpod
 class ServoPositionSensor extends _$ServoPositionSensor with HasLogger {
-  StreamSubscription<LcmDecoded<ScalarI32T>>? _subscription;
-  int? _currentValue;
+  StreamSubscription<LcmDecoded<ScalarFT>>? _subscription;
+  double? _currentValue;
 
   @override
-  int? build(int port) {
+  double? build(int port) {
     if (port < 0 || port >= 4) return null;
 
     ref.onDispose(_dispose);
@@ -31,8 +30,8 @@ class ServoPositionSensor extends _$ServoPositionSensor with HasLogger {
   void _startSubscription(int port) {
     final lcm = ref.read(lcmServiceProvider);
     _subscription = lcm
-        .subscribeAs<ScalarI32T>(
-            Channels.servoPosition(port), ScalarI32T.decode,
+        .subscribeAs<ScalarFT>(
+            Channels.servoPosition(port), ScalarFT.decode,
             options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {

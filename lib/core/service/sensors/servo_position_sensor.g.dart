@@ -13,7 +13,7 @@ part of 'servo_position_sensor.dart';
 const servoPositionSensorProvider = ServoPositionSensorFamily._();
 
 final class ServoPositionSensorProvider
-    extends $NotifierProvider<ServoPositionSensor, int?> {
+    extends $NotifierProvider<ServoPositionSensor, double?> {
   const ServoPositionSensorProvider._(
       {required ServoPositionSensorFamily super.from,
       required int super.argument})
@@ -40,10 +40,10 @@ final class ServoPositionSensorProvider
   ServoPositionSensor create() => ServoPositionSensor();
 
   /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(int? value) {
+  Override overrideWithValue(double? value) {
     return $ProviderOverride(
       origin: this,
-      providerOverride: $SyncValueProvider<int?>(value),
+      providerOverride: $SyncValueProvider<double?>(value),
     );
   }
 
@@ -59,10 +59,12 @@ final class ServoPositionSensorProvider
 }
 
 String _$servoPositionSensorHash() =>
-    r'997be2ee47856c58d89cb173141b1b67705bf2c8';
+    r'df1d7dcf8e46cbcea98f42c0bcb24639b02d6294';
 
 final class ServoPositionSensorFamily extends $Family
-    with $ClassFamilyOverride<ServoPositionSensor, int?, int?, int?, int> {
+    with
+        $ClassFamilyOverride<ServoPositionSensor, double?, double?, double?,
+            int> {
   const ServoPositionSensorFamily._()
       : super(
           retry: null,
@@ -81,11 +83,11 @@ final class ServoPositionSensorFamily extends $Family
   String toString() => r'servoPositionSensorProvider';
 }
 
-abstract class _$ServoPositionSensor extends $Notifier<int?> {
+abstract class _$ServoPositionSensor extends $Notifier<double?> {
   late final _$args = ref.$arg as int;
   int get port => _$args;
 
-  int? build(
+  double? build(
     int port,
   );
   @$mustCallSuper
@@ -94,9 +96,9 @@ abstract class _$ServoPositionSensor extends $Notifier<int?> {
     final created = build(
       _$args,
     );
-    final ref = this.ref as $Ref<int?, int?>;
+    final ref = this.ref as $Ref<double?, double?>;
     final element = ref.element as $ClassProviderElement<
-        AnyNotifier<int?, int?>, int?, Object?, Object?>;
+        AnyNotifier<double?, double?>, double?, Object?, Object?>;
     element.handleValue(ref, created);
   }
 }

@@ -7,26 +7,12 @@ import 'package:stpvelox/core/service/sensors/servo_position_sensor.dart';
 import 'package:stpvelox/core/service/sensors/servo_sensor.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/sensors/domain/entities/sensor.dart';
-import 'package:raccoon_transport/messages/types/scalar_i8_t.g.dart';
-import 'package:raccoon_transport/messages/types/scalar_i32_t.g.dart';
 import 'package:raccoon_transport/raccoon_transport.dart';
 
 class ServoUtils {
   static const double minAngle = 0.0;
-  static const double maxAngle = 170.0;
+  static const double maxAngle = 180.0;
   static const double servoSpeedDps = 60 / 0.3;
-  static const int minPosition = 0;
-  static const int maxPosition = 2047;
-
-  static int angleToPosition(double angle) {
-    final clampedAngle = angle.clamp(minAngle, maxAngle);
-    return ((clampedAngle / maxAngle) * maxPosition).round();
-  }
-
-  static double positionToAngle(int position) {
-    final clampedPosition = position.clamp(minPosition, maxPosition);
-    return (clampedPosition / maxPosition) * maxAngle;
-  }
 
   static double estimateServoMoveTime(double startAngle, double endAngle) {
     final delta = (endAngle - startAngle).abs();
@@ -47,9 +33,8 @@ class SensorServoScreen extends HookConsumerWidget {
     final servoPosition = ref.watch(servoPositionSensorProvider(port));
     final servoMode = ref.watch(servoModeSensorProvider(port));
 
-    final angleMode = useState<bool>(true);
     final isDragging = useState<bool>(false);
-    final localPosition = useState<int>(servoPosition ?? 0);
+    final localAngle = useState<double>(servoPosition ?? 0.0);
     final mountedSlider = useState<bool>(false);
 
     useEffect(() {
@@ -61,27 +46,24 @@ class SensorServoScreen extends HookConsumerWidget {
 
     useEffect(() {
       if (!isDragging.value && servoPosition != null) {
-        localPosition.value = servoPosition;
+        localAngle.value = servoPosition;
       }
       return null;
     }, [servoPosition]);
 
-    double getCurrentAngle() =>
-        ServoUtils.positionToAngle(localPosition.value);
-
     const reliable = PublishOptions(reliable: true);
 
-    void setServoPosition(int position) {
+    void setServoPosition(double degrees) {
       // Position command automatically enables the servo on the STM32 side
       lcmService.publish(
         Channels.servoPositionCommand(port),
-        ScalarI32T(timestamp: DateTime.now().microsecondsSinceEpoch, value: position),
+        ScalarFT(timestamp: DateTime.now().microsecondsSinceEpoch, value: degrees),
         options: reliable,
       );
     }
 
     void disableServo() {
-      localPosition.value = 0;
+      localAngle.value = 0.0;
       // Disable the servo mode (not just set position to 0)
       lcmService.publish(
         Channels.servoMode(port),
@@ -92,59 +74,18 @@ class SensorServoScreen extends HookConsumerWidget {
 
     void onSliderChange(double value) {
       isDragging.value = true;
-      if (angleMode.value) {
-        localPosition.value = ServoUtils.angleToPosition(value);
-      } else {
-        localPosition.value = value.toInt();
-      }
-      setServoPosition(localPosition.value);
+      localAngle.value = value;
+      setServoPosition(value);
     }
 
     void onSliderChangeEnd(double value) {
       isDragging.value = false;
     }
 
-    void toggleMode() {
-      angleMode.value = !angleMode.value;
-    }
-
-    final double minValue = angleMode.value
-        ? ServoUtils.minAngle
-        : ServoUtils.minPosition.toDouble();
-    final double maxValue = angleMode.value
-        ? ServoUtils.maxAngle
-        : ServoUtils.maxPosition.toDouble();
-
-    final double sliderValue = angleMode.value
-        ? ServoUtils.positionToAngle(localPosition.value)
-        : localPosition.value.toDouble();
-
-    final modeToggle = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: ElevatedButton(
-        onPressed: toggleMode,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
-          foregroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        ),
-        child: Text(
-          angleMode.value ? 'Angle Mode' : 'Position Mode',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-
     return Scaffold(
       appBar: createTopBar(
         context,
         sensor.name,
-        trailing: modeToggle,
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
@@ -160,9 +101,9 @@ class SensorServoScreen extends HookConsumerWidget {
                       Positioned(
                         bottom: -180,
                         child: SleekCircularSlider(
-                          min: minValue,
-                          max: maxValue,
-                          initialValue: sliderValue,
+                          min: ServoUtils.minAngle,
+                          max: ServoUtils.maxAngle,
+                          initialValue: localAngle.value,
                           onChange: onSliderChange,
                           onChangeEnd: onSliderChangeEnd,
                           appearance: CircularSliderAppearance(
@@ -184,7 +125,7 @@ class SensorServoScreen extends HookConsumerWidget {
                             animationEnabled: false,
                             infoProperties: InfoProperties(
                               modifier: (double value) {
-                                return '${value.toInt()}${angleMode.value ? '°' : ''}';
+                                return '${value.toInt()}°';
                               },
                               mainLabelStyle: const TextStyle(
                                 fontSize: 32,
@@ -198,31 +139,20 @@ class SensorServoScreen extends HookConsumerWidget {
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  angleMode.value
-                                      ? '${value.toStringAsFixed(1)}°'
-                                      : value.toStringAsFixed(0),
+                                  '${value.toStringAsFixed(1)}°',
                                   style: const TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
-                                Text(
-                                  angleMode.value ? 'Angle' : 'Position',
-                                  style: const TextStyle(
+                                const Text(
+                                  'Angle',
+                                  style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
                                 const SizedBox(height: 20),
-                                Text(
-                                  angleMode.value
-                                      ? 'Position: ${localPosition.value}'
-                                      : 'Angle: ${getCurrentAngle().toStringAsFixed(1)}°',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
                                 Text(
                                   'Mode: ${servoMode?.name ?? "N/A"}',
                                   style: const TextStyle(

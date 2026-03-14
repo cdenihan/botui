@@ -31,32 +31,23 @@ class SensorGraphScreen extends HookConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     const sampleInterval = Duration(milliseconds: 20);
-    const maxPoints = 250;
+    const defaultMaxPoints = 250;
     const movingAvgWindow = 10;
 
-    final processor = useMemoized(
-      () => SensorDataProcessor(
-        maxPoints: maxPoints,
-        movingAvgWindow: movingAvgWindow,
-      ),
-    );
+    final maxPoints = useState<int>(defaultMaxPoints);
+    final frozen = useState<bool>(false);
+    final autoScale = useState<bool>(false);
+    final metricsExpanded = useState<bool>(false);
 
     final dataPoints = useState<List<double>>([]);
     final movingAvgPoints = useState<List<double>>([]);
     final lastValue = useState<double?>(null);
-    final autoScale = useState<bool>(false);
 
     final strategy = useMemoized(
       () => SensorStrategyFactory.createStrategy(sensorType),
       [sensorType],
     );
     final reading = strategy.readValue(ref, port);
-
-    void appendSample(double v) {
-      dataPoints.value = processor.appendToRawData(dataPoints.value, v);
-      movingAvgPoints.value =
-          processor.appendToMovingAverage(movingAvgPoints.value, dataPoints.value);
-    }
 
     useEffect(() {
       if (reading != null) {
@@ -67,21 +58,57 @@ class SensorGraphScreen extends HookConsumerWidget {
 
     useEffect(() {
       final timer = Timer.periodic(sampleInterval, (_) {
+        if (frozen.value) return;
         final v = lastValue.value;
-        if (v != null) {
-          appendSample(v);
-        }
+        if (v == null) return;
+
+        final mp = maxPoints.value;
+        final proc = SensorDataProcessor(
+          maxPoints: mp,
+          movingAvgWindow: movingAvgWindow,
+        );
+        dataPoints.value = proc.appendToRawData(dataPoints.value, v);
+        movingAvgPoints.value =
+            proc.appendToMovingAverage(movingAvgPoints.value, dataPoints.value);
       });
       return timer.cancel;
     }, const []);
 
-    final statistics = processor.calculateStatistics(dataPoints.value);
+    // Trim data when maxPoints decreases
+    useEffect(() {
+      final mp = maxPoints.value;
+      if (dataPoints.value.length > mp) {
+        dataPoints.value = dataPoints.value.sublist(dataPoints.value.length - mp);
+      }
+      if (movingAvgPoints.value.length > mp) {
+        movingAvgPoints.value =
+            movingAvgPoints.value.sublist(movingAvgPoints.value.length - mp);
+      }
+      return null;
+    }, [maxPoints.value]);
+
+    final statistics = SensorDataProcessor(
+      maxPoints: maxPoints.value,
+      movingAvgWindow: movingAvgWindow,
+    ).calculateStatistics(dataPoints.value);
 
     return Scaffold(
       appBar: createTopBar(
         context,
         "${sensor.name} Graph",
         actions: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: IconButton(
+              icon: Icon(
+                frozen.value ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                color: frozen.value ? Colors.orangeAccent : Colors.white,
+                size: 32,
+              ),
+              onPressed: () => frozen.value = !frozen.value,
+            ),
+          ),
           AutoScaleAction(
             value: autoScale.value,
             onChanged: (v) => autoScale.value = v,
@@ -100,13 +127,18 @@ class SensorGraphScreen extends HookConsumerWidget {
                   movingAvg: movingAvgPoints.value,
                   graphMin: graphMin,
                   graphMax: graphMax,
-                  maxPoints: maxPoints,
+                  maxPoints: maxPoints.value,
                   autoScale: autoScale.value,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
               SensorMetricsPanel(
-                avg: statistics.average,
+                statistics: statistics,
+                currentValue: lastValue.value,
+                expanded: metricsExpanded.value,
+                onExpandedChanged: (v) => metricsExpanded.value = v,
+                maxPoints: maxPoints.value,
+                onMaxPointsChanged: (v) => maxPoints.value = v,
               ),
             ],
           ),

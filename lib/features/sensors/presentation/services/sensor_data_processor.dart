@@ -44,6 +44,7 @@ class SensorDataProcessor {
         average: 0,
         minimum: 0,
         maximum: 0,
+        median: 0,
         standardDeviation: 0,
       );
     }
@@ -51,6 +52,12 @@ class SensorDataProcessor {
     final avg = data.reduce((a, b) => a + b) / data.length;
     final minVal = data.reduce(min);
     final maxVal = data.reduce(max);
+
+    final sorted = List<double>.from(data)..sort();
+    final mid = sorted.length ~/ 2;
+    final median = sorted.length.isOdd
+        ? sorted[mid]
+        : (sorted[mid - 1] + sorted[mid]) / 2;
 
     final meanDiffSq = data
             .map((v) => (v - avg) * (v - avg))
@@ -62,6 +69,7 @@ class SensorDataProcessor {
       average: avg,
       minimum: minVal,
       maximum: maxVal,
+      median: median,
       standardDeviation: stdDev,
     );
   }
@@ -72,12 +80,14 @@ class SensorStatistics {
   final double average;
   final double minimum;
   final double maximum;
+  final double median;
   final double standardDeviation;
 
   const SensorStatistics({
     required this.average,
     required this.minimum,
     required this.maximum,
+    required this.median,
     required this.standardDeviation,
   });
 }

@@ -44,15 +44,12 @@ class SystemHealthGraphScreen extends HookConsumerWidget {
 
   Widget _buildSingleGraph(BuildContext context, WidgetRef ref) {
     const sampleInterval = Duration(milliseconds: 100);
-    const maxPoints = 250;
+    const defaultMaxPoints = 250;
     const movingAvgWindow = 10;
 
-    final processor = useMemoized(
-      () => SensorDataProcessor(
-        maxPoints: maxPoints,
-        movingAvgWindow: movingAvgWindow,
-      ),
-    );
+    final maxPoints = useState<int>(defaultMaxPoints);
+    final frozen = useState<bool>(false);
+    final metricsExpanded = useState<bool>(false);
 
     final dataPoints = useState<List<double>>([]);
     final movingAvgPoints = useState<List<double>>([]);
@@ -72,23 +69,55 @@ class SystemHealthGraphScreen extends HookConsumerWidget {
 
     useEffect(() {
       final timer = Timer.periodic(sampleInterval, (_) {
+        if (frozen.value) return;
         final v = lastValue.value;
-        if (v != null) {
-          dataPoints.value = processor.appendToRawData(dataPoints.value, v);
-          movingAvgPoints.value = processor.appendToMovingAverage(
-              movingAvgPoints.value, dataPoints.value);
-        }
+        if (v == null) return;
+
+        final proc = SensorDataProcessor(
+          maxPoints: maxPoints.value,
+          movingAvgWindow: movingAvgWindow,
+        );
+        dataPoints.value = proc.appendToRawData(dataPoints.value, v);
+        movingAvgPoints.value = proc.appendToMovingAverage(
+            movingAvgPoints.value, dataPoints.value);
       });
       return timer.cancel;
     }, const []);
 
-    final statistics = processor.calculateStatistics(dataPoints.value);
+    useEffect(() {
+      final mp = maxPoints.value;
+      if (dataPoints.value.length > mp) {
+        dataPoints.value = dataPoints.value.sublist(dataPoints.value.length - mp);
+      }
+      if (movingAvgPoints.value.length > mp) {
+        movingAvgPoints.value =
+            movingAvgPoints.value.sublist(movingAvgPoints.value.length - mp);
+      }
+      return null;
+    }, [maxPoints.value]);
+
+    final statistics = SensorDataProcessor(
+      maxPoints: maxPoints.value,
+      movingAvgWindow: movingAvgWindow,
+    ).calculateStatistics(dataPoints.value);
 
     return Scaffold(
       appBar: createTopBar(
         context,
         '${metric.title} Graph',
         actions: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: IconButton(
+              icon: Icon(
+                frozen.value ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                color: frozen.value ? Colors.orangeAccent : Colors.white,
+                size: 32,
+              ),
+              onPressed: () => frozen.value = !frozen.value,
+            ),
+          ),
           AutoScaleAction(
             value: autoScale.value,
             onChanged: (v) => autoScale.value = v,
@@ -107,12 +136,19 @@ class SystemHealthGraphScreen extends HookConsumerWidget {
                   movingAvg: movingAvgPoints.value,
                   graphMin: metric.defaultMin,
                   graphMax: metric.defaultMax,
-                  maxPoints: maxPoints,
+                  maxPoints: maxPoints.value,
                   autoScale: autoScale.value,
                 ),
               ),
-              const SizedBox(height: 16),
-              SensorMetricsPanel(avg: statistics.average),
+              const SizedBox(height: 8),
+              SensorMetricsPanel(
+                statistics: statistics,
+                currentValue: lastValue.value,
+                expanded: metricsExpanded.value,
+                onExpandedChanged: (v) => metricsExpanded.value = v,
+                maxPoints: maxPoints.value,
+                onMaxPointsChanged: (v) => maxPoints.value = v,
+              ),
             ],
           ),
         ),

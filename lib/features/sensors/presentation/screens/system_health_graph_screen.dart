@@ -143,6 +143,7 @@ class SystemHealthGraphScreen extends HookConsumerWidget {
               const SizedBox(height: 8),
               SensorMetricsPanel(
                 statistics: statistics,
+                data: dataPoints.value,
                 currentValue: lastValue.value,
                 expanded: metricsExpanded.value,
                 onExpandedChanged: (v) => metricsExpanded.value = v,

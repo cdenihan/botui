@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:stpvelox/features/sensors/presentation/services/sensor_data_processor.dart';
+import 'package:stpvelox/features/sensors/presentation/widgets/density_chart_widget.dart';
 
 class SensorMetricsPanel extends StatelessWidget {
   final SensorStatistics statistics;
+  final List<double> data;
   final double? currentValue;
   final bool expanded;
   final ValueChanged<bool> onExpandedChanged;
@@ -12,6 +14,7 @@ class SensorMetricsPanel extends StatelessWidget {
   const SensorMetricsPanel({
     super.key,
     required this.statistics,
+    required this.data,
     required this.currentValue,
     required this.expanded,
     required this.onExpandedChanged,
@@ -54,14 +57,32 @@ class SensorMetricsPanel extends StatelessWidget {
           if (expanded) ...[
             const Divider(color: Colors.white12, height: 1),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildMetricColumn('Min', statistics.minimum),
-                  _buildMetricColumn('Max', statistics.maximum),
-                  _buildMetricColumn('Median', statistics.median),
-                  _buildMetricColumn('Std', statistics.standardDeviation),
+                  // Stats on the left
+                  Expanded(
+                    flex: 3,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildMetricColumn('Min', statistics.minimum),
+                        _buildMetricColumn('Max', statistics.maximum),
+                        _buildMetricColumn('Med', statistics.median),
+                        _buildMetricColumn('Std', statistics.standardDeviation),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Density chart on the right
+                  Expanded(
+                    flex: 4,
+                    child: DensityChartWidget(
+                      data: data,
+                      statistics: statistics,
+                    ),
+                  ),
                 ],
               ),
             ),

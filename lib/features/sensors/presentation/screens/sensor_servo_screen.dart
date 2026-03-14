@@ -12,6 +12,7 @@ import 'package:raccoon_transport/raccoon_transport.dart';
 class ServoUtils {
   static const double minAngle = 0.0;
   static const double maxAngle = 180.0;
+  static const double dangerMaxAngle = 360.0;
   static const double servoSpeedDps = 60 / 0.3;
 
   static double estimateServoMoveTime(double startAngle, double endAngle) {
@@ -34,8 +35,10 @@ class SensorServoScreen extends HookConsumerWidget {
     final servoMode = ref.watch(servoModeSensorProvider(port));
 
     final isDragging = useState<bool>(false);
+    final dangerMode = useState<bool>(false);
     final localAngle = useState<double>(servoPosition ?? 0.0);
     final mountedSlider = useState<bool>(false);
+    final currentMax = dangerMode.value ? ServoUtils.dangerMaxAngle : ServoUtils.maxAngle;
 
     useEffect(() {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -99,40 +102,31 @@ class SensorServoScreen extends HookConsumerWidget {
                   children: [
                     if (mountedSlider.value)
                       Positioned(
-                        bottom: -180,
+                        bottom: dangerMode.value ? -60 : -180,
                         child: SleekCircularSlider(
+                          key: ValueKey(dangerMode.value),
                           min: ServoUtils.minAngle,
-                          max: ServoUtils.maxAngle,
-                          initialValue: localAngle.value,
+                          max: currentMax,
+                          initialValue: localAngle.value.clamp(ServoUtils.minAngle, currentMax),
                           onChange: onSliderChange,
                           onChangeEnd: onSliderChangeEnd,
                           appearance: CircularSliderAppearance(
-                            startAngle: 180,
-                            angleRange: 180,
+                            startAngle: dangerMode.value ? 150 : 180,
+                            angleRange: dangerMode.value ? 240 : 180,
                             customWidths: CustomSliderWidths(
                               trackWidth: 75,
                               progressBarWidth: 75,
                               handlerSize: 30,
                             ),
                             customColors: CustomSliderColors(
-                              trackColor: Colors.grey.shade300,
-                              progressBarColor: Colors.blue,
+                              trackColor: dangerMode.value ? Colors.red.shade100 : Colors.grey.shade300,
+                              progressBarColor: dangerMode.value ? Colors.red : Colors.blue,
                               dotColor: Colors.white,
                               shadowColor: Colors.grey,
                               shadowMaxOpacity: 0.0,
                             ),
-                            size: 480,
+                            size: dangerMode.value ? 360 : 480,
                             animationEnabled: false,
-                            infoProperties: InfoProperties(
-                              modifier: (double value) {
-                                return '${value.toInt()}°';
-                              },
-                              mainLabelStyle: const TextStyle(
-                                fontSize: 32,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
                           ),
                           innerWidget: (value) {
                             return Column(
@@ -140,16 +134,18 @@ class SensorServoScreen extends HookConsumerWidget {
                               children: [
                                 Text(
                                   '${value.toStringAsFixed(1)}°',
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const Text(
-                                  'Angle',
                                   style: TextStyle(
                                     fontSize: 24,
                                     fontWeight: FontWeight.bold,
+                                    color: dangerMode.value && value > 180 ? Colors.red : null,
+                                  ),
+                                ),
+                                Text(
+                                  dangerMode.value ? 'DANGER' : 'Angle',
+                                  style: TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                    color: dangerMode.value ? Colors.red : null,
                                   ),
                                 ),
                                 const SizedBox(height: 20),
@@ -192,6 +188,44 @@ class SensorServoScreen extends HookConsumerWidget {
                           fontSize: 30,
                           fontWeight: FontWeight.bold,
                         ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 2),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        dangerMode.value = !dangerMode.value;
+                        if (!dangerMode.value && localAngle.value > ServoUtils.maxAngle) {
+                          localAngle.value = ServoUtils.maxAngle;
+                          setServoPosition(ServoUtils.maxAngle);
+                        }
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: dangerMode.value ? Colors.orange : Colors.grey.shade700,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.only(
+                            topRight: Radius.circular(12),
+                            bottomRight: Radius.circular(12),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            dangerMode.value ? Icons.warning : Icons.warning_outlined,
+                            size: 28,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            dangerMode.value ? 'Danger ON' : 'Danger',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),

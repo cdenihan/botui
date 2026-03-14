@@ -7,7 +7,7 @@ import 'package:stpvelox/core/service/sensors/battery_voltage_sensor.dart';
 
 part 'battery_check_service.g.dart';
 
-const _lowBatteryThreshold = 5.5;
+const _lowBatteryThreshold = 5.75;
 
 @riverpod
 class BatteryCheckService extends _$BatteryCheckService {

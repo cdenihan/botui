@@ -174,6 +174,16 @@ class WidgetDecoder {
           rawThresholds: json['thresholds'] as List? ?? [],
           height: (json['height'] as int? ?? 200).toDouble(),
         );
+      case 'camfeed':
+        final camId = json['id'] as String? ?? 'cam_feed';
+        return CamFeedWidget(
+          id: camId,
+          showFps: json['show_fps'] as bool? ?? false,
+          showDetections: json['show_detections'] as bool? ?? true,
+          onTap: json['tappable'] as bool? ?? false
+              ? (x, y) => onValueChanged(camId, {'x': x, 'y': y})
+              : null,
+        );
 
       // Layout widgets
       case 'row':
@@ -182,6 +192,8 @@ class WidgetDecoder {
         return _buildColumn(json);
       case 'center':
         return _buildCenter(json);
+      case 'container':
+        return _buildContainer(json);
       case 'card':
         return _buildCard(json);
       case 'split':
@@ -413,6 +425,25 @@ class WidgetDecoder {
     );
   }
 
+  Widget _buildContainer(Map<String, dynamic> json) {
+    final children = (json['children'] as List?)
+        ?.map((c) => decode(c as Map<String, dynamic>))
+        .toList() ?? [];
+    final bgColor = json['bg_color'] != null ? _parseColor(json['bg_color']) : null;
+    final padding = (json['padding'] as int? ?? 0).toDouble();
+
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      padding: EdgeInsets.all(padding),
+      color: bgColor,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: children,
+      ),
+    );
+  }
+
   Widget _buildCard(Map<String, dynamic> json) {
     final children = (json['children'] as List?)
         ?.map((c) => decode(c as Map<String, dynamic>))
@@ -600,6 +631,8 @@ class WidgetDecoder {
     'tune' => Icons.tune,
     'dashboard' => Icons.dashboard,
     'check_circle' => Icons.check_circle,
+    'camera' || 'camera_alt' => Icons.camera_alt,
+    'visibility_off' => Icons.visibility_off,
     _ => Icons.help_outline,
   };
 }

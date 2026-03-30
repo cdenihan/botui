@@ -46,7 +46,7 @@ import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 import 'package:stpvelox/features/dynamic_ui/presentation/dynamic_ui_screen.dart';
 
 // Camera
-import 'package:stpvelox/features/camera/presentation/pages/yolo_viewer_screen.dart';
+import 'package:stpvelox/features/camera/presentation/pages/camera_viewer_screen.dart' show CameraViewerScreen;
 
 // Other
 import 'package:stpvelox/presentation/screens/robot_face_screen.dart';
@@ -99,7 +99,7 @@ abstract class AppRoutes {
   static const calibrationScreen = '/calibration';
 
   // Camera
-  static const yoloViewer = '/yolo-viewer';
+  static const camera = '/camera';
 
   // Screensaver
   static const robotFace = '/robot-face';
@@ -314,9 +314,9 @@ GoRouter appRouter(Ref ref) {
 
       // Camera
       GoRoute(
-        path: AppRoutes.yoloViewer,
-        name: 'yoloViewer',
-        builder: (context, state) => const YoloViewerScreen(),
+        path: AppRoutes.camera,
+        name: 'camera',
+        builder: (context, state) => const CameraViewerScreen(),
       ),
 
       // Screensaver

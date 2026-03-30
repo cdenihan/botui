@@ -8,6 +8,7 @@ enum SensorCategory {
   mag('Magneto'),
   orientation('Orientation'),
   heading('Heading'),
+  camera('Camera'),
   system('System'),
   ;
 

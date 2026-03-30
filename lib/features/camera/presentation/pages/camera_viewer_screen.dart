@@ -5,16 +5,19 @@ import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:stpvelox/core/lcm/domain/providers.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/camera/application/yolo_viewer_provider.dart';
+import 'package:raccoon_transport/raccoon_transport.dart';
+import 'package:stpvelox/features/camera/application/cam_provider.dart';
+import 'package:stpvelox/features/camera/presentation/widgets/cam_calibration_panel.dart';
 
-class YoloViewerScreen extends ConsumerStatefulWidget {
-  const YoloViewerScreen({super.key});
+class CameraViewerScreen extends ConsumerStatefulWidget {
+  const CameraViewerScreen({super.key});
 
   @override
-  ConsumerState<YoloViewerScreen> createState() => _YoloViewerScreenState();
+  ConsumerState<CameraViewerScreen> createState() =>
+      _CameraViewerScreenState();
 }
 
-class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
+class _CameraViewerScreenState extends ConsumerState<CameraViewerScreen> {
   int _frameCount = 0;
   DateTime? _startTime;
   double _fps = 0.0;
@@ -22,23 +25,65 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
   @override
   void initState() {
     super.initState();
-    // Force LCM service to be initialized
     Future.microtask(() {
       final lcm = ref.read(lcmServiceProvider);
-      print('LCM initialized: ${lcm.isInitialized}');
+      publishStreamCtl(lcm, enabled: true);
     });
   }
 
   @override
+  void dispose() {
+    // Request stream stop
+    try {
+      final lcm = ref.read(lcmServiceProvider);
+      publishStreamCtl(lcm, enabled: false);
+    } catch (_) {}
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final frame = ref.watch(yoloFrameStreamProvider);
+    final frame = ref.watch(camFrameStreamProvider);
+    final detections = ref.watch(camDetectionStreamProvider);
     final lcm = ref.watch(lcmServiceProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: createTopBar(context, 'YOLO Viewer'),
+      appBar: createTopBar(
+        context,
+        'Camera',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.tune, color: Colors.white),
+            iconSize: 32,
+            onPressed: () => _showCalibrationPanel(context),
+          ),
+        ],
+      ),
       body: SafeArea(
-        child: frame != null ? _buildFrameView(frame) : _buildLoadingView(lcm.isInitialized),
+        child: frame != null
+            ? _buildFrameView(frame, detections)
+            : _buildLoadingView(lcm.isInitialized, detections),
+      ),
+    );
+  }
+
+  void _showCalibrationPanel(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.grey[900],
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (context, scrollController) => CamCalibrationPanel(
+          scrollController: scrollController,
+        ),
       ),
     );
   }
@@ -46,8 +91,9 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
   void _updateFps() {
     _frameCount++;
     _startTime ??= DateTime.now();
-    
-    final elapsed = DateTime.now().difference(_startTime!).inMilliseconds / 1000.0;
+
+    final elapsed =
+        DateTime.now().difference(_startTime!).inMilliseconds / 1000.0;
     if (elapsed > 0) {
       setState(() {
         _fps = _frameCount / elapsed;
@@ -55,7 +101,8 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
     }
   }
 
-  Widget _buildLoadingView(bool lcmInitialized) {
+  Widget _buildLoadingView(
+      bool lcmInitialized, CamDetectionData? detections) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -63,22 +110,29 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
           CircularProgressIndicator(color: AppColors.programs),
           const SizedBox(height: 16),
           Text(
-            'Waiting for YOLO frames...',
+            'Waiting for camera frames...',
             style: TextStyle(color: Colors.white70, fontSize: 16),
           ),
           const SizedBox(height: 8),
           Text(
-            'Channel: $kYoloFrameChannel',
+            'Channel: ${Channels.camFrame}',
             style: TextStyle(color: Colors.white38, fontSize: 12),
           ),
           const SizedBox(height: 8),
           Text(
-            'LCM Status: ${lcmInitialized ? "Initialized ✓" : "Initializing..."}',
+            'LCM Status: ${lcmInitialized ? "Initialized" : "Initializing..."}',
             style: TextStyle(
-              color: lcmInitialized ? Colors.green[300] : Colors.orange[300], 
-              fontSize: 12
+              color: lcmInitialized ? Colors.green[300] : Colors.orange[300],
+              fontSize: 12,
             ),
           ),
+          if (detections != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Detections: ${detections.data.num_detections}',
+              style: TextStyle(color: Colors.blue[300], fontSize: 12),
+            ),
+          ],
           const SizedBox(height: 16),
           Text(
             'Frames received: $_frameCount',
@@ -87,8 +141,9 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
           const SizedBox(height: 24),
           ElevatedButton.icon(
             onPressed: () {
-              // Force refresh provider
-              ref.invalidate(yoloFrameStreamProvider);
+              ref.invalidate(camFrameStreamProvider);
+              final lcm = ref.read(lcmServiceProvider);
+              publishStreamCtl(lcm, enabled: true);
             },
             icon: Icon(Icons.refresh),
             label: Text('Refresh'),
@@ -101,9 +156,14 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
     );
   }
 
-  Widget _buildFrameView(YoloFrame frame) {
+  Widget _buildFrameView(
+      CamFrameData frame, CamDetectionData? detections) {
     _updateFps();
-    
+
+    // Use detections from frame itself, or from separate detection stream
+    final detectionCount = frame.data.num_detections;
+    final detectionList = frame.data.detections;
+
     return Column(
       children: [
         // Info bar
@@ -120,10 +180,13 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
               ),
               Text(
                 'FPS: ${_fps.toStringAsFixed(1)}',
-                style: TextStyle(color: Colors.green[300], fontSize: 14, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.green[300],
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold),
               ),
               Text(
-                'Detections: ${frame.data.num_boxes}',
+                'Detections: $detectionCount',
                 style: TextStyle(color: Colors.blue[300], fontSize: 14),
               ),
             ],
@@ -134,7 +197,10 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
           child: Container(
             color: Colors.black,
             child: Center(
-              child: _YoloFrameWidget(frame: frame),
+              child: _CamFrameWidget(
+                frame: frame,
+                detections: detections,
+              ),
             ),
           ),
         ),
@@ -143,10 +209,11 @@ class _YoloViewerScreenState extends ConsumerState<YoloViewerScreen> {
   }
 }
 
-class _YoloFrameWidget extends StatelessWidget {
-  final YoloFrame frame;
+class _CamFrameWidget extends StatelessWidget {
+  final CamFrameData frame;
+  final CamDetectionData? detections;
 
-  const _YoloFrameWidget({required this.frame});
+  const _CamFrameWidget({required this.frame, this.detections});
 
   @override
   Widget build(BuildContext context) {
@@ -161,6 +228,11 @@ class _YoloFrameWidget extends StatelessWidget {
 
     // Decode JPEG image
     final imageData = Uint8List.fromList(frame.data.frame_data);
+
+    // Merge detections: prefer frame-embedded, fallback to separate stream
+    final allDetections = frame.data.detections.isNotEmpty
+        ? frame.data.detections
+        : (detections?.data.detections ?? []);
 
     return Stack(
       children: [
@@ -188,7 +260,7 @@ class _YoloFrameWidget extends StatelessWidget {
         // Overlay bounding boxes
         Positioned.fill(
           child: CustomPaint(
-            painter: _YoloBoundingBoxPainter(frame: frame),
+            painter: _CamBoundingBoxPainter(detections: allDetections),
           ),
         ),
       ],
@@ -196,12 +268,25 @@ class _YoloFrameWidget extends StatelessWidget {
   }
 }
 
-class _YoloBoundingBoxPainter extends CustomPainter {
-  final YoloFrame frame;
+class _CamBoundingBoxPainter extends CustomPainter {
+  final List<CamBlobT> detections;
 
-  _YoloBoundingBoxPainter({required this.frame});
+  _CamBoundingBoxPainter({required this.detections});
 
-  static final List<Color> _colors = [
+  static const Map<String, Color> _colorMap = {
+    'red': Colors.red,
+    'orange': Colors.orange,
+    'yellow': Colors.yellow,
+    'green': Colors.green,
+    'blue': Colors.blue,
+    'purple': Colors.purple,
+    'pink': Colors.pink,
+    'cyan': Colors.cyan,
+    'white': Colors.white,
+    'black': Colors.grey,
+  };
+
+  static final List<Color> _fallbackColors = [
     Colors.green,
     Colors.red,
     Colors.blue,
@@ -214,20 +299,21 @@ class _YoloBoundingBoxPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (frame.data.num_boxes == 0) return;
+    if (detections.isEmpty) return;
 
     final width = size.width;
     final height = size.height;
 
-    for (int i = 0; i < frame.data.boxes.length; i++) {
-      final box = frame.data.boxes[i];
-      final color = _colors[i % _colors.length];
+    for (int i = 0; i < detections.length; i++) {
+      final det = detections[i];
+      final color = _colorMap[det.label.toLowerCase()] ??
+          _fallbackColors[i % _fallbackColors.length];
 
       // Convert normalized center coordinates to pixel corners
-      final x1 = (box.x - box.width / 2) * width;
-      final y1 = (box.y - box.height / 2) * height;
-      final x2 = (box.x + box.width / 2) * width;
-      final y2 = (box.y + box.height / 2) * height;
+      final x1 = (det.x - det.width / 2) * width;
+      final y1 = (det.y - det.height / 2) * height;
+      final x2 = (det.x + det.width / 2) * width;
+      final y2 = (det.y + det.height / 2) * height;
 
       final rect = Rect.fromLTRB(x1, y1, x2, y2);
 
@@ -239,7 +325,8 @@ class _YoloBoundingBoxPainter extends CustomPainter {
       canvas.drawRect(rect, boxPaint);
 
       // Draw label background
-      final label = '${box.label}: ${box.confidence.toStringAsFixed(2)}';
+      final label =
+          '${det.label}: ${det.confidence.toStringAsFixed(2)} (${det.area})';
       final textPainter = TextPainter(
         text: TextSpan(
           text: label,
@@ -271,7 +358,7 @@ class _YoloBoundingBoxPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _YoloBoundingBoxPainter oldDelegate) {
-    return oldDelegate.frame != frame;
+  bool shouldRepaint(covariant _CamBoundingBoxPainter oldDelegate) {
+    return oldDelegate.detections != detections;
   }
 }

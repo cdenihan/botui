@@ -53,7 +53,7 @@ class ProgramSelectionScreen extends HookConsumerWidget {
     return ResponsiveGridTile(
       label: program.name,
       icon: Icons.code,
-      onPressed: () => context.push(AppRoutes.programAction, extra: program),
+      onPressed: () => context.push(AppRoutes.programRun, extra: program),
       color: AppColors.getTileColor(index),
     );
   }

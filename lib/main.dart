@@ -83,18 +83,19 @@ class StpVeloxApp extends HookConsumerWidget {
     // survives route changes (go_router swaps routes, unmounting previous ones).
     ref.listen<Map<String, dynamic>?>(screenRenderProviderProvider, (previous, next) {
       final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
-      final isDashboard = isDashboardRoute(currentLocation);
       final isCalibrationRoute = currentLocation == AppRoutes.calibrationScreen;
 
       final wasOpen = previous != null;
       final shouldBeOpen = next != null;
 
-      if (!wasOpen && shouldBeOpen && isDashboard) {
+      if (!wasOpen && shouldBeOpen && !isCalibrationRoute) {
         _log.info('[DynamicUI] Opening dynamic UI screen');
-        router.go(AppRoutes.calibrationScreen);
+        ref.read(dynamicUiActiveProvider.notifier).set(true);
+        router.push(AppRoutes.calibrationScreen);
       } else if (wasOpen && !shouldBeOpen && isCalibrationRoute) {
-        _log.info('[DynamicUI] Closing dynamic UI screen, returning to dashboard');
-        router.go(AppRoutes.dashboard);
+        _log.info('[DynamicUI] Closing dynamic UI screen');
+        ref.read(dynamicUiActiveProvider.notifier).set(false);
+        router.pop();
       }
     });
 
@@ -163,6 +164,17 @@ class StpVeloxApp extends HookConsumerWidget {
 }
 
 final lowBatteryIgnoredProvider = NotifierProvider<_LowBatteryIgnored, bool>(_LowBatteryIgnored.new);
+
+/// True while the DynamicUI screen is pushed on top — ProgramScreen uses this
+/// to hide its overlay so touches can reach the DynamicUI.
+final dynamicUiActiveProvider = NotifierProvider<_DynamicUiActive, bool>(_DynamicUiActive.new);
+
+class _DynamicUiActive extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool value) => state = value;
+}
 
 class _LowBatteryIgnored extends Notifier<bool> {
   @override

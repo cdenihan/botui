@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
-import 'package:go_router/go_router.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-import 'package:stpvelox/core/router/app_router.dart';
+import 'package:logging/logging.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
+import 'package:stpvelox/main.dart' show dynamicUiActiveProvider;
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:stpvelox/features/program/domain/entities/program_session.dart';
 import 'package:stpvelox/features/program/domain/services/program_lifecycle_service.dart';
 import 'package:stpvelox/features/sensors/domain/entities/args/arg.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 import 'package:xterm/xterm.dart';
+
+final _log = Logger('ProgramScreen');
 
 class ProgramScreen extends HookConsumerWidget {
   final Program program;
@@ -20,16 +22,40 @@ class ProgramScreen extends HookConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final overlayEntry = useState<OverlayEntry?>(null);
     final state = ref.watch(programLifecycleServiceProvider);
+    final dynamicUiActive = ref.watch(dynamicUiActiveProvider);
+
+    // Hide overlay while DynamicUI is on top, restore when it closes
+    useEffect(() {
+      if (dynamicUiActive) {
+        _log.info('[overlay] DynamicUI active — hiding program overlay');
+        removeOverlay(overlayEntry);
+      } else {
+        _log.info('[overlay] DynamicUI inactive — restoring program overlay');
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (overlayEntry.value == null) {
+            createControlOverlay(context, overlayEntry, state, program, ref);
+          }
+        });
+      }
+      return null;
+    }, [dynamicUiActive]);
 
     useEffect(() {
+      _log.info('[useEffect] ProgramScreen mounted');
+      // Show the control overlay immediately when the screen opens
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        createControlOverlay(context, overlayEntry, state, program, ref);
+      });
       return () {
+        _log.warning('[useEffect cleanup] ProgramScreen unmounting — isRunning=${state?.isRunning}');
         removeOverlay(overlayEntry);
         // Stop the program when exiting the screen
         if (state != null && state.isRunning) {
+          _log.warning('[useEffect cleanup] Stopping program because screen is unmounting');
           ref.read(programLifecycleServiceProvider.notifier).stopProgram();
         }
       };
-    }, [state]);
+    }, []);
 
     void onLongPress(ProgramSession? session) {
       createControlOverlay(context, overlayEntry, session, program, ref);
@@ -69,11 +95,6 @@ class ProgramScreen extends HookConsumerWidget {
 
     return Scaffold(
       appBar: createTopBar(context, program.name, actions: [
-        IconButton(
-          onPressed: () => context.push(AppRoutes.programCalibrate, extra: program),
-          icon: const Icon(Icons.tune),
-          tooltip: 'Calibrate',
-        ),
         IconButton(
           onPressed: () => onLongPress(state),
           icon: const Icon(Icons.layers),

@@ -69,9 +69,11 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
             options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
-        log.info('Gyro accuracy received: ${decoded.value.dir}');
-        _currentValue = _currentValue.copyWith(gyro: decoded.value.dir);
-        state = _currentValue;
+        if (decoded.value.dir != _currentValue.gyro) {
+          log.info('Gyro accuracy changed: ${decoded.value.dir}');
+          _currentValue = _currentValue.copyWith(gyro: decoded.value.dir);
+          state = _currentValue;
+        }
       },
       onError: (error) {
         log.severe('Error in gyro accuracy subscription: $error');
@@ -83,9 +85,11 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
             options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
-        log.info('Accel accuracy received: ${decoded.value.dir}');
-        _currentValue = _currentValue.copyWith(accel: decoded.value.dir);
-        state = _currentValue;
+        if (decoded.value.dir != _currentValue.accel) {
+          log.info('Accel accuracy changed: ${decoded.value.dir}');
+          _currentValue = _currentValue.copyWith(accel: decoded.value.dir);
+          state = _currentValue;
+        }
       },
       onError: (error) {
         log.severe('Error in accel accuracy subscription: $error');
@@ -97,9 +101,11 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
             options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
-        log.info('Mag accuracy received: ${decoded.value.dir}');
-        _currentValue = _currentValue.copyWith(mag: decoded.value.dir);
-        state = _currentValue;
+        if (decoded.value.dir != _currentValue.mag) {
+          log.info('Mag accuracy changed: ${decoded.value.dir}');
+          _currentValue = _currentValue.copyWith(mag: decoded.value.dir);
+          state = _currentValue;
+        }
       },
       onError: (error) {
         log.severe('Error in mag accuracy subscription: $error');
@@ -112,9 +118,11 @@ class ImuAccuracySensor extends _$ImuAccuracySensor with HasLogger {
             options: const SubscribeOptions(requestRetained: true))
         .listen(
       (decoded) {
-        log.info('Quaternion accuracy received: ${decoded.value.dir}');
-        _currentValue = _currentValue.copyWith(quaternion: decoded.value.dir);
-        state = _currentValue;
+        if (decoded.value.dir != _currentValue.quaternion) {
+          log.info('Quaternion accuracy changed: ${decoded.value.dir}');
+          _currentValue = _currentValue.copyWith(quaternion: decoded.value.dir);
+          state = _currentValue;
+        }
       },
       onError: (error) {
         log.severe('Error in quaternion accuracy subscription: $error');

@@ -9,7 +9,6 @@ import 'package:stpvelox/features/dashboard/presentation/screens/dashboard_scree
 import 'package:stpvelox/features/program/presentation/screens/program_selection_screen.dart';
 import 'package:stpvelox/features/program/presentation/screens/program_action_screen.dart';
 import 'package:stpvelox/features/program/presentation/screens/program_screen.dart';
-import 'package:stpvelox/features/program/presentation/screens/calibrate_program_screen.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 
 // Sensors
@@ -73,7 +72,6 @@ abstract class AppRoutes {
   static const programs = '/programs';
   static const programAction = '/programs/action';
   static const programRun = '/programs/run';
-  static const programCalibrate = '/programs/calibrate';
 
   // Settings
   static const settings = '/settings';
@@ -195,14 +193,6 @@ GoRouter appRouter(Ref ref) {
         builder: (context, state) {
           final program = state.extra as Program;
           return ProgramScreen(program: program);
-        },
-      ),
-      GoRoute(
-        path: AppRoutes.programCalibrate,
-        name: 'programCalibrate',
-        builder: (context, state) {
-          final program = state.extra as Program;
-          return CalibrateProgramScreen(program: program);
         },
       ),
 

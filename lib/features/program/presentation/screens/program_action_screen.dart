@@ -24,12 +24,6 @@ class ProgramActionScreen extends HookConsumerWidget {
             color: Colors.green,
             onPressed: () => context.push(AppRoutes.programRun, extra: program),
           ),
-          ResponsiveGridTile(
-            label: 'Calibrate',
-            icon: Icons.tune,
-            color: Colors.orange,
-            onPressed: () => context.push(AppRoutes.programCalibrate, extra: program),
-          ),
         ],
       ),
     );

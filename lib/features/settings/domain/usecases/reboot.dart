@@ -12,7 +12,7 @@ RebootDevice rebootDevice(Ref ref) {
 class RebootDevice {
   Future<void> call([bool isShutdown = false]) async {
     if (isShutdown) {
-      await SudoProcess.run('shutdown', [' -h', 'now']);
+      await SudoProcess.run('shutdown', ['-h', 'now']);
     } else {
       await SudoProcess.run('reboot', []);
     }

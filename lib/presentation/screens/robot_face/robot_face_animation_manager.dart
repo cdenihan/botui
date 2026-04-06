@@ -51,10 +51,16 @@ class RobotFaceAnimationManager {
     ));
   }
 
-  void startAnimations() {
+  void startAnimations({bool focusedMode = false}) {
     _startBlinkingCycle();
     _startGazingCycle();
-    _expressionStateManager.scheduleRandomTransition(vsync);
+    if (focusedMode) {
+      // Lock into the "focused" expression — no random cycling
+      _expressionStateManager.transitionToExpression(
+          RobotExpression.focused, vsync);
+    } else {
+      _expressionStateManager.scheduleRandomTransition(vsync);
+    }
   }
 
   bool _disposed = false;
@@ -125,6 +131,11 @@ class RobotFaceAnimationManager {
   Animation<double> get blinkAnimation => _blinkAnimation;
   Animation<Offset> get gazeAnimation => _gazeAnimation;
   ExpressionStateManager get expressionStateManager => _expressionStateManager;
+
+  /// Switch to focused face (e.g. program is running) or back to idle cycling.
+  void setFocusedMode(bool focused, TickerProvider vsync) {
+    _expressionStateManager.setFocusedMode(focused, vsync);
+  }
 
   // Manual control for testing if needed
   void setCurrentExpression(RobotExpression expression) {

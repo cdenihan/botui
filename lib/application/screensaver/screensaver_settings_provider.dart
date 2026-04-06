@@ -54,3 +54,17 @@ final screensaverEnabledProvider =
     NotifierProvider<ScreensaverEnabledNotifier, bool>(
   ScreensaverEnabledNotifier.new,
 );
+
+/// Tracks whether the screensaver is currently showing.
+/// Used by other parts of the app (e.g. dynamic UI) to dismiss it.
+class ScreensaverShowingNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void set(bool value) => state = value;
+}
+
+final screensaverShowingProvider =
+    NotifierProvider<ScreensaverShowingNotifier, bool>(
+  ScreensaverShowingNotifier.new,
+);

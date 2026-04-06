@@ -5,6 +5,20 @@ import 'package:logging/logging.dart';
 
 final _log = Logger('RaccoonExecutionClient');
 
+class RunningCommand {
+  final String commandId;
+  final String projectId;
+  final String commandType;
+  final String startedAt;
+
+  const RunningCommand({
+    required this.commandId,
+    required this.projectId,
+    required this.commandType,
+    required this.startedAt,
+  });
+}
+
 /// Minimal client for the raccoon execution service (HTTP + WebSocket).
 /// The service runs on the Pi at localhost:8421.
 class RaccoonExecutionClient {
@@ -39,6 +53,29 @@ class RaccoonExecutionClient {
     final commandId = response['command_id'] as String;
     _log.info('[calibrate] project=$projectId command_id=$commandId');
     return commandId;
+  }
+
+  /// Returns the currently running command, or null if the robot is idle.
+  Future<RunningCommand?> getRunningCommand() async {
+    final client = HttpClient();
+    try {
+      final request = await client.getUrl(
+        Uri.parse('$baseUrl/api/v1/commands/running'),
+      );
+      request.headers.set('X-API-Token', _token);
+      final response = await request.close();
+      final body = await response.transform(utf8.decoder).join();
+      final json = jsonDecode(body) as Map<String, dynamic>;
+      if (json['is_running'] != true) return null;
+      return RunningCommand(
+        commandId: json['command_id'] as String,
+        projectId: json['project_id'] as String,
+        commandType: json['command_type'] as String,
+        startedAt: json['started_at'] as String,
+      );
+    } finally {
+      client.close();
+    }
   }
 
   /// Cancel a running command.

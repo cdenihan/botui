@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
 import 'package:stpvelox/core/service/sensors/digital_sensor.dart';
 import 'package:stpvelox/core/utils/colors/device_color_generator.dart';
+import 'package:stpvelox/features/program/domain/entities/program_session.dart';
+import 'package:stpvelox/features/program/domain/services/program_lifecycle_service.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_face_animation_manager.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_face_painter.dart';
 import 'package:stpvelox/presentation/screens/robot_face/states/expression_state_manager.dart';
@@ -27,7 +29,9 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
   void initState() {
     super.initState();
     _animationManager = RobotFaceAnimationManager(vsync: this);
-    _animationManager.startAnimations();
+    final session = ref.read(programLifecycleServiceProvider);
+    final isProgramRunning = session != null;
+    _animationManager.startAnimations(focusedMode: isProgramRunning);
   }
 
   @override
@@ -63,6 +67,12 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
 
   @override
   Widget build(BuildContext context) {
+    // React to program start/stop → switch focused face on/off
+    ref.listen<ProgramSession?>(programLifecycleServiceProvider,
+        (previous, next) {
+      _animationManager.setFocusedMode(next != null, this);
+    });
+
     // Screensaver dismissal: tap anywhere to dismiss via InactivityListener
 
     // Watch button 10 directly using useDigitalValue

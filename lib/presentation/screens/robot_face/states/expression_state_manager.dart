@@ -13,6 +13,9 @@ class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
   double _phaseProgress = 1.0; // 0.0 to 1.0
   bool _isDisposed = false;
 
+  // Focused mode — suppresses random cycling
+  bool _focusedMode = false;
+
   // Button 10 irritation tracking
   int _button10PressCount = 0;
   DateTime? _lastButton10Press;
@@ -276,9 +279,26 @@ class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
     }
   }
 
+  /// Switch between focused (locked on `focused` expression) and idle
+  /// (random cycling) modes. Safe to call multiple times.
+  void setFocusedMode(bool focused, TickerProvider vsync) {
+    if (_isDisposed) return;
+    _focusedMode = focused;
+    if (focused) {
+      transitionToExpression(RobotExpression.focused, vsync);
+    } else {
+      returnToNeutral(vsync).then((_) {
+        if (!_isDisposed && !_focusedMode) {
+          scheduleRandomTransition(vsync);
+        }
+      });
+    }
+  }
+
   // State timing and scheduling
   void scheduleRandomTransition(TickerProvider vsync) {
     if (_isDisposed) return;
+    if (_focusedMode) return; // suppressed while a program is running
 
     final random = math.Random();
     final delaySeconds = 3 + random.nextInt(7);

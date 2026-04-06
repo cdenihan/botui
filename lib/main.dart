@@ -4,6 +4,8 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:logging/logging.dart';
 import 'package:stpvelox/application/inactivity/inactivity_listener.dart';
+import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
+import 'package:stpvelox/application/screensaver/screensaver_settings_provider.dart';
 import 'package:stpvelox/core/logging/logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/service/error_message_service.dart';
@@ -79,21 +81,34 @@ class StpVeloxApp extends HookConsumerWidget {
     // Use ref.read to initialize without causing rebuilds on every value change
     ref.read(imuAccuracySensorProvider);
 
+    // Track whether we pushed the calibration route so we can pop it reliably.
+    // We cannot trust router.currentConfiguration.fullPath (it returns stale/wrong
+    // values when routes are pushed imperatively).
+    final dynamicUiPushed = useRef(false);
+
     // Handle dynamic UI screen navigation at app level so the listener
     // survives route changes (go_router swaps routes, unmounting previous ones).
     ref.listen<Map<String, dynamic>?>(screenRenderProviderProvider, (previous, next) {
-      final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
-      final isCalibrationRoute = currentLocation == AppRoutes.calibrationScreen;
-
       final wasOpen = previous != null;
       final shouldBeOpen = next != null;
 
-      if (!wasOpen && shouldBeOpen && !isCalibrationRoute) {
+      if (!wasOpen && shouldBeOpen && !dynamicUiPushed.value) {
         _log.info('[DynamicUI] Opening dynamic UI screen');
+
+        // If the screensaver is currently showing, dismiss it first so it
+        // doesn't sit on top of (or interfere with) the custom UI.
+        final screensaverUp = ref.read(screensaverShowingProvider);
+        if (screensaverUp) {
+          _log.info('[DynamicUI] Dismissing screensaver before opening dynamic UI');
+          ref.read(inactivityProvider.notifier).userActivityDetected();
+        }
+
+        dynamicUiPushed.value = true;
         ref.read(dynamicUiActiveProvider.notifier).set(true);
         router.push(AppRoutes.calibrationScreen);
-      } else if (wasOpen && !shouldBeOpen && isCalibrationRoute) {
+      } else if (wasOpen && !shouldBeOpen && dynamicUiPushed.value) {
         _log.info('[DynamicUI] Closing dynamic UI screen');
+        dynamicUiPushed.value = false;
         ref.read(dynamicUiActiveProvider.notifier).set(false);
         router.pop();
       }

@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:stpvelox/application/inactivity/inactivity_notifier.dart';
 import 'package:stpvelox/application/screensaver/screensaver_settings_provider.dart';
 import 'package:stpvelox/core/logging/has_logging.dart';
 import 'package:stpvelox/core/router/app_router.dart';
+import 'package:stpvelox/main.dart' show dynamicUiActiveProvider;
 
 class InactivityListener extends ConsumerStatefulWidget {
   const InactivityListener({
@@ -18,7 +21,7 @@ class InactivityListener extends ConsumerStatefulWidget {
 }
 
 class _InactivityListenerState extends ConsumerState<InactivityListener> with HasLogger {
-  bool _screensaverShowing = false;
+  Timer? _retryTimer;
 
   void _handleUserActivity(String source) {
     log.finer('User activity detected from: $source');
@@ -26,16 +29,8 @@ class _InactivityListenerState extends ConsumerState<InactivityListener> with Ha
   }
 
   void _showScreensaver() {
-    if (_screensaverShowing) return;
-
-    final router = ref.read(appRouterProvider);
-    final currentLocation = router.routerDelegate.currentConfiguration.fullPath;
-
-    // Only show screensaver if we're on the dashboard
-    if (!isDashboardRoute(currentLocation)) {
-      log.fine('Screensaver blocked - not on dashboard (current: $currentLocation)');
-      return;
-    }
+    final isShowing = ref.read(screensaverShowingProvider);
+    if (isShowing) return;
 
     final screensaverEnabled = ref.read(screensaverEnabledProvider);
     if (!screensaverEnabled) {
@@ -43,26 +38,42 @@ class _InactivityListenerState extends ConsumerState<InactivityListener> with Ha
       return;
     }
 
-    if (!ScreensaverConfig.isWhitelisted('DashboardScreen')) {
-      log.fine('DashboardScreen not whitelisted for screensaver');
+    // If a custom (dynamic) UI screen is active, don't show — reschedule 1s later
+    final dynamicUiActive = ref.read(dynamicUiActiveProvider);
+    if (dynamicUiActive) {
+      log.fine('Screensaver deferred — dynamic UI is active, retrying in 1s');
+      _retryTimer?.cancel();
+      _retryTimer = Timer(const Duration(seconds: 1), () {
+        if (mounted && ref.read(inactivityProvider)) {
+          _showScreensaver();
+        }
+      });
       return;
     }
 
     log.info('Showing screensaver');
-    _screensaverShowing = true;
-    router.push(AppRoutes.robotFace);
+    ref.read(screensaverShowingProvider.notifier).set(true);
+    ref.read(appRouterProvider).push(AppRoutes.robotFace);
   }
 
   void _hideScreensaver() {
-    if (!_screensaverShowing) return;
+    _retryTimer?.cancel();
+    final isShowing = ref.read(screensaverShowingProvider);
+    if (!isShowing) return;
 
     log.info('Hiding screensaver');
-    _screensaverShowing = false;
+    ref.read(screensaverShowingProvider.notifier).set(false);
 
     final router = ref.read(appRouterProvider);
     if (router.canPop()) {
       router.pop();
     }
+  }
+
+  @override
+  void dispose() {
+    _retryTimer?.cancel();
+    super.dispose();
   }
 
   @override

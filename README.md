@@ -33,7 +33,6 @@ StpVelox is the graphical environment that runs directly on the [KIPR Wombat](ht
 | **WiFi** | Scan, connect, and manage networks via Linux NetworkManager |
 | **Settings** | Device config, touch calibration for the embedded display |
 | **Robot Face** | Animated face for the robot |
-| 🐦 **Flappy Wombat** | Easter egg — Flappy Bird controlled by digital sensor port 10 |
 
 ---
 

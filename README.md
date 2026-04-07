@@ -32,7 +32,6 @@ StpVelox is the graphical environment that runs directly on the [KIPR Wombat](ht
 | **Camera** | Live camera feed from the robot's vision system |
 | **WiFi** | Scan, connect, and manage networks via Linux NetworkManager |
 | **Settings** | Device config, touch calibration for the embedded display |
-| **Robot Face** | Animated face for the robot |
 
 ---
 

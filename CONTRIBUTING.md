@@ -20,6 +20,9 @@ fvm flutter pub run build_runner build -d
 bash debug.sh
 ```
 
+> **flutter-pi compatibility warning**
+> flutter-pi requires a Flutter engine build with embedded Linux support — not every Flutter version ships one. FVM is configured (`.fvmrc`) to use a version that has the required engine binaries, but this needs to be checked whenever upgrading Flutter. If `flutterpi_tool` fails with a missing engine error, the pinned version in `.fvmrc` needs updating to one that has a compatible engine artifact. Check [flutter-pi releases](https://github.com/ardera/flutter-pi) for supported versions before bumping.
+
 ### Analyze
 
 ```bash

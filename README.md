@@ -89,9 +89,11 @@ lib/
 └── main.dart
 ```
 
-**Hardware access** goes through `KiprPlugin` — a native method channel that exposes motor/servo control, sensor reads (IMU, analog, digital), and battery monitoring from the underlying KIPR C library.
+**Hardware data** flows in via [LCM](https://lcm-proj.github.io/) through [raccoon-transport](https://github.com/htl-stp-ecer/raccoon-transport) — sensor values, motor state, and IMU readings are published on the LCM bus and consumed by the UI in real time.
 
 **Program execution** uses a pseudoterminal so program stdout/stderr stream live into the terminal widget (`xterm`).
+
+**Rendering** uses [flutter-pi](https://github.com/ardera/flutter-pi) to render directly to the Linux framebuffer — no desktop environment, no compositor overhead. This gives high frame rates at almost no system cost on the Pi.
 
 ---
 

@@ -7,7 +7,7 @@ import 'package:stpvelox/features/program/domain/entities/program_session.dart';
 import 'package:stpvelox/features/program/domain/services/program_lifecycle_service.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_face_animation_manager.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_face_painter.dart';
-import 'package:stpvelox/presentation/screens/robot_face/states/expression_state_manager.dart';
+
 
 class RobotFaceScreen extends ConsumerStatefulWidget {
   const RobotFaceScreen({super.key});
@@ -87,7 +87,14 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
     _previousButton10State = button10State;
 
     final colorSchemeAsync = ref.watch(robotColorSchemeProvider);
-    final expressionStateManager = ref.watch(expressionStateManagerProvider);
+    final personalityAsync = ref.watch(robotPersonalityProvider);
+
+    // Push personality into the expression state manager when it resolves
+    final personality = personalityAsync.asData?.value;
+    if (personality != null &&
+        _animationManager.expressionStateManager.personality == null) {
+      _animationManager.expressionStateManager.setPersonality(personality);
+    }
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -111,6 +118,7 @@ class _RobotFaceScreenState extends ConsumerState<RobotFaceScreen>
                 gazeOffset: _animationManager.gazeAnimation.value,
                 stateManager: _animationManager.expressionStateManager,
                 colorScheme: colorScheme,
+                personality: personality,
               ),
               child: Container(),
             );

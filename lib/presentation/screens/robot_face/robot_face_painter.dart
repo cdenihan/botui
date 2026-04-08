@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:stpvelox/core/utils/colors/robot_color_scheme.dart';
+import 'package:stpvelox/core/utils/robot_personality.dart';
 import 'robot_expressions.dart';
 import 'robot_eye_painter.dart';
 import 'robot_eyebrow_painter.dart';
+import 'robot_cosmetics_painter.dart';
 import 'states/expression_state_manager.dart';
 import 'states/base_expression_state.dart';
 
@@ -12,26 +14,35 @@ class RobotFacePainter extends CustomPainter {
   final Offset gazeOffset;
   final ExpressionStateManager stateManager;
   final RobotColorScheme colorScheme;
+  final RobotPersonality? personality;
 
   const RobotFacePainter({
     required this.blinkValue,
     required this.gazeOffset,
     required this.stateManager,
     required this.colorScheme,
+    this.personality,
   });
 
   @override
   void paint(Canvas canvas, Size size) {
     _drawBackground(canvas, size);
 
-    // Get base eye dimensions
+    // Draw cosmetics behind eyes
+    if (personality != null) {
+      RobotCosmeticsPainter.drawCosmetics(
+        canvas, size, personality!, colorScheme.eyeColor,
+      );
+    }
+
+    // Get base eye dimensions, applying personality size factors
     final scaleFactor = _getScaleFactor(size);
     final baseDimensions = _getBaseEyeDimensions(scaleFactor, blinkValue);
 
     // Transform eyes using state manager
     final transformedDimensions = stateManager.transformEyes(baseDimensions);
 
-    // Draw eyes with transformed dimensions
+    // Draw eyes with transformed dimensions and personality shape
     RobotEyePainter.drawEyesWithDimensions(
       canvas,
       size,
@@ -39,6 +50,7 @@ class RobotFacePainter extends CustomPainter {
       transformedDimensions,
       eyeColor: colorScheme.eyeColor,
       eyeAccentColor: colorScheme.eyeAccentColor,
+      personality: personality,
     );
 
     // Get eyebrow configuration from state manager
@@ -48,6 +60,7 @@ class RobotFacePainter extends CustomPainter {
       size,
       eyebrowConfig,
       eyebrowColor: colorScheme.eyebrowColor,
+      eyebrowStyle: personality?.eyebrowStyle ?? EyebrowStyle.standard,
     );
 
     // Draw expression effects using state manager
@@ -66,8 +79,11 @@ class RobotFacePainter extends CustomPainter {
   }
 
   EyeDimensions _getBaseEyeDimensions(double scaleFactor, double blinkValue) {
-    final baseWidth = RobotFaceConstants.baseEyeWidth * scaleFactor;
-    final baseHeight = RobotFaceConstants.baseEyeHeight * scaleFactor * blinkValue;
+    final widthFactor = personality?.eyeWidthFactor ?? 1.0;
+    final heightFactor = personality?.eyeHeightFactor ?? 1.0;
+
+    final baseWidth = RobotFaceConstants.baseEyeWidth * scaleFactor * widthFactor;
+    final baseHeight = RobotFaceConstants.baseEyeHeight * scaleFactor * heightFactor * blinkValue;
 
     return EyeDimensions(
       leftWidth: baseWidth,
@@ -89,6 +105,7 @@ class RobotFacePainter extends CustomPainter {
   bool shouldRepaint(covariant RobotFacePainter oldDelegate) {
     return oldDelegate.blinkValue != blinkValue ||
         oldDelegate.gazeOffset != gazeOffset ||
-        oldDelegate.stateManager != stateManager;
+        oldDelegate.stateManager != stateManager ||
+        oldDelegate.personality != personality;
   }
 }

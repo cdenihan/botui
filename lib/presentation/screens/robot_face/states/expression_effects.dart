@@ -211,6 +211,427 @@ class ShockLineEffects {
   }
 }
 
+class SleepyZzzEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final random = math.Random(seed + 77);
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // ZZZs float up and to the right from above the right eye
+    final baseX = centerX + eyeSpacing / 2 + 40 * scaleFactor;
+    final baseY = centerY - 80 * scaleFactor;
+
+    for (int i = 0; i < 3; i++) {
+      final drift = (intensity * 60 + i * 35) * scaleFactor;
+      final xOff = i * 30.0 * scaleFactor + random.nextDouble() * 10 * scaleFactor;
+      final zSize = (14.0 + i * 6.0) * scaleFactor * (0.5 + intensity * 0.5);
+      final alpha = ((0.7 - i * 0.2) * intensity).clamp(0.0, 1.0);
+
+      final zPaint = Paint()
+        ..color = paint.color.withOpacity(alpha)
+        ..strokeWidth = 3.0 * scaleFactor
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+
+      final zx = baseX + xOff;
+      final zy = baseY - drift;
+
+      // Draw a Z shape
+      final path = Path()
+        ..moveTo(zx - zSize / 2, zy - zSize / 2)
+        ..lineTo(zx + zSize / 2, zy - zSize / 2)
+        ..lineTo(zx - zSize / 2, zy + zSize / 2)
+        ..lineTo(zx + zSize / 2, zy + zSize / 2);
+
+      canvas.drawPath(path, zPaint);
+    }
+  }
+}
+
+class SadTearEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    final tearPaint = Paint()
+      ..color = paint.color.withOpacity(0.5 * intensity)
+      ..style = PaintingStyle.fill;
+
+    // Tears falling from below each eye
+    for (final side in [-1.0, 1.0]) {
+      final eyeX = centerX + side * eyeSpacing / 2;
+      final tearX = eyeX + 10 * scaleFactor * side;
+      final tearStartY = centerY + 50 * scaleFactor;
+
+      // Two tear drops at different fall positions
+      for (int i = 0; i < 2; i++) {
+        final fall = (intensity * 80 + i * 50) * scaleFactor;
+        final tearY = tearStartY + fall;
+        final tearSize = (6.0 - i * 1.5) * scaleFactor * intensity;
+
+        if (tearSize > 1) {
+          // Teardrop shape: circle + triangle pointing up
+          canvas.drawCircle(Offset(tearX, tearY), tearSize, tearPaint);
+          final path = Path()
+            ..moveTo(tearX - tearSize, tearY)
+            ..lineTo(tearX, tearY - tearSize * 2.5)
+            ..lineTo(tearX + tearSize, tearY)
+            ..close();
+          canvas.drawPath(path, tearPaint);
+        }
+      }
+    }
+  }
+}
+
+class AngrySteamEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final pulse = 1.0 + math.sin(intensity * math.pi * 6) * 0.15;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // Anger vein marks (cross shapes) above outer edges of eyes
+    final veinPaint = Paint()
+      ..color = paint.color.withOpacity(0.6 * intensity)
+      ..strokeWidth = 3.5 * scaleFactor * pulse
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    for (final side in [-1.0, 1.0]) {
+      final vx = centerX + side * (eyeSpacing / 2 + 70 * scaleFactor);
+      final vy = centerY - 60 * scaleFactor;
+      final vs = 14.0 * scaleFactor * intensity;
+
+      // Cross/vein mark (#-shape)
+      canvas.drawLine(Offset(vx - vs, vy - vs * 0.3), Offset(vx + vs, vy - vs * 0.3), veinPaint);
+      canvas.drawLine(Offset(vx - vs, vy + vs * 0.3), Offset(vx + vs, vy + vs * 0.3), veinPaint);
+      canvas.drawLine(Offset(vx - vs * 0.3, vy - vs), Offset(vx - vs * 0.3, vy + vs), veinPaint);
+      canvas.drawLine(Offset(vx + vs * 0.3, vy - vs), Offset(vx + vs * 0.3, vy + vs), veinPaint);
+    }
+  }
+}
+
+class ConfusedQuestionEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final bob = math.sin(intensity * math.pi * 4) * 5 * scaleFactor;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // Question mark above right eye
+    final qx = centerX + eyeSpacing / 2 + 50 * scaleFactor;
+    final qy = centerY - 110 * scaleFactor + bob;
+    final qSize = 18.0 * scaleFactor * (0.5 + intensity * 0.5);
+
+    final qPaint = Paint()
+      ..color = paint.color.withOpacity(0.6 * intensity)
+      ..strokeWidth = 3.5 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final dotPaint = Paint()
+      ..color = paint.color.withOpacity(0.6 * intensity)
+      ..style = PaintingStyle.fill;
+
+    // Question mark curve
+    final path = Path()
+      ..moveTo(qx - qSize * 0.6, qy - qSize)
+      ..quadraticBezierTo(qx - qSize * 0.6, qy - qSize * 1.6, qx, qy - qSize * 1.6)
+      ..quadraticBezierTo(qx + qSize * 0.8, qy - qSize * 1.6, qx + qSize * 0.8, qy - qSize * 0.8)
+      ..quadraticBezierTo(qx + qSize * 0.8, qy - qSize * 0.2, qx, qy);
+    canvas.drawPath(path, qPaint);
+
+    // Question mark dot
+    canvas.drawCircle(Offset(qx, qy + qSize * 0.5), 3.0 * scaleFactor, dotPaint);
+
+    // Smaller secondary ? above left eye if intensity is high
+    if (intensity > 0.5) {
+      final q2x = centerX - eyeSpacing / 2 - 40 * scaleFactor;
+      final q2y = centerY - 100 * scaleFactor - bob;
+      final q2Size = 12.0 * scaleFactor * intensity;
+
+      final q2Paint = Paint()
+        ..color = paint.color.withOpacity(0.35 * intensity)
+        ..strokeWidth = 2.5 * scaleFactor
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
+
+      final path2 = Path()
+        ..moveTo(q2x - q2Size * 0.6, q2y - q2Size)
+        ..quadraticBezierTo(q2x - q2Size * 0.6, q2y - q2Size * 1.6, q2x, q2y - q2Size * 1.6)
+        ..quadraticBezierTo(q2x + q2Size * 0.8, q2y - q2Size * 1.6, q2x + q2Size * 0.8, q2y - q2Size * 0.8)
+        ..quadraticBezierTo(q2x + q2Size * 0.8, q2y - q2Size * 0.2, q2x, q2y);
+      canvas.drawPath(path2, q2Paint);
+
+      canvas.drawCircle(Offset(q2x, q2y + q2Size * 0.5), 2.0 * scaleFactor,
+        Paint()..color = paint.color.withOpacity(0.35 * intensity)..style = PaintingStyle.fill);
+    }
+  }
+}
+
+class AnnoyedTickEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final throb = 1.0 + math.sin(intensity * math.pi * 8) * 0.1;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // Single anger vein mark above right eye
+    final vx = centerX + eyeSpacing / 2 + 55 * scaleFactor;
+    final vy = centerY - 80 * scaleFactor;
+    final vs = 12.0 * scaleFactor * intensity * throb;
+
+    final veinPaint = Paint()
+      ..color = paint.color.withOpacity(0.5 * intensity)
+      ..strokeWidth = 3.0 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    // Cross/vein mark
+    canvas.drawLine(Offset(vx - vs, vy - vs * 0.3), Offset(vx + vs, vy - vs * 0.3), veinPaint);
+    canvas.drawLine(Offset(vx - vs, vy + vs * 0.3), Offset(vx + vs, vy + vs * 0.3), veinPaint);
+    canvas.drawLine(Offset(vx - vs * 0.3, vy - vs), Offset(vx - vs * 0.3, vy + vs), veinPaint);
+    canvas.drawLine(Offset(vx + vs * 0.3, vy - vs), Offset(vx + vs * 0.3, vy + vs), veinPaint);
+  }
+}
+
+class FocusedTargetEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final pulse = 0.8 + math.sin(intensity * math.pi * 3) * 0.2;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+
+    // Subtle bracket marks in corners (like a camera viewfinder)
+    final bracketSize = 30.0 * scaleFactor * intensity;
+    final bracketInset = 80.0 * scaleFactor;
+    final bracketPaint = Paint()
+      ..color = paint.color.withOpacity(0.25 * intensity * pulse)
+      ..strokeWidth = 2.0 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.square;
+
+    // Top-left bracket
+    _drawCornerBracket(canvas, centerX - bracketInset, centerY - bracketInset * 0.6,
+        bracketSize, bracketPaint, topLeft: true);
+    // Top-right bracket
+    _drawCornerBracket(canvas, centerX + bracketInset, centerY - bracketInset * 0.6,
+        bracketSize, bracketPaint, topLeft: false);
+    // Bottom-left bracket
+    _drawCornerBracket(canvas, centerX - bracketInset, centerY + bracketInset * 0.6,
+        bracketSize, bracketPaint, topLeft: true, flip: true);
+    // Bottom-right bracket
+    _drawCornerBracket(canvas, centerX + bracketInset, centerY + bracketInset * 0.6,
+        bracketSize, bracketPaint, topLeft: false, flip: true);
+  }
+
+  static void _drawCornerBracket(Canvas canvas, double x, double y,
+      double size, Paint paint, {required bool topLeft, bool flip = false}) {
+    final dx = topLeft ? -1.0 : 1.0;
+    final dy = flip ? 1.0 : -1.0;
+    final path = Path()
+      ..moveTo(x + dx * size, y)
+      ..lineTo(x, y)
+      ..lineTo(x, y + dy * size);
+    canvas.drawPath(path, paint);
+  }
+}
+
+class MischievousSquiggleEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // Sweat drop on one side
+    final dropX = centerX - eyeSpacing / 2 - 60 * scaleFactor;
+    final dropY = centerY - 30 * scaleFactor;
+    final dropSize = 8.0 * scaleFactor * intensity;
+
+    if (dropSize > 2) {
+      final dropPaint = Paint()
+        ..color = paint.color.withOpacity(0.4 * intensity)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawCircle(Offset(dropX, dropY + dropSize), dropSize, dropPaint);
+      final path = Path()
+        ..moveTo(dropX - dropSize * 0.7, dropY + dropSize)
+        ..lineTo(dropX, dropY - dropSize * 1.5)
+        ..lineTo(dropX + dropSize * 0.7, dropY + dropSize)
+        ..close();
+      canvas.drawPath(path, dropPaint);
+    }
+
+    // Small squiggly line near right eye (sneaky)
+    final sqPaint = Paint()
+      ..color = paint.color.withOpacity(0.3 * intensity)
+      ..strokeWidth = 2.0 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final sqX = centerX + eyeSpacing / 2 + 60 * scaleFactor;
+    final sqY = centerY + 20 * scaleFactor;
+    final sqPath = Path()..moveTo(sqX, sqY);
+    for (int i = 0; i < 4; i++) {
+      sqPath.relativeQuadraticBezierTo(
+        6 * scaleFactor, (i.isEven ? -8 : 8) * scaleFactor * intensity,
+        12 * scaleFactor, 0,
+      );
+    }
+    canvas.drawPath(sqPath, sqPaint);
+  }
+}
+
+class SkepticalEllipsisEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final bob = math.sin(intensity * math.pi * 2) * 3 * scaleFactor;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+
+    // Three dots (...) above center
+    final dotPaint = Paint()
+      ..color = paint.color.withOpacity(0.45 * intensity)
+      ..style = PaintingStyle.fill;
+
+    final dotY = centerY - 130 * scaleFactor + bob;
+    final dotRadius = 4.0 * scaleFactor * (0.5 + intensity * 0.5);
+    final dotSpacing = 18.0 * scaleFactor;
+
+    for (int i = -1; i <= 1; i++) {
+      canvas.drawCircle(Offset(centerX + i * dotSpacing, dotY), dotRadius, dotPaint);
+    }
+  }
+}
+
+class CuriousExclamationEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final pop = math.sin(intensity * math.pi * 3) * 4 * scaleFactor;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // Small lightbulb / exclamation above right eye
+    final ex = centerX + eyeSpacing / 2 + 50 * scaleFactor;
+    final ey = centerY - 120 * scaleFactor + pop;
+
+    final ePaint = Paint()
+      ..color = paint.color.withOpacity(0.5 * intensity)
+      ..strokeWidth = 3.5 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final dotPaint = Paint()
+      ..color = paint.color.withOpacity(0.5 * intensity)
+      ..style = PaintingStyle.fill;
+
+    // Exclamation line
+    final lineH = 18.0 * scaleFactor * (0.5 + intensity * 0.5);
+    canvas.drawLine(Offset(ex, ey - lineH), Offset(ex, ey), ePaint);
+
+    // Exclamation dot
+    canvas.drawCircle(Offset(ex, ey + 8 * scaleFactor), 3.0 * scaleFactor, dotPaint);
+
+    // Small glow
+    final glowPaint = Paint()
+      ..color = paint.color.withOpacity(0.12 * intensity)
+      ..style = PaintingStyle.fill
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, 8.0 * scaleFactor);
+    canvas.drawCircle(Offset(ex, ey - lineH / 2), lineH, glowPaint);
+  }
+}
+
+class IrritatedHashEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+    final shake = math.sin(intensity * math.pi * 12) * 3 * scaleFactor;
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // Vein marks on both sides, shaking
+    final veinPaint = Paint()
+      ..color = paint.color.withOpacity(0.55 * intensity)
+      ..strokeWidth = 3.0 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    for (final side in [-1.0, 1.0]) {
+      final vx = centerX + side * (eyeSpacing / 2 + 60 * scaleFactor) + shake;
+      final vy = centerY - 70 * scaleFactor;
+      final vs = 11.0 * scaleFactor * intensity;
+
+      canvas.drawLine(Offset(vx - vs, vy - vs * 0.3), Offset(vx + vs, vy - vs * 0.3), veinPaint);
+      canvas.drawLine(Offset(vx - vs, vy + vs * 0.3), Offset(vx + vs, vy + vs * 0.3), veinPaint);
+      canvas.drawLine(Offset(vx - vs * 0.3, vy - vs), Offset(vx - vs * 0.3, vy + vs), veinPaint);
+      canvas.drawLine(Offset(vx + vs * 0.3, vy - vs), Offset(vx + vs * 0.3, vy + vs), veinPaint);
+    }
+  }
+}
+
+class DeadXEffects {
+  static void draw(Canvas canvas, Size size, double intensity, Paint paint, int seed) {
+    final scaleFactor = math.min(size.width / RobotFaceConstants.referenceWidth,
+                                 size.height / RobotFaceConstants.referenceHeight);
+
+    final centerX = size.width / 2;
+    final centerY = size.height / 2;
+    final eyeSpacing = RobotFaceConstants.eyeSpacing * scaleFactor;
+
+    // X marks over each eye position (drawn on top of the shrunken eyes)
+    final xPaint = Paint()
+      ..color = paint.color.withOpacity(0.5 * intensity)
+      ..strokeWidth = 4.0 * scaleFactor
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final xSize = 25.0 * scaleFactor * intensity;
+
+    for (final side in [-1.0, 1.0]) {
+      final ex = centerX + side * eyeSpacing / 2;
+      canvas.drawLine(
+        Offset(ex - xSize, centerY - xSize),
+        Offset(ex + xSize, centerY + xSize),
+        xPaint,
+      );
+      canvas.drawLine(
+        Offset(ex + xSize, centerY - xSize),
+        Offset(ex - xSize, centerY + xSize),
+        xPaint,
+      );
+    }
+  }
+}
+
 List<Offset> _generateNonOverlappingPositions(Size size, math.Random random,
                                              int count, double minDistance) {
   final positions = <Offset>[];

@@ -221,6 +221,11 @@ class CuriousState extends BaseExpressionState {
       yOffset: (-125.0 - (intensity * 5)) * scaleFactor,
     );
   }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    CuriousExclamationEffects.draw(canvas, size, intensity, eyePaint, seed);
+  }
 }
 
 class SleepyState extends BaseExpressionState {
@@ -245,6 +250,11 @@ class SleepyState extends BaseExpressionState {
       width: 140.0 * scaleFactor,
       yOffset: (-105.0 + (intensity * 10)) * scaleFactor,
     );
+  }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    SleepyZzzEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
 
@@ -301,6 +311,11 @@ class SadState extends BaseExpressionState {
       yOffset: (-115.0 + (intensity * 5)) * scaleFactor,
     );
   }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    SadTearEffects.draw(canvas, size, intensity, eyePaint, seed);
+  }
 }
 
 class AngryState extends BaseExpressionState {
@@ -325,6 +340,11 @@ class AngryState extends BaseExpressionState {
       width: 140.0 * scaleFactor,
       yOffset: (-100.0 - (intensity * 15)) * scaleFactor,
     );
+  }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    AngrySteamEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
 
@@ -381,6 +401,11 @@ class ConfusedState extends BaseExpressionState {
       yOffset: (-115.0 - (intensity * 8)) * scaleFactor,
     );
   }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    ConfusedQuestionEffects.draw(canvas, size, intensity, eyePaint, seed);
+  }
 }
 
 class MischievousState extends BaseExpressionState {
@@ -406,6 +431,11 @@ class MischievousState extends BaseExpressionState {
       yOffset: (-110.0 - (intensity * 5)) * scaleFactor,
     );
   }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    MischievousSquiggleEffects.draw(canvas, size, intensity, eyePaint, seed);
+  }
 }
 
 class FocusedState extends BaseExpressionState {
@@ -430,6 +460,11 @@ class FocusedState extends BaseExpressionState {
       width: 140.0 * scaleFactor,
       yOffset: (-125.0 - (intensity * 10)) * scaleFactor,
     );
+  }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    FocusedTargetEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
 
@@ -518,6 +553,11 @@ class AnnoyedState extends BaseExpressionState {
       yOffset: (-105.0 - (intensity * 10)) * scaleFactor,
     );
   }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    AnnoyedTickEffects.draw(canvas, size, intensity, eyePaint, seed);
+  }
 }
 
 class SkepticalState extends BaseExpressionState {
@@ -543,6 +583,11 @@ class SkepticalState extends BaseExpressionState {
       yOffset: (-115.0 - (intensity * 8)) * scaleFactor,
     );
   }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    SkepticalEllipsisEffects.draw(canvas, size, intensity, eyePaint, seed);
+  }
 }
 
 class IrritatedState extends BaseExpressionState {
@@ -567,6 +612,11 @@ class IrritatedState extends BaseExpressionState {
       width: 140.0 * scaleFactor,
       yOffset: (-105.0 - (intensity * 10)) * scaleFactor,
     );
+  }
+
+  @override
+  void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
+    IrritatedHashEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }
 
@@ -596,6 +646,6 @@ class DeadState extends BaseExpressionState {
 
   @override
   void drawEffects(Canvas canvas, Size size, double intensity, Paint eyePaint, {Color? effectColor, Color? glowColor}) {
-    // No effects for dead state
+    DeadXEffects.draw(canvas, size, intensity, eyePaint, seed);
   }
 }

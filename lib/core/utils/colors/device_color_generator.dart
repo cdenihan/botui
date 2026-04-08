@@ -4,6 +4,7 @@ import 'package:stpvelox/core/di/injection.dart';
 import 'package:stpvelox/core/utils/colors/color_palette.dart';
 import 'package:stpvelox/core/utils/colors/robot_color_scheme.dart';
 import 'package:stpvelox/core/utils/mac_address_converter.dart';
+import 'package:stpvelox/core/utils/robot_personality.dart';
 
 class DeviceColorGenerator {
   RobotColorScheme? _colorScheme;
@@ -270,4 +271,10 @@ final robotColorSchemeProvider = FutureProvider<RobotColorScheme>((ref) async {
   } else {
     return deviceColorGenerator.generateUniqueColors("00:00:00:00:00:00");
   }
+});
+
+// Provider for RobotPersonality that depends on MAC address
+final robotPersonalityProvider = FutureProvider<RobotPersonality>((ref) async {
+  final macAddress = await ref.read(macAddressProvider.future);
+  return RobotPersonality.fromMac(macAddress ?? "00:00:00:00:00:00");
 });

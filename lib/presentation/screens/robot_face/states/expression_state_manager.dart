@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/legacy.dart';
+import 'package:stpvelox/core/utils/robot_personality.dart';
 import 'package:stpvelox/presentation/screens/robot_face/states/base_expression_state.dart';
 import 'package:stpvelox/presentation/screens/robot_face/robot_expressions.dart';
 
@@ -15,6 +16,9 @@ class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
 
   // Focused mode — suppresses random cycling
   bool _focusedMode = false;
+
+  // Personality — drives weighted expression selection and resting face
+  RobotPersonality? _personality;
 
   // Button 10 irritation tracking
   int _button10PressCount = 0;
@@ -41,6 +45,14 @@ class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
   int get button10PressCount => _button10PressCount;
 
   bool get isInIrritationSequence => _isInIrritationSequence;
+
+  RobotPersonality? get personality => _personality;
+
+  /// Set the robot's personality. Drives weighted expression selection and
+  /// resting face. Call once after MAC-based personality is resolved.
+  void setPersonality(RobotPersonality personality) {
+    _personality = personality;
+  }
 
   // Button 10 press handler
   void handleButton10Press() {
@@ -95,12 +107,15 @@ class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
     _lastButton10Press = null;
     _isInIrritationSequence = false;
 
-    // If currently in an irritation state, transition back to neutral
+    // If currently in an irritation state, transition back to resting expression
     if (_currentState.type == RobotExpression.irritated ||
         _currentState.type == RobotExpression.angry ||
         _currentState.type == RobotExpression.dead) {
-      final neutralState = NeutralState(seed: math.Random().nextInt(1000000));
-      _forceTransitionToState(neutralState);
+      final restingExpression =
+          _personality?.restingExpression ?? RobotExpression.neutral;
+      final seed = math.Random().nextInt(1000000);
+      final restingState = BaseExpressionState.create(restingExpression, seed);
+      _forceTransitionToState(restingState);
     }
   }
 
@@ -162,22 +177,34 @@ class ExpressionStateManager extends StateNotifier<BaseExpressionState> {
 
   Future<void> returnToNeutral(TickerProvider vsync) async {
     if (_isDisposed) return;
-    final neutralState = NeutralState(seed: math.Random().nextInt(1000000));
-    await transitionToState(neutralState, vsync);
+    final restingExpression =
+        _personality?.restingExpression ?? RobotExpression.neutral;
+    final seed = math.Random().nextInt(1000000);
+    final restingState = BaseExpressionState.create(restingExpression, seed);
+    await transitionToState(restingState, vsync);
   }
 
-  // Random expression selection
+  // Random expression selection — uses personality weights when available
   Future<void> transitionToRandomExpression(TickerProvider vsync) async {
     if (_isDisposed) return;
 
-    final availableExpressions =
-        RobotExpression.values.where((e) => e != _currentState.type).toList();
+    final RobotExpression selectedExpression;
 
-    if (availableExpressions.isEmpty) return;
-
-    final random = math.Random();
-    final selectedExpression =
-        availableExpressions[random.nextInt(availableExpressions.length)];
+    if (_personality != null) {
+      selectedExpression = _personality!.pickRandomExpression(_currentState.type);
+    } else {
+      // Fallback: uniform random (excluding current + event-only states)
+      final availableExpressions = RobotExpression.values
+          .where((e) =>
+              e != _currentState.type &&
+              e != RobotExpression.irritated &&
+              e != RobotExpression.dead)
+          .toList();
+      if (availableExpressions.isEmpty) return;
+      final random = math.Random();
+      selectedExpression =
+          availableExpressions[random.nextInt(availableExpressions.length)];
+    }
 
     await transitionToExpression(selectedExpression, vsync);
   }

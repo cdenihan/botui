@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import 'package:stpvelox/core/utils/robot_personality.dart';
 import 'robot_expressions.dart';
 import 'states/base_expression_state.dart';
 
@@ -8,7 +9,8 @@ class RobotEyebrowPainter {
     Canvas canvas,
     Size size,
     EyebrowConfiguration config,
-    {required Color eyebrowColor}
+    {required Color eyebrowColor,
+    EyebrowStyle eyebrowStyle = EyebrowStyle.standard}
   ) {
     final scaleFactor = math.min(
       size.width / RobotFaceConstants.referenceWidth,
@@ -31,27 +33,15 @@ class RobotEyebrowPainter {
     final leftEyeCenter = Offset(centerX - eyeSpacing / 2, centerY);
     final rightEyeCenter = Offset(centerX + eyeSpacing / 2, centerY);
 
-    _drawSingleEyebrow(
-      canvas,
-      leftEyeCenter,
-      config.leftAngle,
-      config.thickness,
-      config.width,
-      config.yOffset,
-      eyebrowPaint,
-      eyebrowStrokePaint,
-      true,
+    _drawStyledEyebrow(
+      canvas, leftEyeCenter, config.leftAngle, config.thickness,
+      config.width, config.yOffset, eyebrowPaint, eyebrowStrokePaint,
+      true, eyebrowStyle, scaleFactor,
     );
-    _drawSingleEyebrow(
-      canvas,
-      rightEyeCenter,
-      config.rightAngle,
-      config.thickness,
-      config.width,
-      config.yOffset,
-      eyebrowPaint,
-      eyebrowStrokePaint,
-      false,
+    _drawStyledEyebrow(
+      canvas, rightEyeCenter, config.rightAngle, config.thickness,
+      config.width, config.yOffset, eyebrowPaint, eyebrowStrokePaint,
+      false, eyebrowStyle, scaleFactor,
     );
   }
 
@@ -224,6 +214,130 @@ class RobotEyebrowPainter {
       width: width,
       yOffset: yOffset,
     );
+  }
+
+  static void _drawStyledEyebrow(
+    Canvas canvas,
+    Offset eyeCenter,
+    double angle,
+    double thickness,
+    double width,
+    double yOffset,
+    Paint fillPaint,
+    Paint strokePaint,
+    bool isLeft,
+    EyebrowStyle style,
+    double scaleFactor,
+  ) {
+    switch (style) {
+      case EyebrowStyle.standard:
+        _drawSingleEyebrow(canvas, eyeCenter, angle, thickness, width,
+            yOffset, fillPaint, strokePaint, isLeft);
+
+      case EyebrowStyle.curved:
+        _drawCurvedEyebrow(canvas, eyeCenter, angle, thickness, width,
+            yOffset, fillPaint, strokePaint, isLeft);
+
+      case EyebrowStyle.thin:
+        _drawSingleEyebrow(canvas, eyeCenter, angle, thickness * 0.5, width,
+            yOffset, fillPaint, strokePaint, isLeft);
+
+      case EyebrowStyle.thick:
+        _drawSingleEyebrow(canvas, eyeCenter, angle, thickness * 1.6, width,
+            yOffset, fillPaint, strokePaint, isLeft);
+
+      case EyebrowStyle.split:
+        _drawSplitEyebrow(canvas, eyeCenter, angle, thickness, width,
+            yOffset, fillPaint, strokePaint, isLeft, scaleFactor);
+
+      case EyebrowStyle.notched:
+        _drawNotchedEyebrow(canvas, eyeCenter, angle, thickness, width,
+            yOffset, fillPaint, strokePaint, isLeft, scaleFactor);
+    }
+  }
+
+  static void _drawCurvedEyebrow(
+    Canvas canvas, Offset eyeCenter, double angle, double thickness,
+    double width, double yOffset, Paint fillPaint, Paint strokePaint,
+    bool isLeft,
+  ) {
+    final startX = eyeCenter.dx - width / 2;
+    final endX = eyeCenter.dx + width / 2;
+    final baseY = eyeCenter.dy + yOffset;
+    final midX = eyeCenter.dx;
+
+    final startY = baseY + (isLeft ? -angle * 30 : angle * 30);
+    final endY = baseY + (isLeft ? angle * 30 : -angle * 30);
+    final midY = math.min(startY, endY) - thickness * 0.6;
+
+    // Top arc
+    final topPath = Path()
+      ..moveTo(startX, startY)
+      ..quadraticBezierTo(midX, midY, endX, endY);
+
+    // Bottom arc (offset by thickness)
+    final botPath = Path()
+      ..moveTo(endX, endY + thickness)
+      ..quadraticBezierTo(midX, midY + thickness, startX, startY + thickness);
+
+    final fullPath = Path()
+      ..addPath(topPath, Offset.zero)
+      ..lineTo(endX, endY + thickness);
+    fullPath.addPath(botPath, Offset.zero);
+    fullPath.close();
+
+    canvas.drawPath(fullPath, fillPaint);
+    canvas.drawPath(fullPath, strokePaint);
+  }
+
+  static void _drawSplitEyebrow(
+    Canvas canvas, Offset eyeCenter, double angle, double thickness,
+    double width, double yOffset, Paint fillPaint, Paint strokePaint,
+    bool isLeft, double scaleFactor,
+  ) {
+    final gap = 12.0 * scaleFactor;
+    final halfWidth = (width - gap) / 2;
+
+    // Left half
+    final leftCenter = Offset(eyeCenter.dx - (halfWidth + gap) / 2, eyeCenter.dy);
+    _drawSingleEyebrow(canvas, leftCenter, angle, thickness, halfWidth,
+        yOffset, fillPaint, strokePaint, isLeft);
+
+    // Right half
+    final rightCenter = Offset(eyeCenter.dx + (halfWidth + gap) / 2, eyeCenter.dy);
+    _drawSingleEyebrow(canvas, rightCenter, angle, thickness, halfWidth,
+        yOffset, fillPaint, strokePaint, isLeft);
+  }
+
+  static void _drawNotchedEyebrow(
+    Canvas canvas, Offset eyeCenter, double angle, double thickness,
+    double width, double yOffset, Paint fillPaint, Paint strokePaint,
+    bool isLeft, double scaleFactor,
+  ) {
+    final startX = eyeCenter.dx - width / 2;
+    final endX = eyeCenter.dx + width / 2;
+    final midX = eyeCenter.dx;
+    final baseY = eyeCenter.dy + yOffset;
+
+    final startY = baseY + (isLeft ? -angle * 30 : angle * 30);
+    final endY = baseY + (isLeft ? angle * 30 : -angle * 30);
+    final midY = (startY + endY) / 2;
+
+    final notchDepth = thickness * 0.7;
+    final notchWidth = 10.0 * scaleFactor;
+
+    final path = Path()
+      ..moveTo(startX, startY)
+      ..lineTo(midX - notchWidth, midY)
+      ..lineTo(midX, midY + notchDepth)
+      ..lineTo(midX + notchWidth, midY)
+      ..lineTo(endX, endY)
+      ..lineTo(endX, endY + thickness)
+      ..lineTo(startX, startY + thickness)
+      ..close();
+
+    canvas.drawPath(path, fillPaint);
+    canvas.drawPath(path, strokePaint);
   }
 
   static void _drawSingleEyebrow(

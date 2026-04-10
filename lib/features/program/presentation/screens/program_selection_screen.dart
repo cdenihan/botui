@@ -8,8 +8,6 @@ import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:stpvelox/features/program/presentation/providers/program_providers.dart';
-import 'package:stpvelox/features/program/presentation/widgets/program_sync_widgets.dart';
-import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 
 class ProgramSelectionScreen extends HookConsumerWidget {
   const ProgramSelectionScreen({super.key});
@@ -51,28 +49,43 @@ class ProgramSelectionScreen extends HookConsumerWidget {
 
   Widget _buildProgramTile(
       BuildContext context, WidgetRef ref, int index, Program program) {
-    // Stack lets the sync-version badge float in the top-right corner without
-    // modifying the shared ResponsiveGridTile widget. IgnorePointer on the badge
-    // keeps the whole tile tappable, even where the badge sits.
-    return Stack(
-      children: [
-        ResponsiveGridTile(
-          label: program.name,
-          icon: Icons.code,
-          onPressed: () => context.push(AppRoutes.programRun, extra: program),
+    final synced = program.syncState?.hasBeenSynced ?? false;
+    final versionLabel =
+        synced ? 'v${program.syncState!.version}' : 'NOT SYNCED';
+
+    return GestureDetector(
+      onTap: () => context.push(AppRoutes.programRun, extra: program),
+      child: Container(
+        decoration: BoxDecoration(
           color: AppColors.getTileColor(index),
+          borderRadius: BorderRadius.circular(8.0),
         ),
-        Positioned(
-          top: 8,
-          right: 8,
-          child: IgnorePointer(
-            child: ProgramVersionChip(
-              syncState: program.syncState,
-              compact: true,
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.code, color: Colors.white, size: 88),
+            const SizedBox(height: 8),
+            Text(
+              program.name,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 18),
             ),
-          ),
+            const SizedBox(height: 6),
+            Text(
+              versionLabel,
+              style: TextStyle(
+                color: synced ? Colors.white : Colors.red.shade100,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
         ),
-      ],
+      ),
     );
   }
 }

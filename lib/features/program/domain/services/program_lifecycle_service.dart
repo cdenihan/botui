@@ -23,9 +23,14 @@ class ProgramLifecycleService extends _$ProgramLifecycleService {
     return null;
   }
 
-  Future<ProgramSession> startProgram(Program program, Map<String, String> args) async {
-    _log.info('[startProgram] Starting: ${program.name}');
-    _session = await ProgramSession.create(program, args);
+  Future<ProgramSession> startProgram(
+    Program program,
+    Map<String, String> args, {
+    List<String> extraFlags = const [],
+  }) async {
+    _log.info('[startProgram] Starting: ${program.name} flags=$extraFlags');
+    _session =
+        await ProgramSession.create(program, args, extraFlags: extraFlags);
     state = _session;
     return _session!;
   }

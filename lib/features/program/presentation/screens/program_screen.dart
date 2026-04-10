@@ -80,24 +80,44 @@ class ProgramScreen extends HookConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      SizedBox(
-                        width: 180,
-                        height: 180,
-                        child: ResponsiveGridTile(
-                          label: 'Start',
-                          icon: Icons.play_arrow,
-                          color: Colors.green,
-                          onPressed: () {
-                            createArgOverlay(
-                                context,
-                                overlayEntry,
-                                {},
-                                current,
-                                0,
-                                current.args.firstOrNull,
-                                ref);
-                          },
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 180,
+                            height: 180,
+                            child: ResponsiveGridTile(
+                              label: 'Start',
+                              icon: Icons.play_arrow,
+                              color: Colors.green,
+                              onPressed: () {
+                                createArgOverlay(
+                                    context,
+                                    overlayEntry,
+                                    {},
+                                    current,
+                                    0,
+                                    current.args.firstOrNull,
+                                    ref,
+                                    const []);
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          SizedBox(
+                            width: 180,
+                            height: 180,
+                            child: ResponsiveGridTile(
+                              label: 'Advanced',
+                              icon: Icons.tune,
+                              color: Colors.blueGrey,
+                              onPressed: () {
+                                createAdvancedOverlay(
+                                    context, overlayEntry, current, ref);
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       ProgramSyncDetailsCard(syncState: syncState),
@@ -119,14 +139,15 @@ void createArgOverlay(
     Program program,
     int idx,
     Arg? arg,
-    WidgetRef ref) {
+    WidgetRef ref,
+    List<String> extraFlags) {
   removeOverlay(overlayEntry);
   assert(overlayEntry.value == null);
 
   if (arg == null) {
     ref
         .read(programLifecycleServiceProvider.notifier)
-        .startProgram(program, args);
+        .startProgram(program, args, extraFlags: extraFlags);
     return;
   }
 
@@ -167,12 +188,12 @@ void createArgOverlay(
                     onPressed: () {
                       if (idx + 1 >= program.args.length) {
                         createArgOverlay(context, overlayEntry, args, program,
-                            idx + 1, null, ref);
+                            idx + 1, null, ref, extraFlags);
                         return;
                       }
 
                       createArgOverlay(context, overlayEntry, args, program,
-                          idx + 1, program.args[idx + 1], ref);
+                          idx + 1, program.args[idx + 1], ref, extraFlags);
                     },
                   ),
                 ),
@@ -187,8 +208,151 @@ void createArgOverlay(
   Overlay.of(context).insert(overlayEntry.value!);
 }
 
+void createAdvancedOverlay(
+    BuildContext context,
+    ValueNotifier<OverlayEntry?> overlayEntry,
+    Program program,
+    WidgetRef ref) {
+  removeOverlay(overlayEntry);
+  assert(overlayEntry.value == null);
+
+  var devEnabled = false;
+  var noCalibrateEnabled = false;
+
+  overlayEntry.value = OverlayEntry(
+    builder: (BuildContext context) {
+      return Material(
+        color: Colors.black87,
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Advanced options',
+                      style: TextStyle(
+                        fontSize: 26,
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    _AdvancedFlagRow(
+                      label: '--dev',
+                      value: devEnabled,
+                      onChanged: (v) => setState(() => devEnabled = v),
+                    ),
+                    const SizedBox(height: 8),
+                    _AdvancedFlagRow(
+                      label: '--no-calibrate',
+                      value: noCalibrateEnabled,
+                      onChanged: (v) => setState(() => noCalibrateEnabled = v),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 160,
+                          height: 160,
+                          child: ResponsiveGridTile(
+                            label: 'Cancel',
+                            icon: Icons.close,
+                            color: Colors.redAccent,
+                            onPressed: () => removeOverlay(overlayEntry),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 160,
+                          height: 160,
+                          child: ResponsiveGridTile(
+                            label: 'Start',
+                            icon: Icons.play_arrow,
+                            color: Colors.green,
+                            onPressed: () {
+                              final flags = <String>[
+                                if (devEnabled) '--dev',
+                                if (noCalibrateEnabled) '--no-calibrate',
+                              ];
+                              createArgOverlay(
+                                  context,
+                                  overlayEntry,
+                                  {},
+                                  program,
+                                  0,
+                                  program.args.firstOrNull,
+                                  ref,
+                                  flags);
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+
+  Overlay.of(context).insert(overlayEntry.value!);
+}
+
 void removeOverlay(ValueNotifier<OverlayEntry?> overlayEntry) {
   overlayEntry.value?.remove();
   overlayEntry.value?.dispose();
   overlayEntry.value = null;
+}
+
+class _AdvancedFlagRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _AdvancedFlagRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: Container(
+        width: 360,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white10,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'DejaVu Sans Mono',
+                  fontSize: 20,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            Switch(
+              value: value,
+              onChanged: onChanged,
+              activeColor: Colors.green,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

@@ -20,7 +20,8 @@ class ProgramSession {
   ProgramSession._internal();
 
   static Future<ProgramSession> create(
-      Program program, Map<String, String> args) async {
+      Program program, Map<String, String> args,
+      {List<String> extraFlags = const []}) async {
     final session = ProgramSession._internal();
 
     session.terminal = Terminal();
@@ -32,9 +33,11 @@ class ProgramSession {
     // project_id is the UUID directory name (last segment of parentDir)
     final projectId = program.parentDir.split('/').last;
 
-    // Map args to --key=value strings
-    final argsList =
-        args.entries.map((e) => '--${e.key}=${e.value}').toList();
+    // Map args to --key=value strings, then append any bare flags (e.g. --dev).
+    final argsList = [
+      ...args.entries.map((e) => '--${e.key}=${e.value}'),
+      ...extraFlags,
+    ];
 
     final commandId = await client.run(projectId, args: argsList);
     session._commandId = commandId;

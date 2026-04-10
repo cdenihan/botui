@@ -42,7 +42,7 @@ final class ProgramLifecycleServiceProvider
 }
 
 String _$programLifecycleServiceHash() =>
-    r'2946c2bf5e2a870970e822b9713cbc814870220c';
+    r'3c93102f4f86bb4a334ad01c72b89d8cb1a2a8c6';
 
 abstract class _$ProgramLifecycleService extends $Notifier<ProgramSession?> {
   ProgramSession? build();

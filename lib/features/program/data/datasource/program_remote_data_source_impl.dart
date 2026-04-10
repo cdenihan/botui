@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'package:yaml/yaml.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
+import 'package:stpvelox/features/program/domain/entities/sync_state.dart';
 import 'package:stpvelox/features/program/domain/repositories/program_remote_data_source.dart';
 import 'package:stpvelox/features/sensors/domain/entities/args/arg.dart';
 
@@ -116,11 +117,16 @@ class ProgramRemoteDataSourceImpl implements ProgramRemoteDataSource {
             name: 'ProgramRemoteDataSourceImpl');
       }
 
+      // Load .raccoon/sync_state.json if present — it's just a local file,
+      // no HTTP roundtrip. Absent means the project has never been synced.
+      final syncState = await SyncState.loadFromProjectDir(dir.path);
+
       final program = Program(
         name: name,
         parentDir: dir.path,
         runScript: runScript,
         args: args,
+        syncState: syncState,
       );
 
       programs.add(program);

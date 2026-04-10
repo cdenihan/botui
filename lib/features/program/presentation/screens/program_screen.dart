@@ -5,6 +5,8 @@ import 'package:logging/logging.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
 import 'package:stpvelox/features/program/domain/services/program_lifecycle_service.dart';
+import 'package:stpvelox/features/program/presentation/providers/program_providers.dart';
+import 'package:stpvelox/features/program/presentation/widgets/program_sync_widgets.dart';
 import 'package:stpvelox/features/sensors/domain/entities/args/arg.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 import 'package:xterm/xterm.dart';
@@ -21,6 +23,19 @@ class ProgramScreen extends HookConsumerWidget {
     final overlayEntry = useState<OverlayEntry?>(null);
     final state = ref.watch(programLifecycleServiceProvider);
 
+    // Watch the programs list so file-watcher updates flow in automatically.
+    // Resolve the current entry by parentDir (the stable on-disk identifier)
+    // and fall back to the route argument until the list has loaded.
+    final listAsync = ref.watch(programSelectionProvider);
+    final current = listAsync.maybeWhen(
+      data: (programs) => programs.firstWhere(
+        (p) => p.parentDir == program.parentDir,
+        orElse: () => program,
+      ),
+      orElse: () => program,
+    );
+    final syncState = current.syncState;
+
     useEffect(() {
       _log.info('[useEffect] ProgramScreen mounted');
       return () {
@@ -36,7 +51,14 @@ class ProgramScreen extends HookConsumerWidget {
     }, []);
 
     return Scaffold(
-      appBar: createTopBar(context, program.name),
+      appBar: createTopBar(
+        context,
+        current.name,
+        trailing: Padding(
+          padding: const EdgeInsets.only(right: 16),
+          child: ProgramVersionChip(syncState: syncState),
+        ),
+      ),
       body: Stack(
         children: [
           if (state != null)
@@ -51,18 +73,35 @@ class ProgramScreen extends HookConsumerWidget {
           if (state == null)
             Container(
               color: Colors.black,
-              child: Center(
-                child: SizedBox(
-                  width: 200,
-                  height: 200,
-                  child: ResponsiveGridTile(
-                    label: 'Start',
-                    icon: Icons.play_arrow,
-                    color: Colors.green,
-                    onPressed: () {
-                      createArgOverlay(context, overlayEntry, {}, program, 0,
-                          program.args.firstOrNull, ref);
-                    },
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SizedBox(
+                        width: 180,
+                        height: 180,
+                        child: ResponsiveGridTile(
+                          label: 'Start',
+                          icon: Icons.play_arrow,
+                          color: Colors.green,
+                          onPressed: () {
+                            createArgOverlay(
+                                context,
+                                overlayEntry,
+                                {},
+                                current,
+                                0,
+                                current.args.firstOrNull,
+                                ref);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ProgramSyncDetailsCard(syncState: syncState),
+                    ],
                   ),
                 ),
               ),

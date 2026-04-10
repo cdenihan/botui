@@ -6,8 +6,9 @@ import 'package:stpvelox/core/router/app_router.dart';
 import 'package:stpvelox/core/utils/colors/colors.dart';
 import 'package:stpvelox/core/widgets/responsive_grid.dart';
 import 'package:stpvelox/core/widgets/top_bar.dart';
-import 'package:stpvelox/features/program/presentation/providers/program_providers.dart';
 import 'package:stpvelox/features/program/domain/entities/program.dart';
+import 'package:stpvelox/features/program/presentation/providers/program_providers.dart';
+import 'package:stpvelox/features/program/presentation/widgets/program_sync_widgets.dart';
 import 'package:stpvelox/features/wifi/presentation/widgets/grid_tile.dart';
 
 class ProgramSelectionScreen extends HookConsumerWidget {
@@ -50,11 +51,28 @@ class ProgramSelectionScreen extends HookConsumerWidget {
 
   Widget _buildProgramTile(
       BuildContext context, WidgetRef ref, int index, Program program) {
-    return ResponsiveGridTile(
-      label: program.name,
-      icon: Icons.code,
-      onPressed: () => context.push(AppRoutes.programRun, extra: program),
-      color: AppColors.getTileColor(index),
+    // Stack lets the sync-version badge float in the top-right corner without
+    // modifying the shared ResponsiveGridTile widget. IgnorePointer on the badge
+    // keeps the whole tile tappable, even where the badge sits.
+    return Stack(
+      children: [
+        ResponsiveGridTile(
+          label: program.name,
+          icon: Icons.code,
+          onPressed: () => context.push(AppRoutes.programRun, extra: program),
+          color: AppColors.getTileColor(index),
+        ),
+        Positioned(
+          top: 8,
+          right: 8,
+          child: IgnorePointer(
+            child: ProgramVersionChip(
+              syncState: program.syncState,
+              compact: true,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

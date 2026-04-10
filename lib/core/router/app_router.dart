@@ -27,6 +27,7 @@ import 'package:stpvelox/features/settings/presentation/pages/screen_rotation_sc
 import 'package:stpvelox/features/settings/presentation/pages/service_status_screen.dart';
 import 'package:stpvelox/features/settings/presentation/pages/service_tile_page.dart';
 import 'package:stpvelox/features/settings/presentation/pages/service_log_screen.dart';
+import 'package:stpvelox/features/settings/presentation/pages/robot_personality_screen.dart';
 
 // WiFi
 import 'package:stpvelox/features/wifi/presentation/pages/wifi_home_screen.dart';
@@ -80,6 +81,7 @@ abstract class AppRoutes {
   static const serviceStatus = '/settings/services';
   static const serviceTile = '/settings/services/tile';
   static const serviceLog = '/settings/services/log';
+  static const personality = '/settings/personality';
 
   // WiFi
   static const wifi = '/wifi';
@@ -235,6 +237,11 @@ GoRouter appRouter(Ref ref) {
             displayName: extra['displayName'] as String,
           );
         },
+      ),
+      GoRoute(
+        path: AppRoutes.personality,
+        name: 'personality',
+        builder: (context, state) => const RobotPersonalityScreen(),
       ),
 
       // WiFi

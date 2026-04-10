@@ -160,6 +160,13 @@ class SettingsRemoteDataSourceImpl implements SettingsRemoteDataSource {
         onTap: (context) => context.push(AppRoutes.serviceStatus),
       ),
       Setting(
+        icon: Icons.emoji_emotions,
+        label: "Personality",
+        color: Colors.pinkAccent,
+        type: SettingType.button,
+        onTap: (context) => context.push(AppRoutes.personality),
+      ),
+      Setting(
         icon: Icons.face,
         label: "Screensaver",
         color: Colors.cyan,

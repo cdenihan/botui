@@ -33,7 +33,7 @@ final class ProgramSelectionProvider
   ProgramSelection create() => ProgramSelection();
 }
 
-String _$programSelectionHash() => r'5dc9cf066ade51caddef3e14deeeed383cfd8a2c';
+String _$programSelectionHash() => r'19a120654993fbeab2cb77fb8d71f45632863542';
 
 abstract class _$ProgramSelection extends $AsyncNotifier<List<Program>> {
   FutureOr<List<Program>> build();

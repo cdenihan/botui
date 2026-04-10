@@ -51,4 +51,4 @@ final class ProgramRemoteDataSourceProvider extends $FunctionalProvider<
 }
 
 String _$programRemoteDataSourceHash() =>
-    r'6f76d731e8f13f3139dbd68d6d9c782bac95723c';
+    r'deea43a072190f5c9d312071673440e3d1dcf40f';

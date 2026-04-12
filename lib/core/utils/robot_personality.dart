@@ -275,7 +275,7 @@ class RobotPersonality {
     final pupilIndex = (macInt >> 4) % PupilStyle.values.length;
     final cosmeticSeed = (macInt >> 8) % 256;
     final sizeSeed = (macInt >> 16) % 256;
-    final traitIndex = (macInt >> 24) % PersonalityTrait.values.length;
+    final traitIndex = (macInt & 0xFFFFFF) % PersonalityTrait.values.length;
     final eyebrowIndex = (macInt >> 28) % EyebrowStyle.values.length;
 
     // Pick 0-2 cosmetics deterministically

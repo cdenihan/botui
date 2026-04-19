@@ -12,6 +12,16 @@ import 'package:stpvelox/features/wifi/domain/enities/wifi_network.dart';
 import 'package:stpvelox/shared/domain/entities/device_info.dart';
 
 class LinuxNetworkManager {
+  static const String _lanConnectionName = 'STP-Velox-LAN';
+  static const String _lanSubnetCidr = '192.168.124.1/24';
+  static const String _lanGatewayIp = '192.168.124.1';
+  static const String _lanDhcpStart = '192.168.124.100';
+  static const String _lanDhcpEnd = '192.168.124.200';
+  static const String _dnsmasqConfigPath = '/etc/dnsmasq.d/stp-velox-lan.conf';
+  static const String _dnsmasqOverrideDir = '/etc/systemd/system/dnsmasq.service.d';
+  static const String _dnsmasqOverridePath =
+      '$_dnsmasqOverrideDir/10-stp-velox-lan.conf';
+
   Future<List<WifiNetwork>> scanNetworks() async {
     await _ensureWifiEnabled();
 
@@ -211,45 +221,60 @@ class LinuxNetworkManager {
 
   Future<DeviceInfo> getDeviceInfo() async {
     try {
-      final ipResult = await SudoProcess.run('hostname', ['-I']);
-      if (ipResult.exitCode != 0) {
-        throw Exception('Failed to retrieve IP address: ${ipResult.stderr}');
-      }
-      final ipAddress = (ipResult.stdout as String).trim().split(' ').first;
+      String? ipAddress;
+      final mode = await getCurrentNetworkMode();
 
+      // Prefer ethernet IP when in LAN mode for clearer status reporting.
+      if (mode == NetworkMode.lanOnly) {
+        final ethernetInterface = await _getEthernetInterface();
+        if (ethernetInterface != null) {
+          ipAddress = await _getIpv4AddressForInterface(ethernetInterface);
+        }
+      }
+
+      if (ipAddress == null || ipAddress.isEmpty) {
+        final ipResult = await SudoProcess.run('hostname', ['-I']);
+        if (ipResult.exitCode != 0) {
+          throw Exception('Failed to retrieve IP address: ${ipResult.stderr}');
+        }
+        final addresses = (ipResult.stdout as String)
+            .trim()
+            .split(RegExp(r'\s+'))
+            .where((ip) => ip.isNotEmpty)
+            .toList();
+        ipAddress = addresses.isNotEmpty ? addresses.first : '';
+      }
+
+      WifiNetwork? connectedNetwork;
       final connResult = await SudoProcess.run(
           'nmcli', ['-t', '-f', 'SSID,SECURITY,IN-USE', 'dev', 'wifi']);
-      if (connResult.exitCode != 0) {
-        throw Exception(
-            'Failed to retrieve connected network: ${connResult.stderr}');
-      }
+      if (connResult.exitCode == 0) {
+        final lines = (connResult.stdout as String).split('\n');
+        for (var line in lines) {
+          if (line.contains('*')) {
+            final parts = line.split(':');
+            if (parts.isNotEmpty) {
+              final ssid = parts[0];
+              final security = parts.length > 1 ? parts[1] : '';
+              WifiEncryptionType encType = WifiEncryptionType.open;
+              if (security.contains('WPA3')) {
+                encType = security.contains('EAP')
+                    ? WifiEncryptionType.wpa3Enterprise
+                    : WifiEncryptionType.wpa3Personal;
+              } else if (security.contains('WPA2')) {
+                encType = security.contains('EAP')
+                    ? WifiEncryptionType.wpa2Enterprise
+                    : WifiEncryptionType.wpa2Personal;
+              }
 
-      final lines = (connResult.stdout as String).split('\n');
-      WifiNetwork? connectedNetwork;
-      for (var line in lines) {
-        if (line.contains('*')) {
-          final parts = line.split(':');
-          if (parts.isNotEmpty) {
-            final ssid = parts[0];
-            final security = parts.length > 1 ? parts[1] : '';
-            WifiEncryptionType encType = WifiEncryptionType.open;
-            if (security.contains('WPA3')) {
-              encType = security.contains('EAP')
-                  ? WifiEncryptionType.wpa3Enterprise
-                  : WifiEncryptionType.wpa3Personal;
-            } else if (security.contains('WPA2')) {
-              encType = security.contains('EAP')
-                  ? WifiEncryptionType.wpa2Enterprise
-                  : WifiEncryptionType.wpa2Personal;
+              connectedNetwork = WifiNetwork(
+                ssid: ssid,
+                encryptionType: encType,
+                isConnected: true,
+                isKnown: true,
+              );
+              break;
             }
-
-            connectedNetwork = WifiNetwork(
-              ssid: ssid,
-              encryptionType: encType,
-              isConnected: true,
-              isKnown: true,
-            );
-            break;
           }
         }
       }
@@ -615,10 +640,19 @@ class LinuxNetworkManager {
 
   Future<void> enableLanOnlyMode() async {
     try {
-      await SudoProcess.run('nmcli', ['radio', 'wifi', 'off']);
+      final ethernetInterface = await _getEthernetInterface();
+      if (ethernetInterface == null) {
+        throw Exception('No ethernet interface found');
+      }
 
-      await SudoProcess.run(
-          'nmcli', ['connection', 'up', 'Wired connection 1']);
+      await _ensureLanEthernetProfile(ethernetInterface);
+      await _ensureDnsmasqInstalled();
+      await _configureLanDhcpServer(ethernetInterface);
+      await _runOrThrow(
+        'nmcli',
+        ['radio', 'wifi', 'off'],
+        errorPrefix: 'Failed to disable WiFi radio for LAN mode',
+      );
 
       await setNetworkMode(NetworkMode.lanOnly);
     } catch (e) {
@@ -628,7 +662,14 @@ class LinuxNetworkManager {
 
   Future<void> disableLanOnlyMode() async {
     try {
-      await SudoProcess.run('nmcli', ['radio', 'wifi', 'on']);
+      await _runOrThrow(
+        'nmcli',
+        ['radio', 'wifi', 'on'],
+        errorPrefix: 'Failed to enable WiFi radio',
+      );
+
+      // Keep config persisted, but stop serving DHCP while LAN-only is disabled.
+      await SudoProcess.run('systemctl', ['stop', 'dnsmasq']);
 
       await setNetworkMode(NetworkMode.client);
     } catch (e) {
@@ -638,11 +679,22 @@ class LinuxNetworkManager {
 
   Future<bool> isLanOnlyModeActive() async {
     try {
+      final mode = await getCurrentNetworkMode();
+      if (mode != NetworkMode.lanOnly) {
+        return false;
+      }
+
       final result = await SudoProcess.run('nmcli', ['radio', 'wifi']);
       if (result.exitCode != 0) return false;
 
       final output = (result.stdout as String).trim();
-      return output.contains('disabled');
+      if (!output.contains('disabled')) {
+        return false;
+      }
+
+      final dnsmasqResult =
+          await SudoProcess.run('systemctl', ['is-active', 'dnsmasq']);
+      return dnsmasqResult.exitCode == 0;
     } catch (e) {
       return false;
     }
@@ -749,6 +801,201 @@ class LinuxNetworkManager {
       return null;
     } catch (e) {
       return null;
+    }
+  }
+
+  Future<String?> _getEthernetInterface() async {
+    try {
+      final result = await SudoProcess.run(
+          'nmcli', ['-t', '-f', 'DEVICE,TYPE', 'device', 'status']);
+      if (result.exitCode != 0) return null;
+
+      final lines = (result.stdout as String).split('\n');
+      for (var line in lines) {
+        if (line.trim().isEmpty) continue;
+        final parts = line.split(':');
+        if (parts.length >= 2 && parts[1] == 'ethernet') {
+          return parts[0];
+        }
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<void> _ensureLanEthernetProfile(String ethernetInterface) async {
+    final listResult =
+        await SudoProcess.run('nmcli', ['-t', '-f', 'NAME', 'connection', 'show']);
+    if (listResult.exitCode != 0) {
+      throw Exception('Failed to list NetworkManager connections: ${listResult.stderr}');
+    }
+
+    final existingConnectionNames = (listResult.stdout as String)
+        .split('\n')
+        .map((line) => line.trim())
+        .where((line) => line.isNotEmpty)
+        .toSet();
+
+    if (existingConnectionNames.contains(_lanConnectionName)) {
+      await _runOrThrow(
+        'nmcli',
+        [
+          'connection',
+          'modify',
+          _lanConnectionName,
+          'connection.interface-name',
+          ethernetInterface,
+          'connection.autoconnect',
+          'yes',
+          'connection.autoconnect-priority',
+          '100',
+          'ipv4.method',
+          'manual',
+          'ipv4.addresses',
+          _lanSubnetCidr,
+          'ipv4.never-default',
+          'yes',
+          'ipv6.method',
+          'ignore',
+        ],
+        errorPrefix: 'Failed to update LAN ethernet profile',
+      );
+    } else {
+      await _runOrThrow(
+        'nmcli',
+        [
+          'connection',
+          'add',
+          'type',
+          'ethernet',
+          'ifname',
+          ethernetInterface,
+          'con-name',
+          _lanConnectionName,
+          'connection.autoconnect',
+          'yes',
+          'connection.autoconnect-priority',
+          '100',
+          'ipv4.method',
+          'manual',
+          'ipv4.addresses',
+          _lanSubnetCidr,
+          'ipv4.never-default',
+          'yes',
+          'ipv6.method',
+          'ignore',
+        ],
+        errorPrefix: 'Failed to create LAN ethernet profile',
+      );
+    }
+
+    // Deactivate other active ethernet profiles to avoid profile races.
+    final activeResult = await SudoProcess.run(
+      'nmcli',
+      ['-t', '-f', 'NAME,DEVICE', 'connection', 'show', '--active'],
+    );
+    if (activeResult.exitCode == 0) {
+      final activeLines = (activeResult.stdout as String).split('\n');
+      for (var line in activeLines) {
+        final parts = line.split(':');
+        if (parts.length >= 2 &&
+            parts[1] == ethernetInterface &&
+            parts[0].isNotEmpty &&
+            parts[0] != _lanConnectionName) {
+          await SudoProcess.run('nmcli', ['connection', 'down', parts[0]]);
+        }
+      }
+    }
+
+    await _runOrThrow(
+      'nmcli',
+      ['connection', 'up', _lanConnectionName],
+      errorPrefix: 'Failed to activate LAN ethernet profile',
+    );
+  }
+
+  Future<void> _ensureDnsmasqInstalled() async {
+    final dnsmasqExists = await SudoProcess.run('which', ['dnsmasq']);
+    if (dnsmasqExists.exitCode == 0) {
+      return;
+    }
+
+    await _runOrThrow(
+      'apt-get',
+      ['update'],
+      errorPrefix: 'Failed to update apt package list before installing dnsmasq',
+    );
+    await _runOrThrow(
+      'apt-get',
+      ['install', '-y', 'dnsmasq'],
+      errorPrefix: 'Failed to install dnsmasq',
+    );
+  }
+
+  Future<void> _configureLanDhcpServer(String ethernetInterface) async {
+    await _runOrThrow('mkdir', ['-p', '/etc/dnsmasq.d']);
+
+    final dnsmasqConfig = '''# Managed by BotUI LAN only mode
+port=0
+interface=$ethernetInterface
+bind-dynamic
+dhcp-authoritative
+dhcp-range=$_lanDhcpStart,$_lanDhcpEnd,255.255.255.0,12h
+dhcp-option=option:router,$_lanGatewayIp
+''';
+    await _writeRootFile(_dnsmasqConfigPath, dnsmasqConfig);
+
+    await _runOrThrow('mkdir', ['-p', _dnsmasqOverrideDir]);
+    const dnsmasqOrdering = '''[Unit]
+After=NetworkManager-wait-online.service
+Wants=NetworkManager-wait-online.service
+''';
+    await _writeRootFile(_dnsmasqOverridePath, dnsmasqOrdering);
+
+    // Best effort: this service can be unavailable on some distros.
+    await SudoProcess.run('systemctl', ['enable', 'NetworkManager-wait-online.service']);
+
+    await _runOrThrow('systemctl', ['daemon-reload']);
+    await _runOrThrow('systemctl', ['enable', 'dnsmasq']);
+    await _runOrThrow('systemctl', ['restart', 'dnsmasq']);
+  }
+
+  Future<void> _writeRootFile(String path, String content) async {
+    final command = '''cat > "$path" <<'EOF'
+$content
+EOF
+''';
+
+    await _runOrThrow(
+      'bash',
+      ['-lc', command],
+      errorPrefix: 'Failed writing $path',
+    );
+  }
+
+  Future<String?> _getIpv4AddressForInterface(String interface) async {
+    final result =
+        await SudoProcess.run('ip', ['-4', '-o', 'addr', 'show', 'dev', interface]);
+    if (result.exitCode != 0) {
+      return null;
+    }
+
+    final output = result.stdout as String;
+    final match = RegExp(r'inet\s+([0-9.]+)').firstMatch(output);
+    return match?.group(1);
+  }
+
+  Future<void> _runOrThrow(
+    String command,
+    List<String> args, {
+    String? errorPrefix,
+    Set<int> acceptedExitCodes = const {0},
+  }) async {
+    final result = await SudoProcess.run(command, args);
+    if (!acceptedExitCodes.contains(result.exitCode)) {
+      final prefix = errorPrefix ?? 'Command failed';
+      throw Exception('$prefix: ${result.stderr}');
     }
   }
 }

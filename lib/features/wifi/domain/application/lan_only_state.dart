@@ -21,7 +21,7 @@ class LanOnlyState {
     bool? isCableConnected,
     String? ipAddress,
     String? macAddress,
-    String? errorMessage,
+    String? Function()? errorMessage,
   }) {
     return LanOnlyState(
       isActive: isActive ?? this.isActive,
@@ -29,7 +29,7 @@ class LanOnlyState {
       isCableConnected: isCableConnected ?? this.isCableConnected,
       ipAddress: ipAddress ?? this.ipAddress,
       macAddress: macAddress ?? this.macAddress,
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: errorMessage != null ? errorMessage() : this.errorMessage,
     );
   }
 }

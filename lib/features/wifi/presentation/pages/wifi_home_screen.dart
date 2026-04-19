@@ -24,35 +24,33 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
     });
   }
 
-  void _handleModeChange(NetworkMode selectedMode) {
-    ref.read(networkModeProvider.notifier).updateNetworkMode(selectedMode);
+  Future<void> _handleModeChange(NetworkMode selectedMode) async {
+    await ref.read(networkModeProvider.notifier).updateNetworkMode(selectedMode);
+    if (!mounted) return;
 
-    // Check if mode change was successful after a short delay
-    Future.delayed(const Duration(milliseconds: 500), () {
-      final state = ref.read(networkModeProvider);
-      if (state.errorMessage != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(state.errorMessage!),
-            duration: const Duration(seconds: 4),
-            backgroundColor: Colors.red[600],
-            action: SnackBarAction(
-              label: 'Dismiss',
-              textColor: Colors.white,
-              onPressed: () {},
-            ),
+    final state = ref.read(networkModeProvider);
+    if (state.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(state.errorMessage!),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.red[600],
+          action: SnackBarAction(
+            label: 'Dismiss',
+            textColor: Colors.white,
+            onPressed: () {},
           ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Switched to ${_getModeDisplayName(selectedMode)}'),
-            duration: const Duration(seconds: 2),
-            backgroundColor: Colors.green[600],
-          ),
-        );
-      }
-    });
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Switched to ${_getModeDisplayName(selectedMode)}'),
+          duration: const Duration(seconds: 2),
+          backgroundColor: Colors.green[600],
+        ),
+      );
+    }
   }
 
   String _getModeDisplayName(NetworkMode mode) {
@@ -69,7 +67,7 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(networkModeProvider);
-    final currentMode = (state.isLoading) ? NetworkMode.client : state.mode;
+    final currentMode = state.mode;
 
     return Scaffold(
       appBar: createTopBar(context, 'Network Control'),
@@ -78,7 +76,7 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
           padding: const EdgeInsets.all(32.0),
           child: Column(
             children: [
-              _buildModeSelector(currentMode),
+              _buildModeSelector(currentMode, state.isLoading),
               const SizedBox(height: 12),
               Expanded(child: _buildContent(currentMode)),
             ],
@@ -88,7 +86,7 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
     );
   }
 
-  Widget _buildModeSelector(NetworkMode currentMode) {
+  Widget _buildModeSelector(NetworkMode currentMode, bool isLoading) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.grey[900],
@@ -129,7 +127,9 @@ class _WifiHomeScreenState extends ConsumerState<WifiHomeScreen> {
                     ),
                   );
                 }).toList(),
-                onChanged: (NetworkMode? selectedMode) {
+                onChanged: isLoading
+                    ? null
+                    : (NetworkMode? selectedMode) {
                   if (selectedMode != null && selectedMode != currentMode) {
                     _handleModeChange(selectedMode);
                   }

@@ -81,14 +81,16 @@ class NetworkModeNotifier extends Notifier<NetworkModeState> with HasLogger {
 
         // Check if enabling failed (e.g., no cable connected)
         final lanState = ref.read(lanOnlyProvider);
-        if (lanState.errorMessage != null) {
+        if (lanState.errorMessage != null || !lanState.isActive) {
+          final error = lanState.errorMessage ??
+              'LAN only mode did not become active. Check ethernet and try again.';
           // Revert to previous mode if LAN mode failed
           state = state.copyWith(
             mode: previousMode,
             isLoading: false,
-            errorMessage: () => lanState.errorMessage,
+            errorMessage: () => error,
           );
-          log.warning("Failed to enable LAN mode: ${lanState.errorMessage}");
+          log.warning("Failed to enable LAN mode: $error");
           return;
         }
       } else if (state.mode == NetworkMode.lanOnly) {
